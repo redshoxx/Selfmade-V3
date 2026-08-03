@@ -1,0 +1,103 @@
+      <div class="recipe-grid">${recipeIdeas().map((idea) => `<button class="card recipe-card" data-action="save-recipe" data-title="${escapeHtml(idea.title)}" data-content="${escapeHtml(encodeURIComponent(idea.content))}"><span>🍳</span><strong>${escapeHtml(idea.title)}</strong><small>Als Notiz speichern</small></button>`).join('')}</div>
+    </section>` : ''}
+
+    ${data.challenge.total_fields > 0 ? `<section class="section">
+      <div class="section-title-row"><h2 class="section-title">Spar-Challenge</h2></div>
+      <button class="card challenge" style="width:100%;color:inherit;text-align:left" data-action="tab" data-tab="money">
+        <div class="challenge-top"><span class="challenge-title">Feld ${data.challenge.current_field}</span><span class="challenge-value">${money(data.challenge.saved_amount)}</span></div>
+        <div class="progress-track"><div class="progress-fill" style="width:${challengeRatio * 100}%"></div></div>
+        <div class="challenge-meta">${data.challenge.completed_fields} von ${data.challenge.total_fields} Feldern</div>
+      </button>
+    </section>` : ''}
+  </div>`;
+}
+
+function renderMoney() {
+  if (moneyMode === 'save') return renderSavings();
+  const ratio = data.summary.income ? data.summary.expense / data.summary.income : 0;
+  return `<div class="content-stack">
+    <div class="segmented">
+      <button class="active" data-action="money-mode" data-mode="month">Monat</button>
+      <button data-action="money-mode" data-mode="save">Sparen</button>
+    </div>
+
+    <section class="card dark-card hero-balance">
+      <div><div class="metric-label" style="color:inherit;opacity:.65">Bleibt übrig</div><div class="metric-value big">${signedMoney(data.summary.remaining)}</div></div>
+      <div class="progress-track" style="background:color-mix(in srgb,currentColor 18%,transparent)"><div class="progress-fill" style="width:${clamp(ratio * 100, 0, 100)}%"></div></div>
+      <div class="progress-labels" style="color:inherit;opacity:.68"><span>${money(data.summary.income)} rein</span><span>${money(data.summary.expense)} raus</span></div>
+    </section>
+
+    <div class="money-actions">
+      <button class="btn btn-primary" data-action="add-transaction" data-type="expense">${icon('plus', 15)} Ausgabe</button>
+      <button class="btn btn-secondary" data-action="add-transaction" data-type="income">${icon('plus', 15)} Einnahme</button>
+      <button class="btn btn-secondary" data-action="export-transactions-csv">${icon('download', 15)} CSV</button>
+      <button class="btn btn-secondary" data-action="print-money-report">${icon('printer', 15)} Bericht</button>
+    </div>
+
+    <section class="section">
+      <div class="section-title-row"><h2 class="section-title">Budgets</h2><button class="btn btn-secondary small" data-action="add-budget">${icon('plus', 14)} Budget</button></div>
+      <div class="budget-list">
+        ${data.budgets.map((item) => {
+          const ratio = item.limit_amount ? item.spent / item.limit_amount : 0;
+          const remaining = item.limit_amount - item.spent;
+          return `<button class="card budget-card" style="width:100%;color:inherit;text-align:left" data-action="edit-budget" data-id="${item.id}">
+            <div class="budget-top"><span class="budget-icon">${icon(budgetIcon(item.icon), 16)}</span><span class="budget-name">${escapeHtml(item.name)}</span><span class="budget-money" ${remaining < 0 ? 'style="color:var(--red)"' : ''}>${money(item.spent)}</span></div>
+            <div class="progress-track"><div class="progress-fill ${item.accent}" style="width:${clamp(ratio * 100, 0, 100)}%"></div></div>
+            <div class="budget-caption ${remaining < 0 ? 'over' : ''}">${remaining >= 0 ? `noch ${money(remaining)} von ${money(item.limit_amount)}` : `${money(Math.abs(remaining))} über dem Budget`}</div>
+          </button>`;
+        }).join('') || `<div class="empty-state compact"><strong>Noch keine Budgets</strong><span>Lege dein erstes eigenes Budget an.</span></div>`}
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-title-row"><h2 class="section-title">Buchungen</h2><span class="section-meta">${data.transactions.length}</span></div>
+      <div class="card list-card">
+        ${data.transactions.slice(0, 8).map((item) => `<button class="list-row clickable" style="width:100%;border-left:0;border-right:0;border-top:0;background:transparent;color:inherit;text-align:left" data-action="transaction-menu" data-id="${item.id}">
+          <span class="row-emoji">${item.type === 'income' ? '💶' : emojiForCategory(item.category)}</span>
+          <span class="row-body"><span class="row-title">${escapeHtml(item.category)}</span><span class="row-sub">${escapeHtml(item.note || item.booked_on)}${item.member_id ? ` · ${escapeHtml(memberName(item.member_id))}` : ''}</span></span>
+          <span class="row-amount" style="color:${item.type === 'income' ? 'var(--green)' : 'var(--text)'}">${item.type === 'income' ? '+' : '−'}${money(item.amount)}</span>
+        </button>`).join('') || `<div class="empty-state compact"><span>Noch keine Buchungen vorhanden.</span></div>`}
+      </div>
+    </section>
+
+    ${(data.receipts || []).length ? `<section class="section">
+      <div class="section-title-row"><h2 class="section-title">Kassenbons</h2><span class="section-meta">${data.receipts.length} importiert</span></div>
+      <div class="card list-card">
+        ${data.receipts.slice(0, 4).map((receipt) => `<button class="list-row clickable" style="width:100%;border-left:0;border-right:0;border-top:0;background:transparent;color:inherit;text-align:left" data-action="receipt-detail" data-id="${receipt.id}"><span class="row-emoji">🧾</span><span class="row-body"><span class="row-title">${escapeHtml(receipt.store_name || 'Kassenbon')}</span><span class="row-sub">${escapeHtml(receipt.receipt_date)} · ${receipt.parsed_items.length} Positionen</span></span><span class="row-amount">${money(receipt.total)}</span></button>`).join('')}
+      </div>
+    </section>` : ''}
+
+    <section class="section">
+      <div class="section-title-row"><h2 class="section-title">Preisverlauf</h2><span class="section-meta">aus Einkäufen und Bons</span></div>
+      <div class="card list-card">
+        ${(data.price_history || []).slice(0, 6).map((item) => `<div class="list-row"><span class="row-emoji">${emojiForCategory(item.category)}</span><span class="row-body"><span class="row-title">${escapeHtml(item.name)}</span><span class="row-sub">${item.purchase_count} Käufe · zuletzt ${escapeHtml(item.last_store || 'ohne Händler')}</span></span><span class="price-history"><strong>${money(item.last_price)}</strong><small>Ø ${money(item.average_price)}</small></span></div>`).join('') || `<div class="empty-state compact"><span>Noch keine Preisdaten vorhanden.</span></div>`}
+      </div>
+    </section>
+  </div>`;
+}
+
+function renderSavings() {
+  return `<div class="content-stack">
+    <div class="segmented">
+      <button data-action="money-mode" data-mode="month">Monat</button>
+      <button class="active" data-action="money-mode" data-mode="save">Sparen</button>
+    </div>
+    <section class="card hero-balance">
+      <div class="hero-top"><div><div class="metric-label">Gespart</div><div class="metric-value big">${money(data.summary.savings)}</div></div></div>
+    </section>
+    <section class="card pad">
+      <div class="section-title-row"><h2 class="section-title">Sparbetrag anpassen</h2></div>
+      <div style="height:8px"></div>
+      <button class="btn btn-secondary block" data-action="edit-savings">Aktuell ${money(data.summary.savings)}</button>
+    </section>
+  </div>`;
+}
+
+function shoppingGroups() {
+  const order = ['Obst & Gemüse', 'Backwaren', 'Kühlregal', 'Tiefkühl', 'Vorrat', 'Haushalt', 'Sonstiges'];
+  const map = new Map();
+  for (const item of data.shopping) {
+    if (!map.has(item.category)) map.set(item.category, []);
+    map.get(item.category).push(item);
+  }
+  return [...map.entries()].sort((a, b) => {

@@ -1,0 +1,141 @@
+      try { await refreshAuthSession(); } catch { renderAuthScreen('Deine Sitzung ist abgelaufen.'); return; }
+    }
+  }
+
+  await refresh();
+}
+
+async function cloudBackgroundRefresh() {
+  if (!cloudConfig.enabled || !authSession?.access_token || cloudPollBusy || busy || storeMode.active || dialogRoot.innerHTML || !navigator.onLine) return;
+  cloudPollBusy = true;
+  try {
+    const next = await api('/api/state');
+    const beforeVersion = Number(data?.cloud?.version || 0);
+    const nextVersion = Number(next?.cloud?.version || 0);
+    if (!data || nextVersion > beforeVersion) {
+      data = next;
+      renderApp();
+    }
+  } catch (error) {
+    if (error.status === 401) {
+      clearAuthSession();
+      renderAuthScreen('Bitte erneut anmelden.');
+    }
+  } finally {
+    cloudPollBusy = false;
+  }
+}
+
+function applyTheme() {
+  const theme = data?.settings?.theme ?? 'light';
+  const resolved = theme === 'system'
+    ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+    : theme;
+  document.documentElement.dataset.theme = resolved;
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', resolved === 'dark' ? '#0f0f12' : '#f0eee9');
+}
+
+function header() {
+  if (activeTab === 'start') {
+    return `<header class="page-header">
+      <div class="page-title-wrap"><p class="eyebrow">${escapeHtml(dateLabel())}</p><h1 class="page-title">Hallo ${escapeHtml(data.settings.display_name)}</h1></div>
+      <div class="header-actions">${cloudConfig.enabled ? `<span class="cloud-indicator" title="Supabase synchronisiert">Cloud</span>` : ``}<button class="icon-button" data-action="global-search" aria-label="Suchen">${icon('search', 18)}</button><button class="icon-button" data-action="settings" aria-label="Einstellungen">${icon('settings', 18)}</button></div>
+    </header>`;
+  }
+  if (activeTab === 'money') {
+    return `<header class="page-header">
+      <div class="page-title-wrap"><h1 class="page-title compact">Geld</h1></div>
+      <div class="header-actions">
+        <button class="icon-button small" data-action="import-receipt" aria-label="Kassenbon importieren">${icon('receipt', 17)}</button>
+        <div class="month-switcher">
+          <button data-action="month-prev" aria-label="Vorheriger Monat">‹</button>
+          <strong>${escapeHtml(monthLabel(data.month))}</strong>
+          <button data-action="month-next" aria-label="Nächster Monat">›</button>
+        </div>
+      </div>
+    </header>`;
+  }
+  if (activeTab === 'shopping') {
+    return `<header class="page-header">
+      <div class="page-title-wrap"><h1 class="page-title compact">Einkauf</h1></div>
+      <div class="header-actions">
+        <button class="icon-button small" data-action="scan-barcode" aria-label="Barcode scannen">${icon('scan', 17)}</button>
+        <button class="btn btn-primary small" data-action="start-store">Im Laden</button>
+      </div>
+    </header>`;
+  }
+  if (activeTab === 'pantry') {
+    return `<header class="page-header">
+      <div class="page-title-wrap"><h1 class="page-title compact">Vorrat</h1></div>
+      <button class="round-button primary" data-action="add-pantry" aria-label="Vorrat hinzufügen">${icon('plus', 19)}</button>
+    </header>`;
+  }
+  return `<header class="page-header">
+    <div class="page-title-wrap"><h1 class="page-title compact">Notizen</h1></div>
+    <button class="round-button primary" data-action="add-note" aria-label="Notiz hinzufügen">${icon('plus', 19)}</button>
+  </header>`;
+}
+
+function tabBar() {
+  const tabData = [
+    ['start', 'home', 'Start', 0],
+    ['money', 'wallet', 'Geld', 0],
+    ['shopping', 'cart', 'Einkauf', data.badges.shopping],
+    ['pantry', 'pantry', 'Vorrat', data.badges.pantry],
+    ['notes', 'notes', 'Notizen', 0]
+  ];
+  return `<nav class="tab-bar" aria-label="Hauptnavigation">
+    ${tabData.map(([id, iconName, label, badge]) => `<button class="tab-button ${activeTab === id ? 'active' : ''}" data-action="tab" data-tab="${id}">
+      <span class="tab-icon">${icon(iconName, 21)}${badge ? `<span class="tab-badge">${badge}</span>` : ''}</span><span>${label}</span>
+    </button>`).join('')}
+  </nav>`;
+}
+
+function renderDashboard() {
+  const urgent = data.pantry
+    .filter((item) => !item.inbox && item.expiry_date)
+    .sort((a, b) => (a.expiry_date ?? '').localeCompare(b.expiry_date ?? ''))
+    .slice(0, 3);
+  const spentRatio = data.summary.income ? data.summary.expense / data.summary.income : 0;
+  const challengeRatio = data.challenge.total_fields ? data.challenge.completed_fields / data.challenge.total_fields : 0;
+  return `<div class="content-stack">
+    <section class="card hero-balance">
+      <div class="hero-top">
+        <div><div class="metric-label">Bleibt diesen Monat</div><div class="metric-value big">${signedMoney(data.summary.remaining)}</div></div>
+        <div class="hero-month">${escapeHtml(new Intl.DateTimeFormat('de-AT', { month: 'long' }).format(new Date()))}</div>
+      </div>
+      <div class="progress-track"><div class="progress-fill" style="width:${clamp(spentRatio * 100, 0, 100)}%"></div></div>
+      <div class="progress-labels"><span>${money(data.summary.income)} rein</span><span>${money(data.summary.expense)} raus</span></div>
+    </section>
+
+    <div class="metric-grid">
+      <section class="card metric-card"><div class="metric-label">Gespart</div><div class="metric-value">${money(data.summary.savings)}</div></section>
+      <button class="card metric-card" style="text-align:left;color:inherit" data-action="tab" data-tab="shopping"><div class="metric-label">Einkauf offen</div><div class="metric-value">${data.badges.shopping} Einträge</div></button>
+    </div>
+
+    <section class="section">
+      <div class="section-title-row"><h2 class="section-title">Schnellaktionen</h2><span class="section-meta">für iPhone optimiert</span></div>
+      <div class="quick-tool-grid">
+        <button class="card quick-tool" data-action="scan-barcode">${icon('scan', 20)}<span><strong>Barcode scannen</strong><small>Produkt direkt hinzufügen</small></span></button>
+        <button class="card quick-tool" data-action="import-receipt">${icon('receipt', 20)}<span><strong>Kassenbon</strong><small>Foto und Positionen importieren</small></span></button>
+        <button class="card quick-tool" data-action="recurring">${icon('repeat', 20)}<span><strong>Routinen</strong><small>Wiederkehrende Einkäufe</small></span></button>
+        <button class="card quick-tool" data-action="export-data">${icon('download', 20)}<span><strong>Backup</strong><small>Daten als JSON exportieren</small></span></button>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-title-row"><h2 class="section-title">Läuft ab</h2><span class="section-meta danger">${data.badges.pantry} dringend</span></div>
+      <div class="card list-card">
+        ${urgent.length ? urgent.map((item) => {
+          const exp = expiryInfo(item.expiry_date);
+          return `<button class="list-row clickable" style="width:100%;border-left:0;border-right:0;border-top:0;background:transparent;color:inherit;text-align:left" data-action="edit-pantry" data-id="${item.id}">
+            <span class="row-emoji">${emojiForItem(item)}</span>
+            <span class="row-body"><span class="row-title">${escapeHtml(item.name)}</span><span class="row-sub">${escapeHtml(item.quantity)} im ${escapeHtml(item.category)}</span></span>
+            <span class="row-chip ${exp.className === 'urgent' ? 'red' : 'orange'}">${escapeHtml(exp.label)}</span>
+          </button>`;
+        }).join('') : `<div class="empty-state"><strong>Nichts läuft bald ab</strong><span>Dein Vorrat ist aktuell entspannt.</span></div>`}
+      </div>
+    </section>
+
+    ${recipeIdeas().length ? `<section class="section">
+      <div class="section-title-row"><h2 class="section-title">Heute verwerten</h2><span class="section-meta">aus deinem Vorrat</span></div>
