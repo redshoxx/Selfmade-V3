@@ -32,12 +32,14 @@ async function request(base, route, options = {}) {
 test('initial state contains all five app areas', async () => {
   await withServer(async (base) => {
     const state = await request(base, '/api/state');
-    assert.equal(state.settings.display_name, 'Lena');
-    assert.equal(state.summary.remaining, 412.8);
-    assert.equal(state.budgets.length, 5);
-    assert.equal(state.shopping.length, 10);
-    assert.equal(state.pantry.filter((item) => item.inbox).length, 3);
-    assert.equal(state.notes.length, 6);
+    assert.equal(state.settings.display_name, '');
+    assert.equal(state.summary.remaining, 0);
+    assert.equal(state.budgets.length, 0);
+    assert.equal(state.shopping.length, 0);
+    assert.equal(state.pantry.length, 0);
+    assert.equal(state.notes.length, 0);
+    assert.equal(state.members.length, 0);
+    assert.equal(state.product_catalog.length, 0);
   });
 });
 
@@ -60,7 +62,15 @@ test('shopping item can be created and updated', async () => {
 
 test('checkout books expense and moves food to pantry inbox', async () => {
   await withServer(async (base) => {
-    const before = await request(base, '/api/state');
+    let before = await request(base, '/api/shopping', {
+      method: 'POST',
+      body: JSON.stringify({ name: 'Testprodukt', quantity: '1', category: 'Lebensmittel', price: 2.5 })
+    });
+    const created = before.shopping.find((item) => item.name === 'Testprodukt');
+    before = await request(base, `/api/shopping/${created.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ checked: true })
+    });
     const selected = before.shopping.filter((item) => item.checked);
     const beforeExpense = before.summary.expense;
     const beforeInbox = before.pantry.filter((item) => item.inbox).length;
@@ -90,21 +100,21 @@ test('settings persist theme and display name', async () => {
 
 test('barcode catalog lookup and create work', async () => {
   await withServer(async (base) => {
-    let lookup = await request(base, '/api/catalog/lookup?barcode=9000000000011');
-    assert.equal(lookup.product.name, 'Vollmilch');
-
     const state = await request(base, '/api/catalog', {
       method: 'POST',
       body: JSON.stringify({
         barcode: '1234567890123',
-        name: 'Olivenöl',
-        brand: 'Testmarke',
+        name: 'Testprodukt',
+        brand: '',
         category: 'Vorrat',
-        default_quantity: '1 Flasche',
+        default_quantity: '1',
         last_price: 7.49
       })
     });
     assert.ok(state.product_catalog.some((item) => item.barcode === '1234567890123'));
+
+    const lookup = await request(base, '/api/catalog/lookup?barcode=1234567890123');
+    assert.equal(lookup.product.name, 'Testprodukt');
   });
 });
 
@@ -201,6 +211,7 @@ test('enhanced pantry and note metadata persist', async () => {
 
 test('backup export and import restore data', async () => {
   await withServer(async (base) => {
+    await request(base, '/api/settings', { method: 'PATCH', body: JSON.stringify({ display_name: 'Testkonto' }) });
     const backup = await request(base, '/api/export');
     await request(base, '/api/shopping', {
       method: 'POST',
@@ -211,6 +222,6 @@ test('backup export and import restore data', async () => {
       body: JSON.stringify(backup)
     });
     assert.equal(restored.shopping.some((item) => item.name === 'Nur temporär'), false);
-    assert.equal(restored.settings.display_name, 'Lena');
+    assert.equal(restored.settings.display_name, 'Testkonto');
   });
 });

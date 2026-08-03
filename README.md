@@ -1,37 +1,52 @@
-# Selfmade V6 – Vercel + Supabase
+# Selfmade V8 – iPhone Barcode Scanner
 
 Selfmade ist eine iPhone-optimierte Haushalts-PWA für Geld, Einkauf, Vorrat, Notizen, Barcode- und Kassenbon-Funktionen.
 
-## V6-Korrekturen
+## Änderungen in V8
 
-- Vercel Function vollständig ohne `node:sqlite`
-- keine persistente lokale Datei in der Serverless-Runtime
-- Supabase als alleinige dauerhafte Cloud-Speicherung
-- öffentliche Supabase-Konfiguration bereits hinterlegt
-- Vercel Environment Variables können die Standardwerte überschreiben
-- verständliche Fehlermeldung, wenn die Supabase-Migration fehlt
-- PWA, Homescreen-Modus und iPhone Safe Areas bleiben erhalten
-
-## Lokal prüfen
-
-```bash
-npm install
-npm test
-npm run build
-```
-
-## Vercel
-
-Siehe [VERCEL_DEPLOY.md](./VERCEL_DEPLOY.md).
+- der Hinweis „Als iPhone-App verwenden“ wurde vollständig entfernt
+- keine Demo-, Beispiel- oder Platzhalterdaten
+- neue Haushalte starten vollständig leer
+- Safari-/Homescreen-kompatibler Barcode-Scanner
+- Live-Kamera mit bevorzugter Rückkamera
+- automatische Fokus- und Zoomoptimierung, soweit das iPhone sie freigibt
+- Taschenlampen-Schalter, wenn die Kamera ihn unterstützt
+- ZXing-Fallback für Safari, wenn `BarcodeDetector` nicht verfügbar ist
+- native iPhone-Fotoaufnahme als zusätzlicher Scanner-Fallback
+- automatische Aktualisierung der Homescreen-App nach einem neuen Service Worker
+- Scannerbibliothek wird über eine gleichnamige Vercel-Route geladen und anschließend vom Service Worker gecacht
 
 ## Supabase
 
-Vor dem ersten produktiven Login muss folgende Migration im Supabase SQL Editor ausgeführt werden:
+Bei einem bestehenden Projekt zuerst den Hotfix im Supabase SQL Editor ausführen:
+
+```text
+supabase/migrations/20260803_fix_bootstrap_household_id_ambiguity.sql
+```
+
+Bei einem neuen Projekt die vollständige Migration ausführen:
 
 ```text
 supabase/migrations/20260803_selfmade_cloud.sql
 ```
 
-## Sicherheit
+## Vercel
 
-Der eingetragene `sb_publishable_...`-Key ist ein öffentlicher App-Key. Die Sicherheit der Haushaltsdaten erfolgt über Supabase Auth und Row Level Security. Ein Service-Role- oder Secret-Key wird nicht verwendet.
+```bash
+npm test
+npm run build
+```
+
+Danach das Projekt neu auf Vercel deployen. Die Build-Ausgabe liegt in `dist/`.
+
+## Kamera auf dem iPhone
+
+1. Die Website beziehungsweise Homescreen-App muss über HTTPS laufen.
+2. Im Barcode-Dialog auf **Kamera starten** tippen.
+3. Den Barcode gerade und vollständig in den Rahmen halten.
+4. Falls iOS keinen Live-Stream bereitstellt, **Foto aufnehmen** verwenden. Das Foto wird lokal im Browser ausgewertet.
+5. Bei verweigertem Zugriff die Website in Safari öffnen und unter **Seitenmenü → Mehr → Kamera → Erlauben** freigeben.
+
+## Datenschutz
+
+Das Kamerabild und aufgenommene Barcode-Foto werden nur lokal im Browser ausgewertet. Für den Barcode-Lookup wird ausschließlich die erkannte Nummer an die vorhandene API gesendet.

@@ -1,4 +1,4 @@
-# Supabase-Einrichtung für Selfmade V4
+# Supabase-Einrichtung für Selfmade V7
 
 Die App kann weiterhin lokal mit SQLite laufen. Sobald `SUPABASE_URL` und
 `SUPABASE_PUBLISHABLE_KEY` gesetzt sind, wechselt sie automatisch in den
@@ -28,6 +28,20 @@ Die Migration erstellt:
 - Row-Level-Security-Policies
 - Bootstrap- und Update-RPCs
 - Realtime-Publication für Zustandsänderungen
+
+
+## Bestehende Installation: Fehler `household_id is ambiguous`
+
+Wurde die frühere Migration bereits ausgeführt und erscheint beim Anmelden
+`column reference "household_id" is ambiguous`, im SQL Editor nur diese
+Hotfix-Datei ausführen:
+
+```text
+supabase/migrations/20260803_fix_bootstrap_household_id_ambiguity.sql
+```
+
+Danach die App neu laden und erneut anmelden. Bestehende Benutzer- und
+Haushaltsdaten werden dabei nicht gelöscht.
 
 ## 3. Auth konfigurieren
 

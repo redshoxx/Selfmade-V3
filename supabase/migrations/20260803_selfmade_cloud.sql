@@ -175,7 +175,7 @@ begin
 
   insert into public.selfmade_profiles (id, display_name, updated_at)
   values (v_user_id, left(coalesce(nullif(trim(p_display_name), ''), 'Selfmade'), 80), now())
-  on conflict (id) do update
+  on conflict on constraint selfmade_profiles_pkey do update
     set display_name = excluded.display_name,
         updated_at = now();
 
@@ -190,7 +190,8 @@ begin
   if v_household_id is null then
     insert into public.selfmade_households (name, owner_id)
     values (left(coalesce(nullif(trim(p_household_name), ''), 'Mein Haushalt'), 80), v_user_id)
-    returning id, name into v_household_id, v_household_name;
+    returning selfmade_households.id, selfmade_households.name
+      into v_household_id, v_household_name;
 
     insert into public.selfmade_household_members (household_id, user_id, role)
     values (v_household_id, v_user_id, 'owner');
@@ -203,7 +204,7 @@ begin
     1,
     v_user_id
   )
-  on conflict (household_id) do nothing;
+  on conflict on constraint selfmade_household_states_pkey do nothing;
 
   return query
     select h.id, h.name, s.version, s.data, s.updated_at

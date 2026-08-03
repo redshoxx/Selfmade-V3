@@ -13,14 +13,20 @@ async function readJson(response) {
 function apiError(response, payload) {
   const code = String(payload?.code || '').toUpperCase();
   const rawMessage = payload?.msg || payload?.message || payload?.error_description || payload?.error || `Supabase-Fehler ${response.status}`;
+  const ambiguousBootstrap = code === '42702'
+    && /household_id/i.test(String(rawMessage))
+    && /ambiguous/i.test(String(rawMessage));
   const migrationMissing = ['PGRST202', 'PGRST204', 'PGRST205', '42P01', '42883'].includes(code)
     || /selfmade_(households|household_states|bootstrap|update_state)/i.test(String(rawMessage))
       && /(not found|could not find|does not exist|schema cache)/i.test(String(rawMessage));
-  const error = new Error(migrationMissing
-    ? 'Die Selfmade-Datenbank ist in Supabase noch nicht eingerichtet. Führe die Datei supabase/migrations/20260803_selfmade_cloud.sql im Supabase SQL Editor aus.'
-    : rawMessage);
-  error.status = migrationMissing ? 503 : response.status;
-  error.code = migrationMissing ? 'migration_required' : code || undefined;
+  const message = ambiguousBootstrap
+    ? 'Die installierte Supabase-Funktion ist veraltet. Führe die Hotfix-Datei supabase/migrations/20260803_fix_bootstrap_household_id_ambiguity.sql im Supabase SQL Editor aus.'
+    : migrationMissing
+      ? 'Die Selfmade-Datenbank ist in Supabase noch nicht eingerichtet. Führe die Datei supabase/migrations/20260803_selfmade_cloud.sql im Supabase SQL Editor aus.'
+      : rawMessage;
+  const error = new Error(message);
+  error.status = ambiguousBootstrap || migrationMissing ? 503 : response.status;
+  error.code = ambiguousBootstrap ? 'migration_hotfix_required' : migrationMissing ? 'migration_required' : code || undefined;
   error.payload = payload;
   return error;
 }

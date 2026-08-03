@@ -34,7 +34,44 @@ function normalizeBackup(value) {
   }
   const backup = { version: 3, exported_at: value.exported_at || nowIso(), tables: {} };
   for (const table of TABLES) backup.tables[table] = Array.isArray(value.tables[table]) ? clone(value.tables[table]) : [];
+  removeLegacyPlaceholderData(backup);
   return backup;
+}
+
+function removeLegacyPlaceholderData(backup) {
+  const t = backup.tables;
+  const legacyDetected =
+    t.product_catalog.some((row) => row.brand === 'Beispielmarke') ||
+    t.purchases.some((row) => row.source === 'seed') ||
+    t.notes.some((row) => ['Packliste Wochenende', 'Lasagne wie bei Oma', 'WLAN Gäste'].includes(row.title));
+
+  if (!legacyDetected) return false;
+
+  const exactNames = {
+    members: new Set(['Lena', 'Jonas']),
+    recurring_items: new Set(['Vollmilch', 'Klopapier', 'Katzenfutter']),
+    shopping_items: new Set(['Tomaten', 'Bananen', 'Vollkornbrot', 'Vollmilch', 'Joghurt natur', 'Butter', 'Frischkäse', 'Klopapier', 'Spülmittel', 'Haferflocken']),
+    pantry_items: new Set(['Vollmilch', 'Hähnchenbrust', 'Tomaten', 'Hackfleisch', 'Joghurt natur', 'Feldsalat', 'Käseaufschnitt', 'Tiefkühl-Erbsen']),
+    notes: new Set(['Packliste Wochenende', 'Lasagne wie bei Oma', 'Maße Regal Flur', 'WLAN Gäste', 'Geschenke Dezember', 'Handwerker']),
+    product_catalog: new Set(['Vollmilch', 'Joghurt natur', 'Vollkornbrot', 'Tomaten', 'Spülmittel'])
+  };
+
+  for (const [table, names] of Object.entries(exactNames)) {
+    t[table] = t[table].filter((row) => !names.has(row.name || row.title));
+  }
+  t.transactions = t.transactions.filter((row) => ![
+    'Gehalt', 'Miete', 'Weitere Einkäufe', 'Wocheneinkauf', 'Unterwegs',
+    'Freizeit', 'Mobilität', 'Haushalt', 'Versicherungen', 'Sonstiges'
+  ].includes(row.note));
+  t.budgets = [];
+  t.purchases = t.purchases.filter((row) => row.source !== 'seed');
+  t.challenge = [];
+  if (t.settings[0]) {
+    t.settings[0].savings = 0;
+    t.settings[0].updated_at = nowIso();
+  }
+  backup.exported_at = nowIso();
+  return true;
 }
 
 function nextId(rows) {
@@ -238,7 +275,7 @@ function getState(backup) {
     type: 'pantry', name: item.name, quantity: item.quantity, category: item.category, reason: 'Zum Nachkaufen markiert'
   }))).slice(0, 8);
 
-  const challenge = t.challenge[0] || { id: 1, current_field: 1, completed_fields: 0, total_fields: 52, saved_amount: 0, target_amount: 1378 };
+  const challenge = t.challenge[0] || { id: 1, current_field: 0, completed_fields: 0, total_fields: 0, saved_amount: 0, target_amount: 0 };
   const urgentPantry = pantry.filter((item) => !item.inbox && item.expiry_date && item.expiry_date <= shiftDate(1)).length;
 
   return {
@@ -436,12 +473,31 @@ async function mutateBackup(backup, req, url) {
     return result(getState(backup), 200, true);
   }
 
+  if (pathname === '/api/budgets' && method === 'POST') {
+    const body = await readBody(req);
+    const maxOrder = t.budgets.reduce((max, item) => Math.max(max, Number(item.sort_order) || 0), 0);
+    t.budgets.push({
+      id: nextId(t.budgets),
+      name: requireText(body.name, 'Budgetname').slice(0, 50),
+      icon: String(body.icon ?? 'wallet').slice(0, 30) || 'wallet',
+      limit_amount: Math.max(0, asNumber(body.limit_amount)),
+      accent: String(body.accent ?? 'blue').slice(0, 20) || 'blue',
+      sort_order: maxOrder + 1
+    });
+    return result(getState(backup), 201, true);
+  }
+
   const budgetId = routeId(pathname, '/api/budgets/');
   if (budgetId && method === 'PATCH') {
     const body = await readBody(req);
     const row = t.budgets.find((item) => Number(item.id) === budgetId);
     if (!row) throw Object.assign(new Error('Budget nicht gefunden.'), { status: 404 });
+    row.name = body.name === undefined ? row.name : requireText(body.name, 'Budgetname').slice(0, 50);
     row.limit_amount = body.limit_amount === undefined ? row.limit_amount : Math.max(0, asNumber(body.limit_amount));
+    return result(getState(backup), 200, true);
+  }
+  if (budgetId && method === 'DELETE') {
+    t.budgets = t.budgets.filter((item) => Number(item.id) !== budgetId);
     return result(getState(backup), 200, true);
   }
 
@@ -489,7 +545,7 @@ async function mutateBackup(backup, req, url) {
     }
     const purchasedIds = new Set(checkedRows.map((row) => Number(row.id)));
     t.shopping_items = t.shopping_items.filter((row) => !purchasedIds.has(Number(row.id)));
-    if (total > 0) t.transactions.push({ id: nextId(t.transactions), type: 'expense', amount: Number(total.toFixed(2)), category: 'Lebensmittel', note: 'Wocheneinkauf', booked_on: isoDate(), member_id: null, created_at: timestamp });
+    if (total > 0) t.transactions.push({ id: nextId(t.transactions), type: 'expense', amount: Number(total.toFixed(2)), category: 'Lebensmittel', note: 'Einkauf', booked_on: isoDate(), member_id: null, created_at: timestamp });
     return result({ total: Number(total.toFixed(2)), state: getState(backup) }, 200, true);
   }
 
@@ -636,11 +692,13 @@ export function createPureVercelHandler(options = {}) {
       }
       const requestedHousehold = String(req.headers['x-selfmade-household'] || '').trim();
       const snapshot = await cloud.loadOrBootstrap(token, { householdId: requestedHousehold, initialState, displayName, householdName });
+      const originalState = JSON.stringify(snapshot.data);
       const backup = normalizeBackup(snapshot.data);
+      const cleanedLegacyData = JSON.stringify(backup) !== originalState;
       const operation = await mutateBackup(backup, req, url);
       let version = snapshot.version;
       let updatedAt = snapshot.updatedAt;
-      if (operation.changed) {
+      if (operation.changed || cleanedLegacyData) {
         const saved = await cloud.saveState(token, { householdId: snapshot.householdId, expectedVersion: snapshot.version, state: backup });
         version = saved.version;
         updatedAt = saved.updatedAt;

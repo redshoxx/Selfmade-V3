@@ -53,8 +53,8 @@ function createDatabase(dbPath) {
   db.exec(`
     CREATE TABLE IF NOT EXISTS settings (
       id INTEGER PRIMARY KEY CHECK (id = 1),
-      display_name TEXT NOT NULL DEFAULT 'Lena',
-      household_name TEXT NOT NULL DEFAULT 'Mein Haushalt',
+      display_name TEXT NOT NULL DEFAULT '',
+      household_name TEXT NOT NULL DEFAULT '',
       theme TEXT NOT NULL DEFAULT 'light' CHECK (theme IN ('light','dark','system')),
       savings REAL NOT NULL DEFAULT 1240,
       selected_month TEXT NOT NULL,
@@ -197,7 +197,7 @@ function createDatabase(dbPath) {
     const columns = db.prepare(`PRAGMA table_info(${table})`).all().map((row) => row.name);
     if (!columns.includes(column)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
   };
-  ensureColumn('settings', 'household_name', "TEXT NOT NULL DEFAULT 'Mein Haushalt'");
+  ensureColumn('settings', 'household_name', "TEXT NOT NULL DEFAULT ''");
   ensureColumn('transactions', 'member_id', 'INTEGER');
   ensureColumn('shopping_items', 'member_id', 'INTEGER');
   ensureColumn('pantry_items', 'unit', "TEXT NOT NULL DEFAULT ''");
@@ -221,119 +221,11 @@ function seedDatabase(db) {
   const count = db.prepare('SELECT COUNT(*) AS count FROM settings').get().count;
   if (count > 0) return;
 
-  const month = isoDate().slice(0, 7);
   const timestamp = nowIso();
   db.prepare(`INSERT INTO settings
     (id, display_name, theme, savings, selected_month, updated_at)
-    VALUES (1, ?, 'light', 1240, ?, ?)`)
-    .run('Lena', month, timestamp);
-
-  const addBudget = db.prepare(`INSERT INTO budgets
-    (name, icon, limit_amount, accent, sort_order) VALUES (?, ?, ?, ?, ?)`);
-  [
-    ['Lebensmittel', 'cart', 500, 'orange', 1],
-    ['Freizeit', 'film', 150, 'red', 2],
-    ['Wohnen', 'home', 1200, 'green', 3],
-    ['Mobilität', 'car', 120, 'purple', 4],
-    ['Haushalt', 'basket', 400, 'blue', 5]
-  ].forEach((row) => addBudget.run(...row));
-
-  const addTransaction = db.prepare(`INSERT INTO transactions
-    (type, amount, category, note, booked_on, created_at) VALUES (?, ?, ?, ?, ?, ?)`);
-  const today = isoDate();
-  const yesterday = shiftDate(-1);
-  [
-    ['income', 2980, 'Einkommen', 'Gehalt', `${month}-01`, timestamp],
-    ['expense', 1180, 'Wohnen', 'Miete', `${month}-01`, timestamp],
-    ['expense', 377.70, 'Lebensmittel', 'Weitere Einkäufe', yesterday, timestamp],
-    ['expense', 28.40, 'Lebensmittel', 'Wocheneinkauf', today, timestamp],
-    ['expense', 6.50, 'Lebensmittel', 'Unterwegs', today, timestamp],
-    ['expense', 168, 'Freizeit', 'Freizeit', `${month}-02`, timestamp],
-    ['expense', 98, 'Mobilität', 'Mobilität', `${month}-02`, timestamp],
-    ['expense', 350, 'Haushalt', 'Haushalt', `${month}-02`, timestamp],
-    ['expense', 200, 'Versicherung', 'Versicherungen', `${month}-02`, timestamp],
-    ['expense', 158.60, 'Sonstiges', 'Sonstiges', `${month}-02`, timestamp]
-  ].forEach((row) => addTransaction.run(...row));
-
-  const addShopping = db.prepare(`INSERT INTO shopping_items
-    (name, quantity, category, note, price, checked, sort_order, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
-  [
-    ['Tomaten', '500 g', 'Obst & Gemüse', '', 2.49, 0, 1],
-    ['Bananen', '6', 'Obst & Gemüse', '', 1.89, 0, 2],
-    ['Vollkornbrot', '1', 'Backwaren', 'geschnitten · von Jonas', 2.29, 0, 3],
-    ['Vollmilch', '5', 'Kühlregal', '', 1.29, 1, 4],
-    ['Joghurt natur', '4', 'Kühlregal', '', 0.79, 1, 5],
-    ['Butter', '1', 'Kühlregal', '', 2.29, 1, 6],
-    ['Frischkäse', '1', 'Kühlregal', '', 1.79, 0, 7],
-    ['Klopapier', '1', 'Haushalt', 'die große Packung', 4.99, 0, 8],
-    ['Spülmittel', '1', 'Haushalt', '', 1.99, 0, 9],
-    ['Haferflocken', '1', 'Vorrat', '', 1.49, 0, 10]
-  ].forEach((row) => addShopping.run(...row, timestamp));
-
-  const addPantry = db.prepare(`INSERT INTO pantry_items
-    (name, quantity, category, expiry_date, buy_again, inbox, added_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
-  [
-    ['Vollmilch', '2 Stück', 'Kühlregal', null, 0, 1],
-    ['Hähnchenbrust', '1 Stück', 'Kühlregal', null, 0, 1],
-    ['Tomaten', '500 g', 'Obst & Gemüse', null, 0, 1],
-    ['Hackfleisch', '400 g', 'Kühlregal', shiftDate(-1), 0, 0],
-    ['Joghurt natur', '2 Becher', 'Kühlregal', shiftDate(1), 1, 0],
-    ['Feldsalat', '1 Beutel', 'Obst & Gemüse', shiftDate(2), 0, 0],
-    ['Käseaufschnitt', '1 Packung', 'Kühlregal', shiftDate(4), 0, 0],
-    ['Tiefkühl-Erbsen', '2 Beutel', 'Tiefkühl', shiftDate(90), 0, 0]
-  ].forEach((row) => addPantry.run(...row, timestamp, timestamp));
-
-  const addNote = db.prepare(`INSERT INTO notes
-    (title, content, accent, pinned, checklist_done, checklist_total, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
-  [
-    ['Packliste Wochenende', '', 'blue', 1, 5, 11],
-    ['Lasagne wie bei Oma', '500 g Hack, 2 Dosen Tomaten, Béchamel aus 50 g Butter, 50 g Mehl, 500 ml Milch. 45 Minuten bei 180 °C.', 'green', 0, 0, 0],
-    ['Maße Regal Flur', 'Nische 78,5 cm breit, 212 cm hoch. Sockelleiste 6 cm.', 'orange', 0, 0, 0],
-    ['WLAN Gäste', 'Passwort steht am Kühlschrank.', 'yellow', 0, 0, 0],
-    ['Geschenke Dezember', '', 'purple', 0, 1, 5],
-    ['Handwerker', 'Heizung entlüften, Termin Mo 10 Uhr.', 'red', 0, 0, 0]
-  ].forEach((row) => addNote.run(...row, timestamp, timestamp));
-
-  const addMember = db.prepare(`INSERT INTO members (name, avatar, role, created_at) VALUES (?, ?, ?, ?)`);
-  addMember.run('Lena', 'L', 'Organisatorin', timestamp);
-  addMember.run('Jonas', 'J', 'Mitglied', timestamp);
-
-  const addRecurring = db.prepare(`INSERT INTO recurring_items
-    (name, quantity, category, frequency_days, next_due, enabled, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, 1, ?, ?)`);
-  [
-    ['Vollmilch', '2', 'Kühlregal', 7, today],
-    ['Klopapier', '1 Packung', 'Haushalt', 30, shiftDate(5)],
-    ['Katzenfutter', '6', 'Haushalt', 10, shiftDate(2)]
-  ].forEach((row) => addRecurring.run(...row, timestamp, timestamp));
-
-  const addCatalog = db.prepare(`INSERT INTO product_catalog
-    (barcode, name, brand, category, default_quantity, last_price, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?)`);
-  [
-    ['9000000000011', 'Vollmilch', 'Beispielmarke', 'Kühlregal', '1 l', 1.29],
-    ['9000000000028', 'Joghurt natur', 'Beispielmarke', 'Kühlregal', '4 Becher', 0.79],
-    ['9000000000035', 'Vollkornbrot', 'Bäckerei', 'Backwaren', '1', 2.29],
-    ['9000000000042', 'Tomaten', 'Regional', 'Obst & Gemüse', '500 g', 2.49],
-    ['9000000000059', 'Spülmittel', 'Haushalt', 'Haushalt', '1', 1.99]
-  ].forEach((row) => addCatalog.run(...row, timestamp));
-
-  const addPurchase = db.prepare(`INSERT INTO purchases
-    (name, quantity, category, price, store_name, purchased_on, source)
-    VALUES (?, ?, ?, ?, ?, ?, ?)`);
-  [
-    ['Vollmilch', '2', 'Kühlregal', 1.29, 'BILLA', shiftDate(-8), 'seed'],
-    ['Vollmilch', '2', 'Kühlregal', 1.35, 'SPAR', shiftDate(-15), 'seed'],
-    ['Joghurt natur', '4', 'Kühlregal', 0.79, 'BILLA', shiftDate(-7), 'seed'],
-    ['Tomaten', '500 g', 'Obst & Gemüse', 2.69, 'Hofer', shiftDate(-10), 'seed']
-  ].forEach((row) => addPurchase.run(...row));
-
-  db.prepare(`INSERT INTO challenge
-    (id, current_field, completed_fields, total_fields, saved_amount, target_amount)
-    VALUES (1, 22, 21, 52, 231, 1378)`).run();
+    VALUES (1, '', 'light', 0, ?, ?)` )
+    .run(isoDate().slice(0, 7), timestamp);
 }
 
 function resetDatabase(db) {
@@ -456,7 +348,7 @@ function getState(db) {
     }))
   ).slice(0, 8);
 
-  const challenge = db.prepare('SELECT * FROM challenge WHERE id = 1').get();
+  const challenge = db.prepare('SELECT * FROM challenge WHERE id = 1').get() || { id: 1, current_field: 0, completed_fields: 0, total_fields: 0, saved_amount: 0, target_amount: 0 };
   const urgentPantry = pantry.filter((item) => !item.inbox && item.expiry_date && item.expiry_date <= shiftDate(1)).length;
 
   return {
@@ -1016,13 +908,30 @@ async function handleApi(req, res, db, url) {
     return json(res, 200, getState(db));
   }
 
+  if (pathname === '/api/budgets' && method === 'POST') {
+    const body = await parseBody(req);
+    const name = requireText(body.name, 'Budgetname').slice(0, 50);
+    const limit = Math.max(0, asNumber(body.limit_amount));
+    const icon = String(body.icon ?? 'wallet').slice(0, 30) || 'wallet';
+    const accent = String(body.accent ?? 'blue').slice(0, 20) || 'blue';
+    const maxOrder = db.prepare('SELECT COALESCE(MAX(sort_order), 0) AS value FROM budgets').get().value;
+    db.prepare('INSERT INTO budgets (name, icon, limit_amount, accent, sort_order) VALUES (?, ?, ?, ?, ?)')
+      .run(name, icon, limit, accent, maxOrder + 1);
+    return json(res, 201, getState(db));
+  }
+
   const budgetId = routeId(pathname, '/api/budgets/');
   if (budgetId && method === 'PATCH') {
     const body = await parseBody(req);
     const row = db.prepare('SELECT * FROM budgets WHERE id = ?').get(budgetId);
     if (!row) throw Object.assign(new Error('Budget nicht gefunden.'), { status: 404 });
+    const name = body.name === undefined ? row.name : requireText(body.name, 'Budgetname').slice(0, 50);
     const limit = body.limit_amount === undefined ? row.limit_amount : Math.max(0, asNumber(body.limit_amount));
-    db.prepare('UPDATE budgets SET limit_amount = ? WHERE id = ?').run(limit, budgetId);
+    db.prepare('UPDATE budgets SET name = ?, limit_amount = ? WHERE id = ?').run(name, limit, budgetId);
+    return json(res, 200, getState(db));
+  }
+  if (budgetId && method === 'DELETE') {
+    db.prepare('DELETE FROM budgets WHERE id = ?').run(budgetId);
     return json(res, 200, getState(db));
   }
 
@@ -1094,7 +1003,7 @@ async function handleApi(req, res, db, url) {
       }
       if (total > 0) {
         db.prepare(`INSERT INTO transactions (type, amount, category, note, booked_on, created_at)
-          VALUES ('expense', ?, 'Lebensmittel', 'Wocheneinkauf', ?, ?)`)
+          VALUES ('expense', ?, 'Lebensmittel', 'Einkauf', ?, ?)`)
           .run(Number(total.toFixed(2)), isoDate(), timestamp);
       }
       db.exec('COMMIT');

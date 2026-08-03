@@ -832,22 +832,6 @@ body {
   .quick-tool-grid { grid-template-columns: 1fr; }
   .header-actions .btn-secondary.small { display: none; }
 }
-.ios-install-tip {
-  display: grid;
-  grid-template-columns: 46px 1fr;
-  gap: 12px;
-  align-items: center;
-  padding: 13px;
-  border-radius: 20px;
-  border: 1px solid var(--line);
-  background: color-mix(in srgb, var(--card) 88%, transparent);
-  box-shadow: var(--shadow-soft);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-}
-.install-app-icon img { width: 46px; height: 46px; border-radius: 14px; display: block; }
-.ios-install-tip strong, .ios-install-tip small { display: block; }
-.ios-install-tip small { margin-top: 4px; color: var(--muted); font-size: 10px; line-height: 1.4; }
 .receipt-detail-image {
   width: 100%;
   max-height: 360px;
@@ -1037,3 +1021,41 @@ body {
 .cloud-settings-card small { display: block; }
 .cloud-settings-card small { margin-top: 3px; color: var(--muted); font-size: 11px; }
 .cloud-settings-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 7px; }
+
+
+.scanner-idle {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 7px;
+  padding: 24px;
+  color: rgba(255,255,255,.92);
+  text-align: center;
+  background: radial-gradient(circle at 50% 35%, rgba(67,97,238,.32), transparent 46%);
+}
+.scanner-idle[hidden] { display: none; }
+.scanner-idle strong, .scanner-idle small { display: block; }
+.scanner-idle small { color: rgba(255,255,255,.68); font-size: 11px; }
+.scanner-status {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  font-size: 11px;
+  line-height: 1.45;
+}
+.scanner-status.active { color: var(--accent); background: var(--accent-soft); border-color: var(--accent-line); }
+.scanner-status.success { color: var(--green); background: var(--green-soft); }
+.scanner-status.error { color: var(--red); background: var(--red-soft); }
+.camera-capture-button { position: relative; overflow: hidden; cursor: pointer; }
+.camera-capture-button input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.scanner-torch-button.active { color: #9a6200; background: #fff2b8; border-color: #f2d673; }
+.scanner-panel video { background: #05070b; }

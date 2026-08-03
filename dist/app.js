@@ -12,6 +12,10 @@ let moneyMode = 'month';
 let busy = false;
 let scannerStream = null;
 let scannerTimer = null;
+let scannerControls = null;
+let scannerReader = null;
+let scannerTorchEnabled = false;
+let scannerResultHandled = false;
 let receiptImageData = '';
 const toastActions = new Map();
 let storeMode = {
@@ -96,6 +100,7 @@ const icons = {
   pin: '<path d="m14 4 6 6-3 1-4 4-1 5-2-2-2-2 5-1 4-4Z"/><path d="m9 15-5 5"/>',
   close: '<path d="m6 6 12 12M18 6 6 18"/>',
   scan: '<path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M8 9v6M11 8v8M14 9v6M17 8v8"/>' ,
+  camera: '<path d="M4 7h3l1.5-2h7L17 7h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z"/><circle cx="12" cy="13" r="4"/>',
   receipt: '<path d="M6 3h12v18l-2-1.5L14 21l-2-1.5L10 21l-2-1.5L6 21Z"/><path d="M9 8h6M9 12h6M9 16h4"/>',
   download: '<path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/>',
   printer: '<path d="M7 8V3h10v5M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><path d="M7 14h10v7H7Z"/>',
@@ -180,18 +185,12 @@ function expiryInfo(date) {
 
 function recipeIdeas() {
   const urgent = data?.pantry?.filter((item) => !item.inbox && item.expiry_date && expiryInfo(item.expiry_date).days <= 3) || [];
-  const names = urgent.map((item) => item.name.toLocaleLowerCase('de'));
-  const ideas = [];
-  if (names.some((name) => name.includes('hack')) && names.some((name) => name.includes('tomat'))) {
-    ideas.push({ title: 'Schnelle Tomaten-Hack-Pfanne', content: 'Hackfleisch anbraten, Tomaten dazugeben, würzen und mit Brot oder Nudeln servieren.' });
-  }
-  if (names.some((name) => name.includes('joghurt')) && names.some((name) => name.includes('salat'))) {
-    ideas.push({ title: 'Salat mit Joghurt-Dressing', content: 'Joghurt mit Zitronensaft, Salz, Pfeffer und Kräutern verrühren und über den Salat geben.' });
-  }
-  if (!ideas.length && urgent.length) {
-    ideas.push({ title: `Resteküche mit ${urgent.slice(0, 2).map((item) => item.name).join(' und ')}`, content: `Heute verwenden: ${urgent.map((item) => item.name).join(', ')}. Als Pfanne, Suppe oder Ofengericht kombinieren.` });
-  }
-  return ideas.slice(0, 2);
+  if (!urgent.length) return [];
+  const names = urgent.slice(0, 3).map((item) => item.name);
+  return [{
+    title: 'Bald ablaufende Produkte verwenden',
+    content: `Heute einplanen: ${names.join(', ')}.`
+  }];
 }
 
 function cacheAppState(payload) {
@@ -345,13 +344,6 @@ function statusBar() {
   </div>`;
 }
 
-function iosInstallTip() {
-  const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-  if (!isIos || standalone) return '';
-  return `<section class="ios-install-tip"><span class="install-app-icon"><img src="/apple-touch-icon.png" alt=""></span><span><strong>Als iPhone-App verwenden</strong><small>In Safari auf Teilen tippen und „Zum Home-Bildschirm“ wählen. Danach startet Selfmade ohne Browserleiste.</small></span></section>`;
-}
-
 function header() {
   if (activeTab === 'start') {
     return `<header class="page-header">
@@ -377,7 +369,6 @@ function header() {
       <div class="page-title-wrap"><h1 class="page-title compact">Einkauf</h1></div>
       <div class="header-actions">
         <button class="icon-button small" data-action="scan-barcode" aria-label="Barcode scannen">${icon('scan', 17)}</button>
-        <button class="btn btn-secondary small" data-action="templates">${icon('template', 13)} Vorlagen</button>
         <button class="btn btn-primary small" data-action="start-store">Im Laden</button>
       </div>
     </header>`;
@@ -415,9 +406,8 @@ function renderDashboard() {
     .sort((a, b) => (a.expiry_date ?? '').localeCompare(b.expiry_date ?? ''))
     .slice(0, 3);
   const spentRatio = data.summary.income ? data.summary.expense / data.summary.income : 0;
-  const challengeRatio = data.challenge.completed_fields / data.challenge.total_fields;
+  const challengeRatio = data.challenge.total_fields ? data.challenge.completed_fields / data.challenge.total_fields : 0;
   return `<div class="content-stack">
-    ${iosInstallTip()}
     <section class="card hero-balance">
       <div class="hero-top">
         <div><div class="metric-label">Bleibt diesen Monat</div><div class="metric-value big">${signedMoney(data.summary.remaining)}</div></div>
@@ -461,14 +451,14 @@ function renderDashboard() {
       <div class="recipe-grid">${recipeIdeas().map((idea) => `<button class="card recipe-card" data-action="save-recipe" data-title="${escapeHtml(idea.title)}" data-content="${escapeHtml(encodeURIComponent(idea.content))}"><span>🍳</span><strong>${escapeHtml(idea.title)}</strong><small>Als Notiz speichern</small></button>`).join('')}</div>
     </section>` : ''}
 
-    <section class="section">
-      <div class="section-title-row"><h2 class="section-title">1-€-Challenge</h2></div>
+    ${data.challenge.total_fields > 0 ? `<section class="section">
+      <div class="section-title-row"><h2 class="section-title">Spar-Challenge</h2></div>
       <button class="card challenge" style="width:100%;color:inherit;text-align:left" data-action="tab" data-tab="money">
-        <div class="challenge-top"><span class="challenge-title">Feld ${data.challenge.current_field} ist dran</span><span class="challenge-value">${money(data.challenge.saved_amount)}</span></div>
+        <div class="challenge-top"><span class="challenge-title">Feld ${data.challenge.current_field}</span><span class="challenge-value">${money(data.challenge.saved_amount)}</span></div>
         <div class="progress-track"><div class="progress-fill" style="width:${challengeRatio * 100}%"></div></div>
-        <div class="challenge-meta">${data.challenge.completed_fields} von ${data.challenge.total_fields} Feldern · Ziel ${money(data.challenge.target_amount)}</div>
+        <div class="challenge-meta">${data.challenge.completed_fields} von ${data.challenge.total_fields} Feldern</div>
       </button>
-    </section>
+    </section>` : ''}
   </div>`;
 }
 
@@ -495,7 +485,7 @@ function renderMoney() {
     </div>
 
     <section class="section">
-      <div class="section-title-row"><h2 class="section-title">Budgets</h2><span class="section-meta">${data.budgets.filter((item) => item.spent / item.limit_amount >= .85).length} von ${data.budgets.length} knapp</span></div>
+      <div class="section-title-row"><h2 class="section-title">Budgets</h2><button class="btn btn-secondary small" data-action="add-budget">${icon('plus', 14)} Budget</button></div>
       <div class="budget-list">
         ${data.budgets.map((item) => {
           const ratio = item.limit_amount ? item.spent / item.limit_amount : 0;
@@ -505,7 +495,7 @@ function renderMoney() {
             <div class="progress-track"><div class="progress-fill ${item.accent}" style="width:${clamp(ratio * 100, 0, 100)}%"></div></div>
             <div class="budget-caption ${remaining < 0 ? 'over' : ''}">${remaining >= 0 ? `noch ${money(remaining)} von ${money(item.limit_amount)}` : `${money(Math.abs(remaining))} über dem Budget`}</div>
           </button>`;
-        }).join('')}
+        }).join('') || `<div class="empty-state compact"><strong>Noch keine Budgets</strong><span>Lege dein erstes eigenes Budget an.</span></div>`}
       </div>
     </section>
 
@@ -516,7 +506,7 @@ function renderMoney() {
           <span class="row-emoji">${item.type === 'income' ? '💶' : emojiForCategory(item.category)}</span>
           <span class="row-body"><span class="row-title">${escapeHtml(item.category)}</span><span class="row-sub">${escapeHtml(item.note || item.booked_on)}${item.member_id ? ` · ${escapeHtml(memberName(item.member_id))}` : ''}</span></span>
           <span class="row-amount" style="color:${item.type === 'income' ? 'var(--green)' : 'var(--text)'}">${item.type === 'income' ? '+' : '−'}${money(item.amount)}</span>
-        </button>`).join('')}
+        </button>`).join('') || `<div class="empty-state compact"><span>Noch keine Buchungen vorhanden.</span></div>`}
       </div>
     </section>
 
@@ -537,22 +527,13 @@ function renderMoney() {
 }
 
 function renderSavings() {
-  const progress = data.challenge.saved_amount / data.challenge.target_amount;
   return `<div class="content-stack">
     <div class="segmented">
       <button data-action="money-mode" data-mode="month">Monat</button>
       <button class="active" data-action="money-mode" data-mode="save">Sparen</button>
     </div>
     <section class="card hero-balance">
-      <div class="hero-top"><div><div class="metric-label">Gespart</div><div class="metric-value big">${money(data.summary.savings)}</div></div><span class="row-chip green">Ziel im Blick</span></div>
-      <div class="progress-track"><div class="progress-fill green" style="width:${clamp(progress * 100, 0, 100)}%"></div></div>
-      <div class="progress-labels"><span>Challenge ${money(data.challenge.saved_amount)}</span><span>Ziel ${money(data.challenge.target_amount)}</span></div>
-    </section>
-    <section class="card challenge">
-      <div class="challenge-top"><span class="challenge-title">1-€-Challenge</span><span class="challenge-value">Feld ${data.challenge.current_field}</span></div>
-      <div class="metric-value big">${money(data.challenge.current_field)}</div>
-      <div class="challenge-meta">Lege als Nächstes den Betrag deines aktuellen Feldes zurück.</div>
-      <button class="btn btn-primary block" data-action="complete-challenge">Feld ${data.challenge.current_field} abschließen</button>
+      <div class="hero-top"><div><div class="metric-label">Gespart</div><div class="metric-value big">${money(data.summary.savings)}</div></div></div>
     </section>
     <section class="card pad">
       <div class="section-title-row"><h2 class="section-title">Sparbetrag anpassen</h2></div>
@@ -592,7 +573,7 @@ function renderShopping() {
       </div>
     </section>`).join('') || `<div class="card empty-state"><div class="empty-icon">${icon('cart', 25)}</div><strong>Liste ist leer</strong><span>Füge unten den ersten Artikel hinzu.</span></div>`}
     <div class="bottom-composer">
-      <form class="composer-row" data-form="quick-shopping"><input class="input composer-input" name="name" placeholder="Was fehlt? z. B. 2 Milch" autocomplete="off"><button class="round-button primary" aria-label="Hinzufügen">${icon('plus', 19)}</button></form>
+      <form class="composer-row" data-form="quick-shopping"><input class="input composer-input" name="name" autocomplete="off"><button class="round-button primary" aria-label="Hinzufügen">${icon('plus', 19)}</button></form>
     </div>
   </div>`;
 }
@@ -653,7 +634,7 @@ function notesGridHtml() {
 
 function renderNotes() {
   return `<div class="content-stack">
-    <div class="search-field">${icon('search', 16)}<input class="input" id="note-search" value="${escapeHtml(noteQuery)}" placeholder="In Notizen suchen" autocomplete="off"></div>
+    <div class="search-field">${icon('search', 16)}<input class="input" id="note-search" value="${escapeHtml(noteQuery)}" autocomplete="off"></div>
     <div class="notes-grid">${notesGridHtml()}</div>
   </div>`;
 }
@@ -758,7 +739,7 @@ function showOnboarding() {
   openDialog('Willkommen bei Selfmade', `
     <div class="onboarding-hero"><img src="/icon-192.png" alt="Selfmade"><div><strong>Dein Haushalt. Klar organisiert.</strong><small>Einkauf, Vorrat, Geld, Notizen, Barcodes und Kassenbons greifen ineinander.</small></div></div>
     ${field('Dein Name', 'display_name', data.settings.display_name, 'text', 'maxlength="40" required')}
-    ${field('Haushaltsname', 'household_name', data.settings.household_name || 'Mein Haushalt', 'text', 'maxlength="60" required')}
+    ${field('Haushaltsname', 'household_name', data.settings.household_name || '', 'text', 'maxlength="60" required')}
     <label class="checkbox-row"><input type="checkbox" name="notifications">Ablauf- und Routinehinweise aktivieren</label>
     <div class="dialog-actions"><button class="btn btn-primary block">App einrichten</button></div>
   `, 'onboarding');
@@ -766,7 +747,7 @@ function showOnboarding() {
 
 function openGlobalSearch() {
   openDialog('Globale Suche', `
-    <div class="field"><label for="global-search">Alles durchsuchen</label><input class="input" id="global-search" type="search" placeholder="Milch, WLAN, Budget …" autocomplete="off"></div>
+    <div class="field"><label for="global-search">Alles durchsuchen</label><input class="input" id="global-search" type="search" autocomplete="off"></div>
     <div id="global-search-results" class="card list-card"><div class="empty-state compact"><span>Suchbegriff eingeben.</span></div></div>
   `);
 }
@@ -823,7 +804,7 @@ function memberSelectField(value = '') {
 function openSettings() {
   openDialog('Einstellungen', `
     ${field('Name', 'display_name', data.settings.display_name, 'text', 'maxlength="40" required')}
-    ${field('Haushalt', 'household_name', data.settings.household_name || 'Mein Haushalt', 'text', 'maxlength="60" required')}
+    ${field('Haushalt', 'household_name', data.settings.household_name || '', 'text', 'maxlength="60" required')}
     <div class="field"><label for="field-theme">Darstellung</label><select class="select" id="field-theme" name="theme"><option value="light" ${data.settings.theme === 'light' ? 'selected' : ''}>Hell</option><option value="dark" ${data.settings.theme === 'dark' ? 'selected' : ''}>Dunkel</option><option value="system" ${data.settings.theme === 'system' ? 'selected' : ''}>System</option></select></div>
     ${field('Gespart', 'savings', data.settings.savings, 'number', 'min="0" step="0.01"')}
     ${cloudConfig.enabled ? `<section class="cloud-settings-card"><div><strong>Supabase Cloud</strong><small>${escapeHtml(data.cloud?.household_name || data.settings.household_name)} · Version ${Number(data.cloud?.version || 0)}</small></div><div class="cloud-settings-actions"><button type="button" class="btn btn-secondary small" data-action="cloud-sync">Jetzt synchronisieren</button><button type="button" class="btn btn-danger small" data-action="auth-signout">Abmelden</button></div></section>` : `<section class="cloud-settings-card muted"><div><strong>Lokale Speicherung</strong><small>SUPABASE_URL und SUPABASE_PUBLISHABLE_KEY sind nicht gesetzt.</small></div></section>`}
@@ -851,54 +832,227 @@ function openMember(member = null) {
 function stopScanner() {
   if (scannerTimer) cancelAnimationFrame(scannerTimer);
   scannerTimer = null;
+  try { scannerControls?.stop?.(); } catch {}
+  scannerControls = null;
+  scannerReader = null;
   if (scannerStream) scannerStream.getTracks().forEach((track) => track.stop());
   scannerStream = null;
+  scannerTorchEnabled = false;
+}
+
+function scannerStatus(message, kind = '') {
+  const element = dialogRoot.querySelector('#scanner-status');
+  if (!element) return;
+  element.className = `scanner-status ${kind}`.trim();
+  element.textContent = message;
 }
 
 function openBarcodeScanner() {
   stopScanner();
+  scannerResultHandled = false;
   openDialog('Barcode scannen', `
     <div class="scanner-panel">
-      <video id="barcode-video" playsinline muted></video>
+      <video id="barcode-video" autoplay playsinline webkit-playsinline muted></video>
       <div class="scanner-frame"><span></span></div>
+      <div class="scanner-idle" id="scanner-idle">${icon('camera', 28)}<strong>Kamera noch nicht gestartet</strong><small>Tippe unten auf „Kamera starten“.</small></div>
     </div>
-    <div class="alert info">Auf iPhones funktioniert die automatische Erkennung abhängig von der Safari-Version. Die manuelle Eingabe bleibt immer verfügbar.</div>
-    <div class="field"><label for="barcode-value">Barcode</label><input class="input" id="barcode-value" inputmode="numeric" autocomplete="off" placeholder="z. B. 9000000000011"></div>
+    <div class="scanner-status" id="scanner-status">Die Erkennung läuft direkt auf deinem iPhone. Es wird kein Kamerabild hochgeladen.</div>
+    <div class="field"><label for="barcode-value">Barcode</label><input class="input" id="barcode-value" inputmode="numeric" autocomplete="off" enterkeyhint="search"></div>
     <div class="dialog-actions stacked-actions">
-      <button class="btn btn-secondary" type="button" data-action="start-barcode-camera">${icon('scan', 15)} Kamera starten</button>
-      <button class="btn btn-primary" type="button" data-action="lookup-barcode">Produkt suchen</button>
+      <button class="btn btn-primary" type="button" data-action="start-barcode-camera">${icon('scan', 15)} Kamera starten</button>
+      <label class="btn btn-secondary camera-capture-button">${icon('camera', 15)} Foto aufnehmen<input id="barcode-photo" type="file" accept="image/*" capture="environment"></label>
+      <button class="btn btn-secondary scanner-torch-button" type="button" data-action="toggle-barcode-torch" hidden>${icon('sun', 15)} Licht</button>
+      <button class="btn btn-secondary" type="button" data-action="lookup-barcode">Manuell suchen</button>
     </div>
   `);
 }
 
+async function waitForVideo(video, timeoutMs = 5000) {
+  if (video.readyState >= 2 && video.videoWidth > 0) return;
+  await new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error('camera_preview_timeout')), timeoutMs);
+    const ready = () => {
+      if (video.videoWidth > 0) {
+        clearTimeout(timeout);
+        video.removeEventListener('loadeddata', ready);
+        video.removeEventListener('playing', ready);
+        resolve();
+      }
+    };
+    video.addEventListener('loadeddata', ready);
+    video.addEventListener('playing', ready);
+  });
+}
+
+async function applyRearCameraOptimizations(track) {
+  if (!track?.getCapabilities || !track?.applyConstraints) return;
+  const capabilities = track.getCapabilities();
+  const advanced = [];
+  if (Array.isArray(capabilities.focusMode) && capabilities.focusMode.includes('continuous')) advanced.push({ focusMode: 'continuous' });
+  if (capabilities.zoom && Number.isFinite(capabilities.zoom.min)) {
+    const targetZoom = Math.min(capabilities.zoom.max || 1, Math.max(capabilities.zoom.min || 1, 1.5));
+    if (targetZoom > 1) advanced.push({ zoom: targetZoom });
+  }
+  if (advanced.length) {
+    try { await track.applyConstraints({ advanced }); } catch {}
+  }
+  const torchButton = dialogRoot.querySelector('.scanner-torch-button');
+  if (torchButton && capabilities.torch) torchButton.hidden = false;
+}
+
+async function handleDecodedBarcode(value) {
+  const barcode = String(value || '').trim();
+  if (!barcode || scannerResultHandled) return;
+  scannerResultHandled = true;
+  const input = dialogRoot.querySelector('#barcode-value');
+  if (input) input.value = barcode;
+  if (navigator.vibrate) navigator.vibrate(80);
+  stopScanner();
+  scannerStatus('Barcode erkannt.', 'success');
+  toast('Barcode erkannt');
+  await lookupBarcode(barcode);
+}
+
+async function startNativeBarcodeLoop(video) {
+  const formats = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'itf', 'qr_code'];
+  const detector = new BarcodeDetector({ formats });
+  const scan = async () => {
+    if (!scannerStream || !dialogRoot.querySelector('#barcode-video')) return;
+    try {
+      const codes = await detector.detect(video);
+      if (codes[0]?.rawValue) return handleDecodedBarcode(codes[0].rawValue);
+    } catch {}
+    scannerTimer = requestAnimationFrame(scan);
+  };
+  scan();
+}
+
+async function ensureZxingLibrary() {
+  if (window.ZXingBrowser?.BrowserMultiFormatReader) return window.ZXingBrowser;
+  const script = document.querySelector('#zxing-browser-library');
+  if (!script || script.dataset.failed === '1') throw new Error('scanner_library_unavailable');
+  if (script.dataset.ready !== '1') {
+    await new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('scanner_library_unavailable')), 10000);
+      script.addEventListener('load', () => { clearTimeout(timeout); resolve(); }, { once: true });
+      script.addEventListener('error', () => { clearTimeout(timeout); reject(new Error('scanner_library_unavailable')); }, { once: true });
+    });
+  }
+  if (!window.ZXingBrowser?.BrowserMultiFormatReader) throw new Error('scanner_library_unavailable');
+  return window.ZXingBrowser;
+}
+
+async function startZxingBarcodeLoop(video) {
+  const zxing = await ensureZxingLibrary();
+  scannerReader = new zxing.BrowserMultiFormatReader(undefined, {
+    delayBetweenScanAttempts: 120,
+    delayBetweenScanSuccess: 500
+  });
+  scannerControls = await scannerReader.decodeFromStream(scannerStream, video, (result) => {
+    const value = result?.getText?.() || result?.text;
+    if (value) handleDecodedBarcode(value);
+  });
+}
+
+async function requestRearCamera() {
+  const constraints = {
+    audio: false,
+    video: {
+      facingMode: { ideal: 'environment' },
+      width: { ideal: 1920 },
+      height: { ideal: 1080 }
+    }
+  };
+  return navigator.mediaDevices.getUserMedia(constraints);
+}
+
 async function startBarcodeCamera() {
-  if (!navigator.mediaDevices?.getUserMedia) return toast('Kamerazugriff wird von diesem Browser nicht unterstützt.', 'error');
-  if (!('BarcodeDetector' in window)) return toast('Automatische Barcode-Erkennung ist hier nicht verfügbar. Bitte Barcode manuell eingeben.', 'error');
+  scannerResultHandled = false;
+  if (!window.isSecureContext) return scannerStatus('Die Kamera benötigt eine HTTPS-Verbindung.', 'error');
+  if (!navigator.mediaDevices?.getUserMedia) return scannerStatus('Der Kamerazugriff ist auf diesem Gerät nicht verfügbar. Nutze „Foto aufnehmen“.', 'error');
+
+  stopScanner();
+  scannerStatus('Kamera wird gestartet …');
+  const video = dialogRoot.querySelector('#barcode-video');
+  const idle = dialogRoot.querySelector('#scanner-idle');
+  if (!video) return;
+
   try {
-    scannerStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
-    const video = dialogRoot.querySelector('#barcode-video');
-    if (!video) return stopScanner();
+    scannerStream = await requestRearCamera();
+    const track = scannerStream.getVideoTracks()[0];
+    track?.addEventListener('ended', () => {
+      if (dialogRoot.querySelector('#barcode-video')) scannerStatus('Der Kamerastream wurde beendet. Tippe erneut auf „Kamera starten“.', 'error');
+    }, { once: true });
+
+    video.muted = true;
+    video.setAttribute('playsinline', '');
+    video.setAttribute('webkit-playsinline', '');
     video.srcObject = scannerStream;
     await video.play();
-    const detector = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'qr_code'] });
-    const scan = async () => {
-      if (!scannerStream || !dialogRoot.querySelector('#barcode-video')) return;
-      try {
-        const codes = await detector.detect(video);
-        if (codes[0]?.rawValue) {
-          dialogRoot.querySelector('#barcode-value').value = codes[0].rawValue;
-          stopScanner();
-          toast('Barcode erkannt');
-          await lookupBarcode(codes[0].rawValue);
-          return;
-        }
-      } catch {}
-      scannerTimer = requestAnimationFrame(scan);
-    };
-    scan();
+    await waitForVideo(video);
+    await applyRearCameraOptimizations(track);
+    if (idle) idle.hidden = true;
+    scannerStatus('Halte den Barcode ruhig und vollständig in den Rahmen.', 'active');
+
+    if ('BarcodeDetector' in window) await startNativeBarcodeLoop(video);
+    else await startZxingBarcodeLoop(video);
   } catch (error) {
     stopScanner();
-    toast(error.name === 'NotAllowedError' ? 'Kamerazugriff wurde nicht erlaubt.' : 'Kamera konnte nicht gestartet werden.', 'error');
+    const name = error?.name || '';
+    if (name === 'NotAllowedError' || name === 'SecurityError') {
+      scannerStatus('Kamerazugriff ist deaktiviert. Öffne die Website einmal in Safari → Seitenmenü → Mehr → Kamera → Erlauben. Danach die Homescreen-App neu starten.', 'error');
+    } else if (name === 'NotFoundError' || name === 'OverconstrainedError') {
+      scannerStatus('Keine geeignete Rückkamera gefunden. Nutze „Foto aufnehmen“.', 'error');
+    } else if (String(error?.message) === 'scanner_library_unavailable') {
+      scannerStatus('Die Scanner-Komponente konnte nicht geladen werden. Prüfe die Internetverbindung und starte die App neu.', 'error');
+    } else if (String(error?.message) === 'camera_preview_timeout') {
+      scannerStatus('iOS konnte die Live-Kamera nicht anzeigen. Nutze „Foto aufnehmen“; diese Variante funktioniert auch im Homescreen-Modus.', 'error');
+    } else {
+      scannerStatus('Kamera konnte nicht gestartet werden. Nutze „Foto aufnehmen“ oder starte das iPhone kurz neu.', 'error');
+    }
+  }
+}
+
+async function toggleBarcodeTorch() {
+  const track = scannerStream?.getVideoTracks?.()[0];
+  if (!track?.applyConstraints) return;
+  scannerTorchEnabled = !scannerTorchEnabled;
+  try {
+    await track.applyConstraints({ advanced: [{ torch: scannerTorchEnabled }] });
+    const button = dialogRoot.querySelector('.scanner-torch-button');
+    if (button) button.classList.toggle('active', scannerTorchEnabled);
+  } catch {
+    scannerTorchEnabled = false;
+    scannerStatus('Das Kameralicht wird von diesem iPhone-Modus nicht unterstützt.', 'error');
+  }
+}
+
+async function scanBarcodePhoto(file) {
+  if (!file) return;
+  scannerStatus('Foto wird ausgewertet …');
+  try {
+    if ('BarcodeDetector' in window) {
+      const bitmap = await createImageBitmap(file);
+      const detector = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'itf', 'qr_code'] });
+      const result = await detector.detect(bitmap);
+      bitmap.close?.();
+      if (result[0]?.rawValue) return handleDecodedBarcode(result[0].rawValue);
+    }
+    const zxing = await ensureZxingLibrary();
+    const url = URL.createObjectURL(file);
+    try {
+      const reader = new zxing.BrowserMultiFormatReader();
+      const result = await reader.decodeFromImageUrl(url);
+      const value = result?.getText?.() || result?.text;
+      if (value) return handleDecodedBarcode(value);
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+    scannerStatus('Auf dem Foto wurde kein Barcode erkannt. Fotografiere ihn näher, gerade und scharf.', 'error');
+  } catch (error) {
+    scannerStatus(String(error?.message) === 'scanner_library_unavailable'
+      ? 'Die Scanner-Komponente konnte nicht geladen werden. Prüfe die Internetverbindung.'
+      : 'Auf dem Foto wurde kein Barcode erkannt. Fotografiere ihn näher, gerade und ohne Spiegelung.', 'error');
   }
 }
 
@@ -939,7 +1093,7 @@ function openReceiptImport() {
       <label for="receipt-file">${icon('receipt', 22)}<strong>Bon fotografieren oder auswählen</strong><small>Das Bild bleibt in deiner lokalen App-Datenbank.</small></label>
       <img id="receipt-preview" alt="Kassenbon Vorschau" hidden>
     </div>
-    <div class="field"><label for="receipt-ocr">Erkannter oder kopierter Bon-Text</label><textarea class="textarea" id="receipt-ocr" name="ocr_text" placeholder="BILLA\nVollmilch 1,29\nTomaten 2,49\nGesamt 3,78"></textarea></div>
+    <div class="field"><label for="receipt-ocr">Erkannter oder kopierter Bon-Text</label><textarea class="textarea" id="receipt-ocr" name="ocr_text"></textarea></div>
     <button type="button" class="btn btn-secondary block" data-action="parse-receipt">Text analysieren</button>
     <form class="form-grid" data-form="receipt">
       <input type="hidden" name="items_json" value="[]">
@@ -1069,7 +1223,7 @@ function openTransaction(type) {
     <input type="hidden" name="type" value="${type}">
     ${field('Betrag', 'amount', '', 'number', 'min="0.01" step="0.01" inputmode="decimal" required')}
     ${selectField('Kategorie', 'category', type === 'income' ? 'Einkommen' : 'Lebensmittel', type === 'income' ? ['Einkommen', 'Verkauf', 'Sonstiges'] : ['Lebensmittel', 'Freizeit', 'Wohnen', 'Mobilität', 'Haushalt', 'Versicherung', 'Sonstiges'])}
-    ${field('Beschreibung', 'note', '', 'text', 'maxlength="160" placeholder="z. B. Wocheneinkauf"')}
+    ${field('Beschreibung', 'note', '', 'text', 'maxlength="160"')}
     ${field('Datum', 'booked_on', todayLocal(), 'date', 'required')}
     ${memberSelectField('')}
     <div class="dialog-actions"><button type="button" class="btn btn-secondary" data-action="close-dialog">Abbrechen</button><button class="btn btn-primary">Buchen</button></div>
@@ -1094,7 +1248,7 @@ function openPantry(item = null, arranging = false) {
     <input type="hidden" name="id" value="${item?.id ?? ''}">
     <input type="hidden" name="inbox" value="${arranging ? '0' : item?.inbox ? '1' : '0'}">
     ${field('Produkt', 'name', item?.name ?? '', 'text', 'maxlength="80" required')}
-    <div class="form-row">${field('Menge', 'quantity', item?.quantity ?? '1', 'text', 'maxlength="30" required')}${field('Einheit', 'unit', item?.unit ?? '', 'text', 'maxlength="20" placeholder="Stück, g, l"')}</div>
+    <div class="form-row">${field('Menge', 'quantity', item?.quantity ?? '1', 'text', 'maxlength="30" required')}${field('Einheit', 'unit', item?.unit ?? '', 'text', 'maxlength="20"')}</div>
     ${selectField('Bereich', 'category', item?.category ?? 'Kühlregal', ['Obst & Gemüse', 'Backwaren', 'Kühlregal', 'Tiefkühl', 'Vorrat', 'Haushalt', 'Sonstiges'])}
     ${selectField('Lagerort', 'location', item?.location ?? (item?.category === 'Tiefkühl' ? 'Gefrierschrank' : item?.category === 'Kühlregal' ? 'Kühlschrank' : 'Vorratsschrank'), ['Kühlschrank', 'Gefrierschrank', 'Vorratsschrank', 'Keller', 'Sonstiges'])}
     <div class="form-row">${field('Ablaufdatum', 'expiry_date', item?.expiry_date ?? '', 'date')}${field('Kaufdatum', 'purchase_date', item?.purchase_date ?? '', 'date')}</div>
@@ -1112,8 +1266,8 @@ function openNote(item = null) {
     <input type="hidden" name="id" value="${item?.id ?? ''}">
     <input type="hidden" name="accent" value="${selected}">
     ${field('Titel', 'title', item?.title ?? '', 'text', 'maxlength="100" required')}
-    <div class="field"><label for="field-content">Inhalt</label><textarea class="textarea" id="field-content" name="content" maxlength="5000" placeholder="Schreib etwas auf …">${escapeHtml(item?.content ?? '')}</textarea></div>
-    <div class="form-row">${field('Tag', 'tag', item?.tag ?? '', 'text', 'maxlength="40" placeholder="z. B. Rezept"')}${field('Fällig', 'due_date', item?.due_date ?? '', 'date')}</div>
+    <div class="field"><label for="field-content">Inhalt</label><textarea class="textarea" id="field-content" name="content" maxlength="5000">${escapeHtml(item?.content ?? '')}</textarea></div>
+    <div class="form-row">${field('Tag', 'tag', item?.tag ?? '', 'text', 'maxlength="40"')}${field('Fällig', 'due_date', item?.due_date ?? '', 'date')}</div>
     <div class="form-row">${selectField('Verknüpfung', 'related_type', item?.related_type ?? '', ['', 'Einkauf', 'Vorrat', 'Geld'])}${field('Verknüpft mit', 'related_name', item?.related_name ?? '', 'text', 'maxlength="80"')}</div>
     <div class="form-row">${field('Erledigt', 'checklist_done', item?.checklist_done ?? 0, 'number', 'min="0" step="1"')}${field('Gesamt', 'checklist_total', item?.checklist_total ?? 0, 'number', 'min="0" step="1"')}</div>
     <div class="field"><label>Farbe</label><div class="color-picker">${Object.keys(noteColor).map((color) => `<button type="button" class="color-dot ${color === selected ? 'selected' : ''}" style="background:${noteColor[color]}" data-action="note-color" data-color="${color}" aria-label="${color}"></button>`).join('')}</div></div>
@@ -1123,22 +1277,18 @@ function openNote(item = null) {
   `, 'note');
 }
 
-function openBudget(item) {
-  openDialog(`${item.name}-Budget`, `
-    <input type="hidden" name="id" value="${item.id}">
-    ${field('Monatslimit', 'limit_amount', item.limit_amount, 'number', 'min="0" step="0.01" required')}
-    <div class="alert info">Aktuell ausgegeben: ${money(item.spent)}</div>
-    <div class="dialog-actions"><button type="button" class="btn btn-secondary" data-action="close-dialog">Abbrechen</button><button class="btn btn-primary">Speichern</button></div>
+function openBudget(item = null) {
+  openDialog(item ? 'Budget bearbeiten' : 'Budget anlegen', `
+    <input type="hidden" name="id" value="${item?.id ?? ''}">
+    ${field('Name', 'name', item?.name ?? '', 'text', 'maxlength="50" required')}
+    ${field('Monatslimit', 'limit_amount', item?.limit_amount ?? '', 'number', 'min="0" step="0.01" required')}
+    ${item ? `<div class="alert info">Aktuell ausgegeben: ${money(item.spent)}</div>` : ''}
+    <div class="dialog-actions">${item ? `<button type="button" class="btn btn-danger" data-action="delete-budget" data-id="${item.id}">${icon('trash', 15)} Löschen</button>` : `<button type="button" class="btn btn-secondary" data-action="close-dialog">Abbrechen</button>`}<button class="btn btn-primary">Speichern</button></div>
   `, 'budget');
 }
 
 function openTemplates() {
-  const templates = [
-    ['Wocheneinkauf', ['Tomaten', 'Bananen', 'Vollkornbrot', 'Vollmilch', 'Joghurt natur']],
-    ['Frühstück', ['Haferflocken', 'Vollmilch', 'Bananen']],
-    ['Haushalt', ['Klopapier', 'Spülmittel', 'Müllbeutel']]
-  ];
-  openDialog('Vorlagen', `<div class="content-stack">${templates.map(([name, items], index) => `<button class="card pad" style="text-align:left;color:inherit" data-action="apply-template" data-index="${index}"><strong>${name}</strong><div class="row-sub">${items.join(' · ')}</div></button>`).join('')}</div>`);
+  toast('Es sind keine Vorlagen angelegt.');
 }
 
 function openReceiptDetail(receipt) {
@@ -1314,7 +1464,9 @@ shell.addEventListener('click', async (event) => {
   else if (action === 'month-prev' || action === 'month-next') {
     const selected_month = addMonth(data.month, action === 'month-prev' ? -1 : 1);
     await mutate(() => api('/api/settings', { method: 'PATCH', body: JSON.stringify({ selected_month }) }));
-  } else if (action === 'edit-budget') openBudget(data.budgets.find((item) => item.id === Number(target.dataset.id)));
+  } else if (action === 'add-budget') openBudget();
+  else if (action === 'edit-budget') openBudget(data.budgets.find((item) => item.id === Number(target.dataset.id)));
+  else if (action === 'delete-budget') await mutate(() => api(`/api/budgets/${target.dataset.id}`, { method: 'DELETE' }), 'Budget gelöscht');
   else if (action === 'transaction-menu') openTransactionMenu(data.transactions.find((item) => item.id === Number(target.dataset.id)));
   else if (action === 'edit-savings') openDialog('Sparbetrag', `${field('Gespart', 'savings', data.settings.savings, 'number', 'min="0" step="0.01" required')}<div class="dialog-actions"><button type="button" class="btn btn-secondary" data-action="close-dialog">Abbrechen</button><button class="btn btn-primary">Speichern</button></div>`, 'savings');
   else if (action === 'complete-challenge') toast('Die Challenge-Funktion ist als nächster Backend-Schritt vorbereitet.');
@@ -1328,7 +1480,7 @@ shell.addEventListener('click', async (event) => {
   } else if (action === 'edit-shopping') openShopping(data.shopping.find((item) => item.id === Number(target.dataset.id)));
   else if (action === 'quick-shopping') {
     await mutate(() => api('/api/shopping', { method: 'POST', body: JSON.stringify({ name: target.dataset.name, quantity: '1', category: target.dataset.name === 'Spülmittel' ? 'Haushalt' : 'Vorrat' }) }), `${target.dataset.name} hinzugefügt`);
-  } else if (action === 'templates') openTemplates();
+  }
   else if (action === 'start-store') {
     if (!data.shopping.length) return toast('Die Einkaufsliste ist leer.', 'error');
     storeMode = { active: true, categoryIndex: 0, checkout: false, prices: new Map(data.shopping.map((item) => [item.id, item.price ?? 0])) };
@@ -1405,12 +1557,13 @@ dialogRoot.addEventListener('click', async (event) => {
   else if (action === 'edit-member') openMember(data.members?.find((item) => item.id === Number(target.dataset.id)));
   else if (action === 'delete-member') await mutate(() => api(`/api/members/${target.dataset.id}`, { method: 'DELETE' }), 'Mitglied gelöscht');
   else if (action === 'start-barcode-camera') startBarcodeCamera();
+  else if (action === 'toggle-barcode-torch') toggleBarcodeTorch();
   else if (action === 'lookup-barcode') lookupBarcode();
   else if (action === 'parse-receipt') parseReceiptDialog();
   else if (action === 'delete-recurring') await mutate(() => api(`/api/recurring/${target.dataset.id}`, { method: 'DELETE' }), 'Routine gelöscht');
   else if (action === 'confirm-reset') {
-    openDialog('Alles zurücksetzen?', `<div class="alert danger">Alle eigenen Änderungen werden gelöscht und die Beispieldaten wiederhergestellt.</div><div class="dialog-actions"><button class="btn btn-secondary" data-action="close-dialog">Abbrechen</button><button class="btn btn-danger" data-action="reset">Zurücksetzen</button></div>`);
-  } else if (action === 'reset') await mutate(() => api('/api/reset', { method: 'POST', body: '{}' }), 'Beispieldaten wiederhergestellt');
+    openDialog('Alles zurücksetzen?', `<div class="alert danger">Alle gespeicherten App-Daten dieses Haushalts werden dauerhaft gelöscht.</div><div class="dialog-actions"><button class="btn btn-secondary" data-action="close-dialog">Abbrechen</button><button class="btn btn-danger" data-action="reset">Zurücksetzen</button></div>`);
+  } else if (action === 'reset') await mutate(() => api('/api/reset', { method: 'POST', body: '{}' }), 'Alle App-Daten wurden gelöscht');
   else if (action === 'delete-shopping') await deleteWithUndo('shopping', data.shopping.find((item) => item.id === Number(target.dataset.id)));
   else if (action === 'delete-pantry') await deleteWithUndo('pantry', data.pantry.find((item) => item.id === Number(target.dataset.id)));
   else if (action === 'archive-note') await mutate(() => api(`/api/notes/${target.dataset.id}`, { method: 'PATCH', body: JSON.stringify({ archived: true }) }), 'Notiz archiviert');
@@ -1419,21 +1572,6 @@ dialogRoot.addEventListener('click', async (event) => {
   else if (action === 'note-color') {
     dialogRoot.querySelector('input[name="accent"]').value = target.dataset.color;
     dialogRoot.querySelectorAll('.color-dot').forEach((el) => el.classList.toggle('selected', el === target));
-  } else if (action === 'apply-template') {
-    const templates = [
-      [{ name: 'Tomaten', quantity: '500 g', category: 'Obst & Gemüse' }, { name: 'Bananen', quantity: '6', category: 'Obst & Gemüse' }, { name: 'Vollkornbrot', quantity: '1', category: 'Backwaren' }, { name: 'Vollmilch', quantity: '2', category: 'Kühlregal' }, { name: 'Joghurt natur', quantity: '4', category: 'Kühlregal' }],
-      [{ name: 'Haferflocken', quantity: '1', category: 'Vorrat' }, { name: 'Vollmilch', quantity: '1', category: 'Kühlregal' }, { name: 'Bananen', quantity: '4', category: 'Obst & Gemüse' }],
-      [{ name: 'Klopapier', quantity: '1', category: 'Haushalt' }, { name: 'Spülmittel', quantity: '1', category: 'Haushalt' }, { name: 'Müllbeutel', quantity: '1', category: 'Haushalt' }]
-    ];
-    const items = templates[Number(target.dataset.index)];
-    try {
-      busy = true;
-      for (const item of items) await api('/api/shopping', { method: 'POST', body: JSON.stringify(item) });
-      data = await api('/api/state');
-      closeDialog();
-      renderApp();
-      toast('Vorlage hinzugefügt');
-    } catch (error) { toast(error.message, 'error'); } finally { busy = false; }
   }
 });
 
@@ -1452,6 +1590,11 @@ dialogRoot.addEventListener('change', async (event) => {
       renderApp();
       toast('Backup importiert');
     } catch (error) { toast(error.message || 'Backup konnte nicht importiert werden.', 'error'); }
+    return;
+  }
+  if (event.target.id === 'barcode-photo') {
+    const file = event.target.files?.[0];
+    if (file) await scanBarcodePhoto(file);
     return;
   }
   if (event.target.id !== 'receipt-file') return;
@@ -1491,7 +1634,8 @@ dialogRoot.addEventListener('submit', async (event) => {
   } else if (kind === 'transaction') {
     await mutate(() => api('/api/transactions', { method: 'POST', body: JSON.stringify({ ...values, amount: Number(values.amount) }) }), 'Buchung gespeichert');
   } else if (kind === 'budget') {
-    await mutate(() => api(`/api/budgets/${values.id}`, { method: 'PATCH', body: JSON.stringify({ limit_amount: Number(values.limit_amount) }) }), 'Budget gespeichert');
+    const payload = { name: values.name, limit_amount: Number(values.limit_amount) };
+    await mutate(() => values.id ? api(`/api/budgets/${values.id}`, { method: 'PATCH', body: JSON.stringify(payload) }) : api('/api/budgets', { method: 'POST', body: JSON.stringify(payload) }), 'Budget gespeichert');
   } else if (kind === 'shopping') {
     const payload = { name: values.name, quantity: values.quantity, category: values.category, member_id: values.member_id || null, note: values.note, price: values.price === '' ? null : Number(values.price) };
     await mutate(() => values.id ? api(`/api/shopping/${values.id}`, { method: 'PATCH', body: JSON.stringify(payload) }) : api('/api/shopping', { method: 'POST', body: JSON.stringify(payload) }), 'Artikel gespeichert');
@@ -1568,6 +1712,12 @@ setInterval(() => {
 }, 30000);
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  let reloadingForServiceWorker = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (reloadingForServiceWorker) return;
+    reloadingForServiceWorker = true;
+    location.reload();
+  });
   window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
 }
 
