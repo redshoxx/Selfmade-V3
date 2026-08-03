@@ -1,4 +1,4 @@
-# Selfmade V14 – native iPhone-PWA
+# Selfmade V15 – native iPhone-PWA
 
 Selfmade ist eine für den iPhone-Homescreen optimierte Haushalts-App mit Supabase-Speicherung und Vercel-Deployment.
 
@@ -11,7 +11,7 @@ Selfmade ist eine für den iPhone-Homescreen optimierte Haushalts-App mit Supaba
 - keine Browser-Skalierung, kein Pinch-Zoom und kein Doppeltipp-Zoom
 - keine horizontale Verschiebung oder abgeschnittenen Formulare
 - große Touch-Ziele für Buttons und Navigation
-- hochwertige einspaltige Formulare auf iPhones
+- kompakte zweispaltige Formulargruppen auf dem iPhone 12
 - native Eingabetastaturen über `inputmode`
 - sinnvolle Autovervollständigung und Großschreibung
 - dauerhafte Labels statt Informationen nur im Platzhalter
@@ -21,7 +21,7 @@ Selfmade ist eine für den iPhone-Homescreen optimierte Haushalts-App mit Supaba
 - fixierte Formularaktionen über der iPhone-Tastatur
 - destruktive Aktionen getrennt vom Speichern
 - lautlose Cloud-Synchronisierung
-- Barcode-Scanner mit Live-Kamera und Foto-Fallback
+- Barcode-Scanner mit begrenzter Kamerahöhe, Live-Erkennung und Foto-Fallback
 - keine Demo-, Beispiel- oder Platzhalterdaten
 
 ## Supabase
@@ -63,4 +63,4 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_1EpIlW3NxMKtGL4MjF2xtg_aYacqCx3
 
 ## iPhone-Aktualisierung
 
-Nach einem Vercel-Deployment die Homescreen-App vollständig schließen und erneut öffnen. Der Service Worker Version 14 entfernt ältere App-Caches automatisch.
+Nach einem Vercel-Deployment die Homescreen-App vollständig schließen und erneut öffnen. Der Service Worker Version 15 entfernt ältere App-Caches automatisch.

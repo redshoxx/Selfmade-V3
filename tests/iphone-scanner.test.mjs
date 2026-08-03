@@ -16,5 +16,5 @@ test('barcode scanner includes Safari camera and photo fallbacks', () => {
   assert.match(appSource, /id="barcode-photo"/);
   assert.match(appSource, /capture="environment"/);
   assert.match(appSource, /playsinline/);
-  assert.match(indexSource, /\/vendor\/zxing-browser\.min\.js/);
+  assert.match(indexSource, /https:\/\/unpkg\.com\/@zxing\/browser@0\.2\.1/);
 });
