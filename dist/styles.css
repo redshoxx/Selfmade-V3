@@ -28,6 +28,7 @@
   --radius-lg: 14px;
   --radius-md: 11px;
   --radius-sm: 8px;
+  --safe-top: max(0px, env(safe-area-inset-top));
   --safe-bottom: max(10px, env(safe-area-inset-bottom));
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   font-synthesis: none;
@@ -123,32 +124,9 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   position: absolute;
   inset: 0;
   display: grid;
-  grid-template-rows: 28px auto minmax(0, 1fr) 64px;
+  grid-template-rows: auto minmax(0, 1fr) 64px;
   background: var(--app-bg);
 }
-.status-bar {
-  min-height: 28px;
-  padding: 8px 14px 0;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  font-size: 11px;
-  line-height: 1;
-  font-weight: 800;
-  letter-spacing: -.01em;
-  user-select: none;
-}
-.status-icons { display: flex; align-items: center; gap: 5px; }
-.signal { display: inline-flex; gap: 1px; align-items: flex-end; height: 9px; }
-.signal i { width: 2px; background: currentColor; border-radius: 2px; display: block; }
-.signal i:nth-child(1) { height: 3px; }
-.signal i:nth-child(2) { height: 5px; }
-.signal i:nth-child(3) { height: 7px; }
-.signal i:nth-child(4) { height: 9px; }
-.battery { width: 18px; height: 9px; border: 1.4px solid currentColor; border-radius: 2px; position: relative; }
-.battery::after { content: ""; position: absolute; right: -3px; top: 2px; width: 2px; height: 4px; border-radius: 0 1px 1px 0; background: currentColor; }
-.battery::before { content: ""; position: absolute; inset: 1.5px; right: 4px; border-radius: 1px; background: currentColor; }
-
 .page-header {
   min-height: 56px;
   padding: 6px 14px 7px;
@@ -588,7 +566,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   inset: 0;
   z-index: 50;
   display: grid;
-  grid-template-rows: 28px auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   background: var(--app-bg);
 }
 .store-header { padding: 6px 14px 10px; }
@@ -683,7 +661,7 @@ body {
 @media (min-width: 640px) and (min-height: 700px) {
   #app-shell { border-radius: 30px; }
 }
-.app { grid-template-rows: 28px auto minmax(0, 1fr) 86px; }
+.app { grid-template-rows: auto minmax(0, 1fr) 86px; }
 .page-header { padding: 9px 16px 10px; }
 .page-title { font-size: 28px; letter-spacing: -.05em; }
 .content-scroll { padding: 6px 16px 28px; }

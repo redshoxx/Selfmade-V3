@@ -337,13 +337,6 @@ function applyTheme() {
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', resolved === 'dark' ? '#0f0f12' : '#f0eee9');
 }
 
-function statusBar() {
-  return `<div class="status-bar">
-    <span class="status-time">${new Intl.DateTimeFormat('de-AT', { hour: '2-digit', minute: '2-digit' }).format(new Date())}</span>
-    <span class="status-icons"><span class="signal"><i></i><i></i><i></i><i></i></span><span>5G</span><span class="battery"></span></span>
-  </div>`;
-}
-
 function header() {
   if (activeTab === 'start') {
     return `<header class="page-header">
@@ -650,7 +643,7 @@ function renderApp() {
     shell.innerHTML = renderStoreMode();
     return;
   }
-  shell.innerHTML = `<div class="app">${statusBar()}${header()}<main class="content-scroll">${renderContent()}</main>${tabBar()}</div>`;
+  shell.innerHTML = `<div class="app">${header()}<main class="content-scroll">${renderContent()}</main>${tabBar()}</div>`;
 }
 
 function storeCategories() {
@@ -675,7 +668,6 @@ function renderStoreMode() {
   const checkedCount = current.items.filter((item) => item.checked).length;
   const totalChecked = data.shopping.filter((item) => item.checked).length;
   return `<div class="store-mode">
-    ${statusBar()}
     <header class="store-header">
       <div class="store-kicker"><span>IM LADEN</span><button class="btn btn-soft small" data-action="end-store">Beenden</button></div>
       <div class="store-progress">${groups.map((_, i) => `<i class="${i < idx ? 'done' : i === idx ? 'current' : ''}"></i>`).join('')}</div>
@@ -698,7 +690,6 @@ function renderCheckout(groups) {
   const checked = data.shopping.filter((item) => item.checked);
   const total = storeTotal();
   return `<div class="store-mode">
-    ${statusBar()}
     <header class="store-header">
       <div class="store-kicker"><span>ABSCHLUSS</span><button class="btn btn-soft small" data-action="end-store">Beenden</button></div>
       <div class="store-progress">${groups.map(() => '<i class="done"></i>').join('')}</div>

@@ -50,3 +50,7 @@ Danach das Projekt neu auf Vercel deployen. Die Build-Ausgabe liegt in `dist/`.
 ## Datenschutz
 
 Das Kamerabild und aufgenommene Barcode-Foto werden nur lokal im Browser ausgewertet. Für den Barcode-Lookup wird ausschließlich die erkannte Nummer an die vorhandene API gesendet.
+
+## Version 9 – echte iPhone-Statusleiste
+
+Die zuvor im App-Layout nachgebildete Statusleiste mit Uhrzeit, Mobilfunk und Akku wurde vollständig entfernt. Im Safari-Homescreen-Modus wird ausschließlich die echte iOS-Systemstatusleiste angezeigt.
