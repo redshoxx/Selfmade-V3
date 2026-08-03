@@ -27,7 +27,7 @@ test('shopping layout is compact and usable on iPhone 12', () => {
   assert.match(styles, /\.shopping-add-actions-v16/);
 });
 
-test('V16 assets force a new homescreen cache', () => {
-  assert.match(index, /app\.js\?v=16/);
-  assert.match(index, /styles\.css\?v=16/);
+test('legacy V16 shopping code coexists with the current cache version', () => {
+  assert.match(index, /app\.js\?v=17/);
+  assert.match(index, /styles\.css\?v=17/);
 });
