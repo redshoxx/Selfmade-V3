@@ -23,9 +23,9 @@ test('iPhone gestures and focus zoom are blocked', () => {
   assert.match(app, /event\.ctrlKey \|\| event\.metaKey/);
 });
 
-test('version 16 core assets force a fresh PWA cache', () => {
-  assert.match(index, /styles\.css\?v=16/);
-  assert.match(index, /app\.js\?v=16/);
-  assert.match(sw, /selfmade-v16-shopping-redesign/);
-  assert.match(sw, /version:\s*16/);
+test('version 17 core assets force a fresh PWA cache', () => {
+  assert.match(index, /styles\.css\?v=17/);
+  assert.match(index, /app\.js\?v=17/);
+  assert.match(sw, /selfmade-v17-native-shopping-store/);
+  assert.match(sw, /version:\s*17/);
 });
