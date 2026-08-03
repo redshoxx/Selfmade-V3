@@ -1,9 +1,9 @@
 {
   "name": "selfmade-haushaltsapp",
-  "version": "16.0.0",
+  "version": "17.0.0",
   "private": true,
   "type": "module",
-  "description": "Für iPhone 12 optimierte Haushalts-PWA mit neu gestalteter Einkaufsliste, intelligenter Schnelleingabe, Supabase und Vercel.",
+  "description": "Für iPhone optimierte Haushalts-PWA mit nativer Einkaufsliste, Bottom-Sheet-Produkterfassung, Kompakt-/Listenansicht und neuem Ladenmodus.",
   "engines": {
     "node": "22.x"
   },
