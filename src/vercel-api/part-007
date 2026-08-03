@@ -1,5 +1,10 @@
 getBearerToken(req);
       if (!token) throw Object.assign(new Error('Bitte zuerst anmelden.'), { status: 401, code: 'auth_required' });
+      if (url.pathname === '/api/recipes/import/gutekueche/preview' && req.method === 'POST') {
+        await cloud.getUser(token);
+        const body = await readBody(req);
+        return sendJson(res, 200, { recipe: await fetchGuteKuecheRecipe(body.url) });
+      }
       if (url.pathname === '/api/cloud/households' && req.method === 'GET') {
         return sendJson(res, 200, { households: await cloud.listHouseholds(token) });
       }

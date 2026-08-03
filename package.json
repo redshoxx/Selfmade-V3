@@ -1,9 +1,9 @@
 {
   "name": "selfmade-haushaltsapp",
-  "version": "19.0.0",
+  "version": "19.1.0",
   "private": true,
   "type": "module",
-  "description": "Selfmade V19 mit Rezeptverwaltung, Wochenplaner, Zutatenübernahme, Vollbild-Kochmodus, Sprachsteuerung und Küchentimern.",
+  "description": "Selfmade V19.1 mit Rezeptverwaltung, GuteKueche-Linkimport, Wochenplaner, Kochmodus und Küchentimern.",
   "engines": {
     "node": "22.x"
   },

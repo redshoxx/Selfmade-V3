@@ -1,3 +1,4 @@
+import { fetchGuteKuecheRecipe } from './gutekueche-import.mjs';
 import { createSupabaseCloud, getBearerToken } from './supabase-cloud.mjs';
 import { INITIAL_BACKUP } from './seed-backup.mjs';
 import { DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_PUBLISHABLE_KEY } from './supabase-public-config.mjs';

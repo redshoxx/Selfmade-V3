@@ -97,7 +97,7 @@ header = function headerV19() {
   return `<header class="page-header recipes-header-v19">
     <div class="page-title-wrap"><h1 class="page-title compact">Rezepte</h1><p class="recipes-header-sub-v19">${recipesModeV19 === 'planner' ? weekLabelV19() : `${(data.recipes || []).length} gespeichert`}</p></div>
     <div class="header-actions">
-      ${recipesModeV19 === 'recipes' ? `<button class="icon-button small" data-action="recipe-search-focus-v19" aria-label="Rezepte durchsuchen">${icon('search', 17)}</button><button class="round-button primary" data-action="add-recipe-v19" aria-label="Rezept hinzufügen">${icon('plus', 19)}</button>` : `<button class="icon-button small" data-action="copy-previous-week-v19" aria-label="Vorwoche übernehmen">${icon('repeat', 17)}</button>`}
+      ${recipesModeV19 === 'recipes' ? `<button class="icon-button small" data-action="recipe-search-focus-v19" aria-label="Rezepte durchsuchen">${icon('search', 17)}</button><button class="icon-button small recipe-import-header-v191" data-action="import-gutekueche-v191" aria-label="Rezept von GuteKueche importieren">${icon('download', 17)}</button><button class="round-button primary" data-action="add-recipe-v19" aria-label="Rezept hinzufügen">${icon('plus', 19)}</button>` : `<button class="icon-button small" data-action="copy-previous-week-v19" aria-label="Vorwoche übernehmen">${icon('repeat', 17)}</button>`}
     </div>
   </header>`;
 };

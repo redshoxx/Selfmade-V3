@@ -34,8 +34,8 @@ test('store mode uses compact cards and price bottom sheet', () => {
 });
 
 test('version 19 preserves the V17 shopping UI with a fresh performance cache', () => {
-  assert.match(index, /app\.js\?v=19/);
-  assert.match(index, /styles\.css\?v=19/);
-  assert.match(sw, /selfmade-v19-recipes-cooking/);
-  assert.match(sw, /version:\s*19/);
+  assert.match(index, /app\.js\?v=19\.1/);
+  assert.match(index, /styles\.css\?v=19\.1/);
+  assert.match(sw, /selfmade-v19-1-gutekueche-import/);
+  assert.match(sw, /version:\s*19\.1/);
 });

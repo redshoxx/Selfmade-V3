@@ -1,7 +1,7 @@
 {
   "name": "Selfmade Haushalts-App",
   "short_name": "Selfmade",
-  "description": "Haushalts-App für Geld, Einkauf, Vorrat, Rezepte, Mahlzeitenplanung, Kochmodus und Notizen.",
+  "description": "Haushalts-App mit Rezepten, einzelnem GuteKueche-Linkimport, Mahlzeitenplanung, Kochmodus, Einkauf, Vorrat und Geld.",
   "start_url": "/?source=homescreen",
   "scope": "/",
   "display": "standalone",
@@ -10,56 +10,18 @@
   "theme_color": "#4361EE",
   "lang": "de-AT",
   "icons": [
-    {
-      "src": "/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    }
+    {"src":"/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},
+    {"src":"/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"},
+    {"src":"/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
   ],
   "shortcuts": [
-    {
-      "name": "Einkauf öffnen",
-      "short_name": "Einkauf",
-      "url": "/#shopping"
-    },
-    {
-      "name": "Rezepte öffnen",
-      "short_name": "Rezepte",
-      "url": "/#recipes"
-    },
-    {
-      "name": "Geld öffnen",
-      "short_name": "Geld",
-      "url": "/#money"
-    },
-    {
-      "name": "Notizen öffnen",
-      "short_name": "Notizen",
-      "url": "/#notes"
-    }
+    {"name":"Einkauf öffnen","short_name":"Einkauf","url":"/#shopping"},
+    {"name":"Rezepte öffnen","short_name":"Rezepte","url":"/#recipes"},
+    {"name":"Geld öffnen","short_name":"Geld","url":"/#money"},
+    {"name":"Notizen öffnen","short_name":"Notizen","url":"/#notes"}
   ],
   "id": "selfmade-household-app",
-  "display_override": [
-    "standalone",
-    "fullscreen"
-  ],
-  "categories": [
-    "utilities",
-    "finance",
-    "lifestyle"
-  ],
+  "display_override": ["standalone","fullscreen"],
+  "categories": ["utilities","finance","lifestyle"],
   "prefer_related_applications": false
 }

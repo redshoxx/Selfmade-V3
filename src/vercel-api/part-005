@@ -96,7 +96,7 @@ erPantry = body.consider_pantry !== false;
     const body = await readBody(req);
     const row = t.recipes.find((item) => Number(item.id) === recipeId);
     if (!row) throw Object.assign(new Error('Rezept nicht gefunden.'), { status: 404 });
-    const fields = ['name','image_data_url','description','difficulty','category','notes','finished_photo_data_url','cook_note'];
+    const fields = ['name','image_data_url','description','difficulty','category','notes','source_url','source_name','source_attribution','imported_at','finished_photo_data_url','cook_note'];
     for (const fieldName of fields) if (body[fieldName] !== undefined) row[fieldName] = String(body[fieldName] || '').trim().slice(0, fieldName.includes('image') ? 2_000_000 : 5000);
     if (body.name !== undefined) row.name = requireText(body.name, 'Rezeptname').slice(0, 120);
     if (body.prep_minutes !== undefined) row.prep_minutes = Math.max(0, asNumber(body.prep_minutes));

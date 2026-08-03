@@ -24,8 +24,8 @@ test('iPhone gestures and focus zoom are blocked', () => {
 });
 
 test('version 19 core assets force a fresh PWA cache', () => {
-  assert.match(index, /styles\.css\?v=19/);
-  assert.match(index, /app\.js\?v=19/);
-  assert.match(sw, /selfmade-v19-recipes-cooking/);
-  assert.match(sw, /version:\s*19/);
+  assert.match(index, /styles\.css\?v=19\.1/);
+  assert.match(index, /app\.js\?v=19\.1/);
+  assert.match(sw, /selfmade-v19-1-gutekueche-import/);
+  assert.match(sw, /version:\s*19\.1/);
 });
