@@ -1,12 +1,14 @@
-# Selfmade Haushalts-App V4
+# Selfmade Haushalts-App V5 – Vercel + Supabase
 
-Moderne iPhone-optimierte Full-Stack-PWA für Haushaltsorganisation mit
-wahlweise lokaler SQLite- oder Supabase-Cloud-Speicherung.
+Moderne iPhone-optimierte Haushalts-PWA für Vercel. Das Frontend wird als
+statische Website über das Vercel-CDN ausgeliefert. Die vorhandene REST-API
+läuft als Vercel Function und speichert sämtliche produktiven App-Daten in
+Supabase.
 
 ## Funktionen
 
-- Start-Dashboard mit Prioritäten und Vorschlägen
-- Geldverwaltung mit Budgets und Preisverlauf
+- Dashboard mit Prioritäten und intelligenten Vorschlägen
+- Geldverwaltung, Budgets und Preisverlauf
 - gemeinsame Einkaufsliste und Ladenmodus
 - Vorrat, Lagerorte, Mindestbestände und Ablaufwarnungen
 - Notizen, Tags, Checklisten und Fälligkeiten
@@ -17,13 +19,59 @@ wahlweise lokaler SQLite- oder Supabase-Cloud-Speicherung.
 - Backup-Import und -Export
 - iPhone-PWA mit Safe Areas, App-Icon und Homescreen-Modus
 - Supabase Auth, RLS, Cloud-Synchronisierung und Konflikterkennung
+- Vercel Functions und statischer Vercel-Build
 
-## Voraussetzungen
+## Architektur auf Vercel
 
-- Node.js 22.5 oder neuer
-- optional: eigenes Supabase-Projekt
+```text
+Browser / iPhone PWA
+        │
+        ├── statische Dateien aus dist/
+        │
+        └── /api/*
+              │
+              └── Vercel Function api/handler.mjs
+                        │
+                        └── Supabase Auth + Postgres
+```
 
-## Lokaler Start
+Auf Vercel wird keine lokale Datenbank als dauerhafter Speicher verwendet.
+SQLite läuft ausschließlich kurzzeitig im Speicher der Function, damit die
+bestehende Transaktionslogik kompatibel bleibt. Die dauerhafte Speicherung
+erfolgt in Supabase.
+
+## Vercel-Deployment
+
+Die vollständige Anleitung befindet sich in:
+
+```text
+VERCEL_DEPLOY.md
+```
+
+Kurzablauf:
+
+1. Supabase-Migration ausführen.
+2. Projekt zu GitHub hochladen oder in Vercel importieren.
+3. In Vercel die Environment Variables setzen:
+
+```env
+SUPABASE_URL=https://DEIN_PROJECT_REF.supabase.co
+SUPABASE_PUBLISHABLE_KEY=sb_publishable_DEIN_KEY
+```
+
+4. Deployment starten.
+
+Vercel erkennt `vercel.json` und führt automatisch aus:
+
+```bash
+npm run build
+```
+
+Der statische Build wird in `dist/` erzeugt.
+
+## Lokal entwickeln
+
+Klassischer lokaler Node-Server:
 
 ```bash
 npm start
@@ -33,67 +81,24 @@ npm start
 http://127.0.0.1:4173
 ```
 
-Ohne Supabase-Konfiguration verwendet die App SQLite:
-
-```env
-PORT=4173
-HOST=127.0.0.1
-DATABASE_PATH=./data/selfmade.sqlite
-```
-
-## Supabase-Cloud-Modus
-
-```env
-SUPABASE_URL=https://DEIN_PROJECT_REF.supabase.co
-SUPABASE_PUBLISHABLE_KEY=sb_publishable_DEIN_KEY
-```
-
-Vorher muss die Migration ausgeführt werden:
-
-```text
-supabase/migrations/20260803_selfmade_cloud.sql
-```
-
-Die vollständige Anleitung steht in [SUPABASE_SETUP.md](./SUPABASE_SETUP.md).
-
-## Datenmodell im Cloud-Modus
-
-Die vorhandene App-API bleibt unverändert. Der Server lädt den versionierten
-Haushaltszustand aus Supabase, führt eine Änderung in einer kurzlebigen
-SQLite-Transaktion aus und speichert das Ergebnis als JSONB-Snapshot zurück.
-Dadurch bleiben bestehende Funktionen und Backups kompatibel.
-
-Supabase speichert:
-
-- Profile
-- Haushalte
-- Mitgliedschaften
-- vollständigen versionierten App-Zustand
-
-Der Zugriff wird über Supabase Auth und Row Level Security abgesichert.
-
-## Tests
+Vercel-kompatibler lokaler Test mit installierter Vercel CLI:
 
 ```bash
+npm run dev:vercel
+```
+
+## Build und Tests
+
+```bash
+npm run build
 npm test
 ```
 
-Enthalten sind Tests für:
+## Wichtige Dateien
 
-- sämtliche lokalen CRUD-Funktionen
-- Barcode und Kassenbons
-- Backup und Wiederherstellung
-- Cloud-Konfiguration
-- Auth-Schutz
-- Bootstrap und persistente Cloud-Mutationen über einen Supabase-Testserver
-
-## Zurücksetzen
-
-Im lokalen Modus:
-
-```bash
-npm run reset
-```
-
-Im Cloud-Modus sollte ein Reset nur bewusst über die App oder über ein neues
-Supabase-Projekt erfolgen.
+- `vercel.json` – Vercel-Build, API-Rewrite und Header
+- `api/handler.mjs` – zentrale Vercel Function
+- `scripts/build-vercel.mjs` – kopiert die PWA nach `dist/`
+- `supabase/migrations/20260803_selfmade_cloud.sql` – Cloud-Datenmodell und RLS
+- `.env.example` – benötigte Umgebungsvariablen
+- `VERCEL_DEPLOY.md` – Schritt-für-Schritt-Anleitung

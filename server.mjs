@@ -1239,6 +1239,50 @@ async function serveStatic(req, res, url) {
   }
 }
 
+
+let vercelSeedDatabase;
+
+/**
+ * Creates a request handler for Vercel Functions.
+ *
+ * Vercel's filesystem is ephemeral, so production data is always read from
+ * and written to Supabase. An in-memory SQLite database is used only as a
+ * short-lived compatibility layer for the existing transaction logic.
+ */
+export function createVercelApiHandler(options = {}) {
+  const cloud = createSupabaseCloud({
+    url: options.supabaseUrl ?? process.env.SUPABASE_URL,
+    publishableKey: options.supabasePublishableKey ?? process.env.SUPABASE_PUBLISHABLE_KEY
+  });
+
+  if (!vercelSeedDatabase) vercelSeedDatabase = createDatabase(':memory:');
+
+  return async function vercelApiHandler(req, res) {
+    const url = new URL(req.url ?? '/api/health', `https://${req.headers.host ?? 'localhost'}`);
+    try {
+      if (!cloud.enabled) {
+        throw Object.assign(new Error(
+          'Supabase ist für dieses Vercel-Deployment nicht konfiguriert. Setze SUPABASE_URL und SUPABASE_PUBLISHABLE_KEY.'
+        ), { status: 503, code: 'supabase_not_configured' });
+      }
+      if (!url.pathname.startsWith('/api/')) {
+        return json(res, 404, { error: 'API-Endpunkt nicht gefunden.' });
+      }
+      await handleSupabaseApi(req, res, vercelSeedDatabase, url, cloud);
+    } catch (error) {
+      if ((error.status ?? 500) >= 500 && error.code !== 'supabase_not_configured') console.error(error);
+      if (!res.headersSent) {
+        json(res, error.status ?? 500, {
+          error: error.message ?? 'Interner Serverfehler.',
+          code: error.code
+        });
+      } else if (!res.writableEnded) {
+        res.end();
+      }
+    }
+  };
+}
+
 export async function createServerApp(options = {}) {
   const dbPath = path.resolve(options.dbPath ?? process.env.DATABASE_PATH ?? path.join(__dirname, 'data', 'selfmade.sqlite'));
   await mkdir(path.dirname(dbPath), { recursive: true });
