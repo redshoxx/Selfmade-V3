@@ -1,9 +1,9 @@
 {
   "name": "selfmade-haushaltsapp",
-  "version": "15.0.0",
+  "version": "16.0.0",
   "private": true,
   "type": "module",
-  "description": "Für iPhone 12 optimierte Haushalts-PWA mit kompakten Dialogen, stabiler Barcode-Kamera, Supabase und Vercel.",
+  "description": "Für iPhone 12 optimierte Haushalts-PWA mit neu gestalteter Einkaufsliste, intelligenter Schnelleingabe, Supabase und Vercel.",
   "engines": {
     "node": "22.x"
   },
