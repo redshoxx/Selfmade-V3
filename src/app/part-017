@@ -1,0 +1,172 @@
+
+/* Version 17 – native Einkaufsliste, Bottom-Sheet-Hinzufügen und neuer Ladenmodus */
+let shoppingViewV17 = ['compact', 'list'].includes(localStorage.getItem('selfmade-shopping-view-v17'))
+  ? localStorage.getItem('selfmade-shopping-view-v17')
+  : 'compact';
+let showCompletedShoppingV17 = localStorage.getItem('selfmade-shopping-completed-v17') === '1';
+let collapsedShoppingGroupsV17 = (() => {
+  try { return new Set(JSON.parse(localStorage.getItem('selfmade-shopping-collapsed-v17') || '[]')); }
+  catch { return new Set(); }
+})();
+
+const headerBeforeShoppingV17 = header;
+header = function headerV17() {
+  if (activeTab !== 'shopping') return headerBeforeShoppingV17();
+  const openCount = data.shopping.filter((item) => !item.checked).length;
+  return `<header class="page-header shopping-header-v17">
+    <div class="page-title-wrap">
+      <h1 class="page-title compact">Einkauf</h1>
+      <p class="shopping-header-meta">${openCount ? `${openCount} ${openCount === 1 ? 'Artikel offen' : 'Artikel offen'}` : 'Alles erledigt'}</p>
+    </div>
+    <div class="shopping-header-actions-v17">
+      <button class="icon-button shopping-header-add-v17" data-action="open-shopping-add-v17" aria-label="Produkt hinzufügen">${icon('plus', 20)}</button>
+      <button class="btn btn-primary small shopping-store-button" data-action="start-store" ${openCount ? '' : 'disabled'}>${icon('store', 16)} Im Laden</button>
+    </div>
+  </header>`;
+};
+
+function persistCollapsedGroupsV17() {
+  localStorage.setItem('selfmade-shopping-collapsed-v17', JSON.stringify([...collapsedShoppingGroupsV17]));
+}
+
+function shoppingDetailsV17(item) {
+  return [item.quantity, item.note, memberName(item.member_id)].filter(Boolean).map(escapeHtml).join(' · ');
+}
+
+function shoppingRowV17(item, completed = false) {
+  const numeric = /^\d+$/.test(String(item.quantity));
+  const details = shoppingDetailsV17(item);
+  if (shoppingViewV17 === 'compact') {
+    return `<article class="shopping-row-v17 compact ${completed ? 'is-completed' : ''}">
+      <button class="check shopping-check-v17 ${item.checked ? 'checked' : ''}" data-action="toggle-shopping" data-id="${item.id}" aria-label="${item.checked ? 'Artikel wieder öffnen' : 'Artikel abhaken'}">${item.checked ? icon('check', 15) : ''}</button>
+      <button class="shopping-row-main-v17" data-action="edit-shopping" data-id="${item.id}">
+        <strong>${escapeHtml(item.name)}</strong>
+      </button>
+      <span class="shopping-quantity-v17">${escapeHtml(item.quantity || '1')}</span>
+      <button class="shopping-row-more-v17" data-action="edit-shopping" data-id="${item.id}" aria-label="Artikel bearbeiten">${icon('chevronRight', 17)}</button>
+    </article>`;
+  }
+
+  return `<article class="shopping-row-v17 list ${completed ? 'is-completed' : ''}">
+    <button class="check shopping-check-v17 ${item.checked ? 'checked' : ''}" data-action="toggle-shopping" data-id="${item.id}" aria-label="${item.checked ? 'Artikel wieder öffnen' : 'Artikel abhaken'}">${item.checked ? icon('check', 15) : ''}</button>
+    <button class="shopping-row-main-v17" data-action="edit-shopping" data-id="${item.id}">
+      <strong>${escapeHtml(item.name)}</strong>
+      ${details ? `<small>${details}</small>` : ''}
+    </button>
+    ${!completed && numeric ? `<span class="quantity-stepper shopping-stepper-v17">
+      <button class="step-button" data-action="quantity" data-id="${item.id}" data-delta="-1" aria-label="Menge verringern">−</button>
+      <span class="step-value">${escapeHtml(item.quantity)}</span>
+      <button class="step-button" data-action="quantity" data-id="${item.id}" data-delta="1" aria-label="Menge erhöhen">+</button>
+    </span>` : `<button class="shopping-row-more-v17" data-action="edit-shopping" data-id="${item.id}" aria-label="Artikel bearbeiten">${icon('chevronRight', 17)}</button>`}
+  </article>`;
+}
+
+function shoppingGroupV17(category, items) {
+  const collapsed = collapsedShoppingGroupsV17.has(category);
+  return `<section class="shopping-group-v17 ${collapsed ? 'is-collapsed' : ''}">
+    <button class="shopping-group-header-v17" data-action="toggle-shopping-group-v17" data-category="${escapeHtml(category)}" aria-expanded="${!collapsed}">
+      <span class="shopping-group-identity-v17"><i>${emojiForCategory(category)}</i><strong>${escapeHtml(category)}</strong></span>
+      <span class="shopping-group-count-v17">${items.length}${icon('chevronRight', 15)}</span>
+    </button>
+    ${collapsed ? '' : `<div class="shopping-group-items-v17">${items.map((item) => shoppingRowV17(item)).join('')}</div>`}
+  </section>`;
+}
+
+renderShopping = function renderShoppingV17() {
+  const openItems = data.shopping.filter((item) => !item.checked);
+  const completedItems = data.shopping.filter((item) => item.checked);
+  const groups = shoppingGroupsForV16(openItems);
+  const total = data.shopping.length;
+  const progress = total ? completedItems.length / total * 100 : 0;
+
+  return `<div class="content-stack shopping-screen-v17">
+    <section class="shopping-toolbar-v17" aria-label="Einkaufslistenansicht">
+      <div class="shopping-view-toggle-v17" role="group" aria-label="Ansicht auswählen">
+        <button class="${shoppingViewV17 === 'compact' ? 'active' : ''}" data-action="shopping-view-v17" data-view="compact">Kompakt</button>
+        <button class="${shoppingViewV17 === 'list' ? 'active' : ''}" data-action="shopping-view-v17" data-view="list">Liste</button>
+      </div>
+    </section>
+
+    ${total ? `<section class="shopping-progress-v17">
+      <span><strong>${openItems.length}</strong> offen</span>
+      <div class="progress-track"><div class="progress-fill green" style="width:${progress}%"></div></div>
+      <span>${completedItems.length}/${total}</span>
+    </section>` : ''}
+
+    <div class="shopping-groups-v17">
+      ${groups.map(([category, items]) => shoppingGroupV17(category, items)).join('')}
+    </div>
+
+    ${!openItems.length && !completedItems.length ? `<section class="card shopping-empty-v17">
+      <span>${icon('cart', 27)}</span>
+      <strong>Deine Einkaufsliste ist leer</strong>
+      <p>Füge Produkte über das Plus hinzu. Kategorien werden automatisch erkannt.</p>
+      <button class="btn btn-primary" data-action="open-shopping-add-v17">Produkt hinzufügen</button>
+    </section>` : ''}
+
+    ${completedItems.length ? `<section class="shopping-completed-v17">
+      <button class="shopping-completed-header-v17" data-action="toggle-completed-shopping-v17" aria-expanded="${showCompletedShoppingV17}">
+        <span>${icon('check', 16)} Erledigt</span>
+        <span>${completedItems.length}${icon('chevronRight', 15)}</span>
+      </button>
+      ${showCompletedShoppingV17 ? `<div class="shopping-group-items-v17 completed">${completedItems.map((item) => shoppingRowV17(item, true)).join('')}</div>` : ''}
+    </section>` : ''}
+  </div>`;
+};
+
+function shoppingSheetMatchesV17(query) {
+  const matches = shoppingCatalogMatchesV16(query);
+  if (!matches.length) return '';
+  return `<div class="shopping-sheet-results-v17" role="listbox" aria-label="Passende Produkte">
+    ${matches.map((item) => `<button type="button" data-action="shopping-sheet-pick-v17" data-name="${escapeHtml(item.name)}" data-quantity="${escapeHtml(item.quantity)}" data-category="${escapeHtml(item.category)}">
+      <i>${emojiForCategory(item.category)}</i><span><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.source)} · ${escapeHtml(item.quantity)}</small></span>${icon('plus', 16)}
+    </button>`).join('')}
+  </div>`;
+}
+
+function shoppingRecentItemsV17() {
+  const listed = new Set(data.shopping.map((item) => normalizeShoppingTextV16(item.name)));
+  const seen = new Set();
+  const source = [
+    ...(data.suggestions || []).map((item) => ({ ...item, source: item.reason || 'Vorschlag' })),
+    ...(data.recurring || []).filter((item) => item.enabled !== false).map((item) => ({ name: item.name, quantity: item.quantity || '1', category: item.category || 'Sonstiges', source: 'Routine' })),
+    ...(data.product_catalog || []).map((item) => ({ name: item.name, quantity: item.default_quantity || '1', category: item.category || 'Sonstiges', source: item.brand || 'Produktkatalog' })),
+    ...(data.pantry || []).filter((item) => item.buy_again || item.low_stock).map((item) => ({ name: item.name, quantity: item.unit ? `${item.quantity} ${item.unit}` : item.quantity || '1', category: item.category || 'Sonstiges', source: 'Vorrat' }))
+  ];
+  return source.filter((item) => {
+    const key = normalizeShoppingTextV16(item.name);
+    if (!key || seen.has(key) || listed.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).slice(0, 6);
+}
+
+function openShoppingAddSheetV17(item = null) {
+  const parsed = item?.name ? { ...item, category: item.category || inferShoppingCategoryV16(item.name) } : { name: '', quantity: '1', category: 'Sonstiges', note: '' };
+  const recent = shoppingRecentItemsV17();
+  openDialog('Produkt hinzufügen', `
+    <input type="hidden" name="id" value="">
+    <input type="hidden" name="member_id" value="">
+    <input type="hidden" name="price" value="">
+    <div class="shopping-sheet-search-v17">${icon('search', 18)}<input id="shopping-add-name-v17" name="name" value="${escapeHtml(parsed.name || '')}" placeholder="Produkt suchen oder eingeben" maxlength="80" autocomplete="off" autocapitalize="words" enterkeyhint="next" required autofocus></div>
+    <div id="shopping-sheet-results-v17">${shoppingSheetMatchesV17(parsed.name || '')}</div>
+    <div class="form-row shopping-sheet-fields-v17">
+      ${field('Menge', 'quantity', parsed.quantity || '1', 'text', 'maxlength="30" required')}
+      ${selectField('Abteilung', 'category', parsed.category || 'Sonstiges', ['Obst & Gemüse', 'Backwaren', 'Kühlregal', 'Tiefkühl', 'Vorrat', 'Haushalt', 'Sonstiges'])}
+    </div>
+    ${field('Notiz (optional)', 'note', parsed.note || '', 'text', 'maxlength="140"')}
+    <div class="shopping-sheet-shortcuts-v17">
+      <button type="button" data-action="shopping-sheet-scan-v17">${icon('scan', 17)} Scannen</button>
+      <button type="button" data-action="shopping-sheet-routines-v17">${icon('repeat', 17)} Routinen</button>
+    </div>
+    ${recent.length ? `<div class="shopping-sheet-recent-v17"><span>Häufig & fällig</span><div>${recent.map((entry) => `<button type="button" data-action="shopping-sheet-pick-v17" data-name="${escapeHtml(entry.name)}" data-quantity="${escapeHtml(entry.quantity)}" data-category="${escapeHtml(entry.category)}">${emojiForCategory(entry.category)} ${escapeHtml(entry.name)}</button>`).join('')}</div></div>` : ''}
+    <div class="dialog-actions shopping-sheet-actions-v17"><button type="button" class="btn btn-secondary" data-action="close-dialog">Abbrechen</button><button class="btn btn-primary">Hinzufügen</button></div>
+  `, 'shopping');
+}
+
+const openShoppingBeforeV17 = openShopping;
+openShopping = function openShoppingV17(item = null) {
+  if (item?.id) return openShoppingBeforeV17(item);
+  return openShoppingAddSheetV17(item);
+};
+
