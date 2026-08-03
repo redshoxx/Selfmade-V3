@@ -14,4 +14,5 @@ async function assemble(sourceDirectory, outputFile) {
 
 await assemble('src/app', 'public/app.js');
 await assemble('src/styles', 'public/styles.css');
-console.log('App-Assets wurden vollständig zusammengesetzt.');
+await assemble('src/vercel-api', 'vercel-api.mjs');
+console.log('App- und API-Assets wurden vollständig zusammengesetzt.');

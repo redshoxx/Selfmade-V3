@@ -1,9 +1,9 @@
 {
   "name": "selfmade-haushaltsapp",
-  "version": "18.0.0",
+  "version": "19.0.0",
   "private": true,
   "type": "module",
-  "description": "Reines Performance-Update der Selfmade-PWA mit schnellerem Start, adaptiver Cloud-Synchronisierung und optimiertem Rendering.",
+  "description": "Selfmade V19 mit Rezeptverwaltung, Wochenplaner, Zutatenübernahme, Vollbild-Kochmodus, Sprachsteuerung und Küchentimern.",
   "engines": {
     "node": "22.x"
   },

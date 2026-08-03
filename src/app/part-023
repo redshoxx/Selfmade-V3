@@ -1,0 +1,43 @@
+
+function renderMealPlannerV19() {
+  const dates = weekDatesV19();
+  const urgent = expiringPantryV19();
+  return `<div class="meal-planner-v19">
+    <div class="week-nav-v19"><button data-action="meal-week-v19" data-delta="-7" aria-label="Vorherige Woche">${icon('chevronLeft', 18)}</button><div><strong>${escapeHtml(weekLabelV19())}</strong><span>Montag bis Sonntag</span></div><button data-action="meal-week-v19" data-delta="7" aria-label="Nächste Woche">${icon('chevronRight', 18)}</button></div>
+    ${urgent.length ? `<section class="planner-expiry-v19"><div>${icon('pantry', 17)}<span><strong>Bald ablaufend einplanen</strong><small>${urgent.map((item) => item.name).join(', ')}</small></span></div><button data-action="planner-expiry-recipes-v19">Rezepte finden</button></section>` : ''}
+    <div class="planner-days-v19">${dates.map((date) => renderPlannerDayV19(date)).join('')}</div>
+  </div>`;
+}
+
+function renderPlannerDayV19(date) {
+  const entries = (data.meal_plan || []).filter((entry) => entry.plan_date === date);
+  const today = date === todayLocal();
+  return `<section class="planner-day-v19 ${today ? 'today' : ''}">
+    <header><div><strong>${escapeHtml(shortDayV19(date))}</strong>${today ? '<span>Heute</span>' : ''}</div><button data-action="add-meal-v19" data-date="${date}" aria-label="Mahlzeit einplanen">${icon('plus', 16)}</button></header>
+    <div class="planner-meals-v19">${mealTypesV19.map((type) => {
+      const entry = entries.find((item) => item.meal_type === type);
+      const recipe = mealRecipeV19(entry);
+      return entry && recipe ? `<button class="planned-meal-v19" data-action="planned-meal-menu-v19" data-id="${entry.id}"><span>${type === 'Frühstück' ? '☕' : type === 'Mittagessen' ? '🍲' : type === 'Abendessen' ? '🍽️' : '🍎'}</span><div><small>${escapeHtml(type)}</small><strong>${escapeHtml(recipe.name)}</strong><em>${entry.servings} Portionen</em></div>${icon('more', 15)}</button>` : `<button class="empty-meal-v19" data-action="add-meal-v19" data-date="${date}" data-meal-type="${escapeHtml(type)}"><span>${escapeHtml(type)}</span>${icon('plus', 14)}</button>`;
+    }).join('')}</div>
+  </section>`;
+}
+
+function openMealPickerV19(date, mealType = 'Abendessen') {
+  const recipes = data.recipes || [];
+  openDialog('Mahlzeit einplanen', `<div class="meal-picker-v19">
+    <div class="form-row">${field('Datum', 'plan_date', date, 'date', 'required')}${selectField('Mahlzeit', 'meal_type', mealType, mealTypesV19.map((value) => [value, value]))}</div>
+    <div class="field"><label for="meal-recipe-search-v19">Rezept</label><div class="recipe-search-v19">${icon('search', 16)}<input id="meal-recipe-search-v19" class="input" placeholder="Rezept suchen" autocomplete="off"></div></div>
+    <div id="meal-recipe-list-v19" class="meal-recipe-list-v19">${mealRecipeListV19(recipes)}</div>
+  </div>`);
+}
+
+function mealRecipeListV19(recipes) {
+  if (!recipes.length) return `<div class="empty-state compact"><span>Lege zuerst ein Rezept an.</span></div>`;
+  return recipes.map((recipe) => `<button data-action="select-meal-recipe-v19" data-id="${recipe.id}"><span>${recipe.image_data_url ? `<img src="${escapeHtml(recipe.image_data_url)}" alt="">` : icon('utensils', 18)}</span><div><strong>${escapeHtml(recipe.name)}</strong><small>${escapeHtml(recipe.category)} · ${escapeHtml(recipeTimeLabelV19(recipe))}</small></div>${icon('chevronRight', 15)}</button>`).join('');
+}
+
+function openPlannedMealMenuV19(entry) {
+  const recipe = mealRecipeV19(entry);
+  if (!recipe) return;
+  openDialog(recipe.name, `<div class="planned-meal-menu-v19"><div class="store-price-product-v17"><span>${recipe.image_data_url ? `<img src="${escapeHtml(recipe.image_data_url)}" alt="">` : '🍽️'}</span><div><strong>${escapeHtml(entry.meal_type)}</strong><small>${escapeHtml(entry.plan_date)} · ${entry.servings} Portionen</small></div></div><button class="btn btn-primary block" data-action="start-cooking-v19" data-id="${recipe.id}">${icon('chef', 16)} Kochmodus starten</button><button class="btn btn-secondary block" data-action="open-recipe-v19" data-id="${recipe.id}">Rezept öffnen</button><button class="btn btn-danger block" data-action="delete-meal-v19" data-id="${entry.id}">Aus Wochenplan entfernen</button></div>`);
+}

@@ -1,0 +1,155 @@
+category: item.category, reason: 'Zum Nachkaufen markiert'
+  }))).slice(0, 8);
+
+
+  const recipes = [...t.recipes]
+    .sort((a, b) => Number(b.favorite) - Number(a.favorite) || String(b.updated_at || '').localeCompare(String(a.updated_at || '')))
+    .map((row) => ({
+      ...row,
+      favorite: Boolean(row.favorite),
+      servings: Math.max(1, asNumber(row.servings, 2)),
+      prep_minutes: Math.max(0, asNumber(row.prep_minutes)),
+      total_minutes: Math.max(0, asNumber(row.total_minutes)),
+      rating: Math.max(0, Math.min(5, asNumber(row.rating))),
+      actual_minutes: Math.max(0, asNumber(row.actual_minutes)),
+      ingredients: parseJsonArray(row.ingredients),
+      steps: parseJsonArray(row.steps)
+    }));
+  const mealPlan = [...t.meal_plan]
+    .sort((a, b) => String(a.plan_date).localeCompare(String(b.plan_date)) || String(a.meal_type).localeCompare(String(b.meal_type)))
+    .map((row) => ({ ...row, recipe_id: Number(row.recipe_id), servings: Math.max(1, asNumber(row.servings, 1)) }));
+  const cookingHistory = [...t.cooking_history]
+    .sort((a, b) => String(b.cooked_at || '').localeCompare(String(a.cooked_at || '')))
+    .slice(0, 50)
+    .map((row) => ({ ...row, recipe_id: Number(row.recipe_id), rating: asNumber(row.rating), actual_minutes: asNumber(row.actual_minutes) }));
+  const challenge = t.challenge[0] || { id: 1, current_field: 0, completed_fields: 0, total_fields: 0, saved_amount: 0, target_amount: 0 };
+  const urgentPantry = pantry.filter((item) => !item.inbox && item.expiry_date && item.expiry_date <= shiftDate(1)).length;
+
+  return {
+    settings,
+    month,
+    summary: {
+      income: Number(totals.income.toFixed(2)),
+      expense: Number(totals.expense.toFixed(2)),
+      remaining: Number((totals.income - totals.expense).toFixed(2)),
+      savings: Number(settings.savings)
+    },
+    budgets,
+    transactions,
+    shopping,
+    pantry,
+    notes,
+    members,
+    recurring,
+    recipes,
+    meal_plan: mealPlan,
+    cooking_history: cookingHistory,
+    product_catalog: productCatalog,
+    receipts,
+    price_history: priceHistory,
+    suggestions,
+    challenge: { ...challenge, saved_amount: Number(challenge.saved_amount), target_amount: Number(challenge.target_amount) },
+    badges: {
+      shopping: shopping.filter((item) => !item.checked).length,
+      pantry: urgentPantry,
+      notes: notes.filter((item) => item.pinned).length,
+      recipes: mealPlan.filter((item) => item.plan_date === isoDate()).length
+    }
+  };
+}
+
+async function mutateBackup(backup, req, url) {
+  const { pathname } = url;
+  const method = req.method || 'GET';
+  const t = backup.tables;
+  const result = (payload, status = 200, changed = false) => ({ payload, status, changed });
+
+  if (pathname === '/api/state' && method === 'GET') return result(getState(backup));
+  if (pathname === '/api/export' && method === 'GET') return result({ ...clone(backup), exported_at: nowIso() });
+  if (pathname === '/api/receipts/parse' && method === 'POST') {
+    const body = await readBody(req);
+    return result(parseReceiptText(body.ocr_text));
+  }
+
+  if (pathname === '/api/import' && method === 'POST') {
+    const imported = normalizeBackup(await readBody(req));
+    backup.version = imported.version;
+    backup.exported_at = nowIso();
+    backup.tables = imported.tables;
+    return result(getState(backup), 200, true);
+  }
+
+  if (pathname === '/api/reset' && method === 'POST') {
+    const displayName = t.settings[0]?.display_name;
+    const householdName = t.settings[0]?.household_name;
+    const reset = normalizeBackup(clone(INITIAL_BACKUP));
+    if (reset.tables.settings[0]) {
+      if (displayName) reset.tables.settings[0].display_name = displayName;
+      if (householdName) reset.tables.settings[0].household_name = householdName;
+      reset.tables.settings[0].updated_at = nowIso();
+    }
+    backup.version = reset.version;
+    backup.exported_at = nowIso();
+    backup.tables = reset.tables;
+    return result(getState(backup), 200, true);
+  }
+
+  if (pathname === '/api/settings' && method === 'PATCH') {
+    const body = await readBody(req);
+    const row = t.settings[0];
+    row.display_name = body.display_name === undefined ? row.display_name : requireText(body.display_name, 'Name').slice(0, 40);
+    row.household_name = body.household_name === undefined ? row.household_name : requireText(body.household_name, 'Haushalt').slice(0, 60);
+    row.theme = ['light', 'dark', 'system'].includes(body.theme) ? body.theme : row.theme;
+    row.savings = body.savings === undefined ? row.savings : Math.max(0, asNumber(body.savings));
+    row.selected_month = body.selected_month === undefined ? row.selected_month : normalizeMonth(body.selected_month);
+    row.updated_at = nowIso();
+    return result(getState(backup), 200, true);
+  }
+
+  if (pathname === '/api/members' && method === 'POST') {
+    const body = await readBody(req);
+    const name = requireText(body.name, 'Mitglied').slice(0, 40);
+    t.members.push({ id: nextId(t.members), name, avatar: String(body.avatar ?? name[0] ?? '•').trim().slice(0, 2) || '•', role: String(body.role ?? 'Mitglied').trim().slice(0, 40) || 'Mitglied', created_at: nowIso() });
+    return result(getState(backup), 201, true);
+  }
+  const memberId = routeId(pathname, '/api/members/');
+  if (memberId && method === 'PATCH') {
+    const body = await readBody(req);
+    const row = t.members.find((item) => Number(item.id) === memberId);
+    if (!row) throw Object.assign(new Error('Mitglied nicht gefunden.'), { status: 404 });
+    row.name = body.name === undefined ? row.name : requireText(body.name, 'Mitglied').slice(0, 40);
+    row.avatar = body.avatar === undefined ? row.avatar : String(body.avatar).trim().slice(0, 2) || row.name[0];
+    row.role = body.role === undefined ? row.role : String(body.role).trim().slice(0, 40) || 'Mitglied';
+    return result(getState(backup), 200, true);
+  }
+  if (memberId && method === 'DELETE') {
+    t.transactions.forEach((item) => { if (Number(item.member_id) === memberId) item.member_id = null; });
+    t.shopping_items.forEach((item) => { if (Number(item.member_id) === memberId) item.member_id = null; });
+    t.members = t.members.filter((item) => Number(item.id) !== memberId);
+    return result(getState(backup), 200, true);
+  }
+
+  if (pathname === '/api/catalog/lookup' && method === 'GET') {
+    const barcode = String(url.searchParams.get('barcode') || '').trim().slice(0, 64);
+    if (!barcode) return result({ product: null, source: 'none' });
+    const row = t.product_catalog.find((item) => item.barcode === barcode);
+    if (row) return result({ product: { ...row, last_price: row.last_price == null ? null : Number(row.last_price), source: 'local' }, source: 'local' });
+    const external = await lookupOpenFoodFacts(barcode);
+    if (!external) return result({ product: null, source: 'none' });
+    t.product_catalog.push({ id: nextId(t.product_catalog), barcode: external.barcode, name: external.name, brand: external.brand, category: external.category, default_quantity: external.default_quantity, last_price: null, updated_at: nowIso() });
+    return result({ product: external, source: 'openfoodfacts' }, 200, true);
+  }
+  if (pathname === '/api/catalog' && method === 'POST') {
+    const body = await readBody(req);
+    const barcode = requireText(body.barcode, 'Barcode').slice(0, 64);
+    let row = t.product_catalog.find((item) => item.barcode === barcode);
+    if (!row) {
+      row = { id: nextId(t.product_catalog), barcode };
+      t.product_catalog.push(row);
+    }
+    row.name = requireText(body.name, 'Produkt').slice(0, 80);
+    row.brand = String(body.brand ?? '').trim().slice(0, 60);
+    row.category = String(body.category ?? 'Sonstiges').trim().slice(0, 50) || 'Sonstiges';
+    row.default_quantity = String(body.default_quantity ?? '1').trim().slice(0, 30) || '1';
+    row.last_price = body.last_price === '' || body.last_price == null ? null : Math.max(0, asNumber(body.last_price));
+    row.updated_at = 

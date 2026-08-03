@@ -1,0 +1,35 @@
+getBearerToken(req);
+      if (!token) throw Object.assign(new Error('Bitte zuerst anmelden.'), { status: 401, code: 'auth_required' });
+      if (url.pathname === '/api/cloud/households' && req.method === 'GET') {
+        return sendJson(res, 200, { households: await cloud.listHouseholds(token) });
+      }
+
+      const claims = decodeJwtPayload(token);
+      const displayName = String(claims.user_metadata?.display_name || claims.email?.split('@')?.[0] || 'Selfmade').slice(0, 80);
+      const householdName = `${displayName || 'Mein'} Haushalt`.slice(0, 80);
+      const initialState = normalizeBackup(clone(INITIAL_BACKUP));
+      if (initialState.tables.settings[0]) {
+        initialState.tables.settings[0].display_name = displayName;
+        initialState.tables.settings[0].household_name = householdName;
+        initialState.tables.settings[0].updated_at = nowIso();
+      }
+      const requestedHousehold = String(req.headers['x-selfmade-household'] || '').trim();
+      const snapshot = await cloud.loadOrBootstrap(token, { householdId: requestedHousehold, initialState, displayName, householdName });
+      const originalState = JSON.stringify(snapshot.data);
+      const backup = normalizeBackup(snapshot.data);
+      const cleanedLegacyData = JSON.stringify(backup) !== originalState;
+      const operation = await mutateBackup(backup, req, url);
+      let version = snapshot.version;
+      let updatedAt = snapshot.updatedAt;
+      if (operation.changed || cleanedLegacyData) {
+        const saved = await cloud.saveState(token, { householdId: snapshot.householdId, expectedVersion: snapshot.version, state: backup });
+        version = saved.version;
+        updatedAt = saved.updatedAt;
+      }
+      return sendJson(res, operation.status, withCloudMeta(operation.payload, snapshot, version, updatedAt));
+    } catch (error) {
+      console.error('[selfmade-vercel]', error);
+      return sendJson(res, error.status || 500, { error: error.message || 'Interner Serverfehler.', code: error.code });
+    }
+  };
+}

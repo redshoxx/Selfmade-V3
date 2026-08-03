@@ -1,7 +1,7 @@
 {
   "name": "Selfmade Haushalts-App",
   "short_name": "Selfmade",
-  "description": "Moderne Haushalts-App für Geld, Einkauf, Vorrat, Notizen, Barcode und Kassenbons.",
+  "description": "Haushalts-App für Geld, Einkauf, Vorrat, Rezepte, Mahlzeitenplanung, Kochmodus und Notizen.",
   "start_url": "/?source=homescreen",
   "scope": "/",
   "display": "standalone",
@@ -34,6 +34,11 @@
       "name": "Einkauf öffnen",
       "short_name": "Einkauf",
       "url": "/#shopping"
+    },
+    {
+      "name": "Rezepte öffnen",
+      "short_name": "Rezepte",
+      "url": "/#recipes"
     },
     {
       "name": "Geld öffnen",

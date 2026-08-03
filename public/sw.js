@@ -1,10 +1,10 @@
-const CACHE = 'selfmade-v18-performance';
+const CACHE = 'selfmade-v19-recipes-cooking';
 const CORE_ASSETS = [
   '/',
-  '/index.html?v=18',
-  '/styles.css?v=18',
-  '/app.js?v=18',
-  '/manifest.webmanifest?v=18',
+  '/index.html?v=19',
+  '/styles.css?v=19',
+  '/app.js?v=19',
+  '/manifest.webmanifest?v=19',
   '/icon.svg',
   '/icon-192.png',
   '/icon-512.png',
@@ -22,7 +22,7 @@ self.addEventListener('activate', (event) => {
     await Promise.all(keys.map((key) => key === CACHE ? Promise.resolve() : caches.delete(key)));
     await self.clients.claim();
     const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    clients.forEach((client) => client.postMessage({ type: 'SELFMADE_UPDATED', version: 18 }));
+    clients.forEach((client) => client.postMessage({ type: 'SELFMADE_UPDATED', version: 19 }));
   })());
 });
 
@@ -46,10 +46,10 @@ async function navigationNetworkFirst(request) {
   const timeout = setTimeout(() => controller.abort(), 2500);
   try {
     const response = await fetch(request, { signal: controller.signal, cache: 'no-cache' });
-    if (response.ok) await cache.put('/index.html?v=18', response.clone());
+    if (response.ok) await cache.put('/index.html?v=19', response.clone());
     return response;
   } catch {
-    return (await cache.match(request)) || (await cache.match('/index.html?v=18')) || Response.error();
+    return (await cache.match(request)) || (await cache.match('/index.html?v=19')) || Response.error();
   } finally {
     clearTimeout(timeout);
   }

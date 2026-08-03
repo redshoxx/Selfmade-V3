@@ -38,17 +38,17 @@ test('large lists use rendering containment', () => {
 });
 
 test('service worker serves versioned assets cache-first and navigation network-first', () => {
-  assert.match(sw, /selfmade-v18-performance/);
+  assert.match(sw, /selfmade-v19-recipes-cooking/);
   assert.match(sw, /cacheFirstWithRefresh/);
   assert.match(sw, /navigationNetworkFirst/);
-  assert.match(sw, /version:\s*18/);
+  assert.match(sw, /version:\s*19/);
 });
 
 test('versioned assets have immutable browser caching', () => {
   const serialized = JSON.stringify(vercel);
   assert.match(serialized, /max-age=31536000, immutable/);
   assert.match(index, /modulepreload/);
-  assert.match(index, /app\.js\?v=18/);
+  assert.match(index, /app\.js\?v=19/);
 });
 
 test('Supabase bridge provides metadata-only state checks without redundant household lookup', () => {

@@ -1,0 +1,185 @@
+import { createSupabaseCloud, getBearerToken } from './supabase-cloud.mjs';
+import { INITIAL_BACKUP } from './seed-backup.mjs';
+import { DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_PUBLISHABLE_KEY } from './supabase-public-config.mjs';
+
+const TABLES = [
+  'settings', 'members', 'budgets', 'transactions', 'recurring_items',
+  'shopping_items', 'pantry_items', 'notes', 'product_catalog',
+  'purchases', 'receipts', 'challenge', 'recipes', 'meal_plan', 'cooking_history'
+];
+
+const nowIso = () => new Date().toISOString();
+const isoDate = (date = new Date()) => {
+  const d = new Date(date);
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 10);
+};
+const shiftDate = (days) => {
+  const date = new Date();
+  date.setHours(12, 0, 0, 0);
+  date.setDate(date.getDate() + days);
+  return isoDate(date);
+};
+const normalizeMonth = (value) => /^\d{4}-\d{2}$/.test(value ?? '') ? value : isoDate().slice(0, 7);
+const asBool = (value) => value ? 1 : 0;
+const asNumber = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
+
+function clone(value) {
+  return structuredClone ? structuredClone(value) : JSON.parse(JSON.stringify(value));
+}
+
+function normalizeBackup(value) {
+  if (!value || Number(value.version) !== 3 || typeof value.tables !== 'object') {
+    throw Object.assign(new Error('Ungültiger Cloud-Datenstand.'), { status: 500 });
+  }
+  const backup = { version: 3, exported_at: value.exported_at || nowIso(), tables: {} };
+  for (const table of TABLES) backup.tables[table] = Array.isArray(value.tables[table]) ? clone(value.tables[table]) : [];
+  removeLegacyPlaceholderData(backup);
+  return backup;
+}
+
+function removeLegacyPlaceholderData(backup) {
+  const t = backup.tables;
+  const legacyDetected =
+    t.product_catalog.some((row) => row.brand === 'Beispielmarke') ||
+    t.purchases.some((row) => row.source === 'seed') ||
+    t.notes.some((row) => ['Packliste Wochenende', 'Lasagne wie bei Oma', 'WLAN Gäste'].includes(row.title));
+
+  if (!legacyDetected) return false;
+
+  const exactNames = {
+    members: new Set(['Lena', 'Jonas']),
+    recurring_items: new Set(['Vollmilch', 'Klopapier', 'Katzenfutter']),
+    shopping_items: new Set(['Tomaten', 'Bananen', 'Vollkornbrot', 'Vollmilch', 'Joghurt natur', 'Butter', 'Frischkäse', 'Klopapier', 'Spülmittel', 'Haferflocken']),
+    pantry_items: new Set(['Vollmilch', 'Hähnchenbrust', 'Tomaten', 'Hackfleisch', 'Joghurt natur', 'Feldsalat', 'Käseaufschnitt', 'Tiefkühl-Erbsen']),
+    notes: new Set(['Packliste Wochenende', 'Lasagne wie bei Oma', 'Maße Regal Flur', 'WLAN Gäste', 'Geschenke Dezember', 'Handwerker']),
+    product_catalog: new Set(['Vollmilch', 'Joghurt natur', 'Vollkornbrot', 'Tomaten', 'Spülmittel'])
+  };
+
+  for (const [table, names] of Object.entries(exactNames)) {
+    t[table] = t[table].filter((row) => !names.has(row.name || row.title));
+  }
+  t.transactions = t.transactions.filter((row) => ![
+    'Gehalt', 'Miete', 'Weitere Einkäufe', 'Wocheneinkauf', 'Unterwegs',
+    'Freizeit', 'Mobilität', 'Haushalt', 'Versicherungen', 'Sonstiges'
+  ].includes(row.note));
+  t.budgets = [];
+  t.purchases = t.purchases.filter((row) => row.source !== 'seed');
+  t.challenge = [];
+  if (t.settings[0]) {
+    t.settings[0].savings = 0;
+    t.settings[0].updated_at = nowIso();
+  }
+  backup.exported_at = nowIso();
+  return true;
+}
+
+function nextId(rows) {
+  return rows.reduce((max, row) => Math.max(max, Number(row.id) || 0), 0) + 1;
+}
+
+
+function parseJsonArray(value) {
+  if (Array.isArray(value)) return clone(value);
+  if (typeof value !== 'string' || !value.trim()) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch { return []; }
+}
+
+function normalizeFoodName(value) {
+  return String(value || '')
+    .toLocaleLowerCase('de-AT')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/\b(frisch|gehackt|gemahlen|optional|ca\.?|etwa)\b/g, '')
+    .replace(/[^a-z0-9äöüß]+/g, ' ')
+    .trim();
+}
+
+function normalizeUnit(value) {
+  const unit = String(value || '').trim().toLocaleLowerCase('de-AT');
+  const map = {
+    gramm: 'g', gram: 'g', g: 'g', kilogramm: 'kg', kilogram: 'kg', kg: 'kg',
+    milliliter: 'ml', ml: 'ml', liter: 'l', litre: 'l', l: 'l',
+    stück: 'Stück', stk: 'Stück', st: 'Stück', piece: 'Stück',
+    teelöffel: 'TL', tl: 'TL', esslöffel: 'EL', el: 'EL', prise: 'Prise', prisen: 'Prise'
+  };
+  return map[unit] || String(value || '').trim().slice(0, 20);
+}
+
+function baseQuantity(amount, unit) {
+  const value = Math.max(0, asNumber(amount));
+  const normalized = normalizeUnit(unit);
+  if (normalized === 'kg') return { value: value * 1000, unit: 'g', dimension: 'mass' };
+  if (normalized === 'g') return { value, unit: 'g', dimension: 'mass' };
+  if (normalized === 'l') return { value: value * 1000, unit: 'ml', dimension: 'volume' };
+  if (normalized === 'ml') return { value, unit: 'ml', dimension: 'volume' };
+  return { value, unit: normalized || 'Stück', dimension: normalized || 'count' };
+}
+
+function displayQuantity(value, unit) {
+  const amount = Number(Number(value).toFixed(2));
+  if (unit === 'g' && amount >= 1000) return { amount: Number((amount / 1000).toFixed(2)), unit: 'kg' };
+  if (unit === 'ml' && amount >= 1000) return { amount: Number((amount / 1000).toFixed(2)), unit: 'l' };
+  return { amount, unit };
+}
+
+function ingredientCategory(name, fallback = '') {
+  if (fallback) return String(fallback).slice(0, 50);
+  const value = normalizeFoodName(name);
+  if (/milch|joghurt|käse|butter|sahne|rahm|ei\b/.test(value)) return 'Kühlregal';
+  if (/brot|semmel|brötchen|toast|gebäck/.test(value)) return 'Backwaren';
+  if (/apfel|banane|tomat|kartoff|zwiebel|salat|gemüse|obst|paprika|karotte|gurke|knoblauch/.test(value)) return 'Obst & Gemüse';
+  if (/tiefkühl|tk\b|eis/.test(value)) return 'Tiefkühl';
+  return 'Vorrat';
+}
+
+function pantryAvailability(rows, ingredient) {
+  const key = normalizeFoodName(ingredient.name);
+  const target = baseQuantity(ingredient.amount, ingredient.unit);
+  let available = 0;
+  const matches = [];
+  for (const row of rows) {
+    const rowKey = normalizeFoodName(row.name);
+    if (!rowKey || !(rowKey === key || rowKey.includes(key) || key.includes(rowKey))) continue;
+    const quantityMatch = String(row.quantity || '').replace(',', '.').match(/-?\d+(?:\.\d+)?/);
+    const rowBase = baseQuantity(quantityMatch ? Number(quantityMatch[0]) : 0, row.unit || String(row.quantity || '').replace(/[\d.,\s]/g, ''));
+    if (rowBase.dimension !== target.dimension) continue;
+    available += rowBase.value;
+    matches.push({ row, base: rowBase });
+  }
+  return { available, required: target.value, unit: target.unit, dimension: target.dimension, matches };
+}
+
+function requireText(value, field) {
+  const text = String(value ?? '').trim();
+  if (!text) throw Object.assign(new Error(`${field} darf nicht leer sein.`), { status: 400 });
+  return text;
+}
+
+function routeId(pathname, prefix) {
+  if (!pathname.startsWith(prefix)) return null;
+  const value = pathname.slice(prefix.length);
+  return /^\d+$/.test(value) ? Number(value) : null;
+}
+
+async function readBody(req) {
+  if (req.body && typeof req.body === 'object' && !Buffer.isBuffer(req.body)) return req.body;
+  if (typeof req.body === 'string') {
+    try { return JSON.parse(req.body); } catch { throw Object.assign(new Error('Ungültiges JSON.'), { status: 400 }); }
+  }
+  const chunks = [];
+  let total = 0;
+  for await (const chunk of req) {
+    total += chunk.length;
+    if (total > 10_000_000) throw Object.assign(new Error('Anfrage zu groß.'), { status: 413 });
+    chunks.push(chunk);
+  }
+  if (!chunks.length) return {};
+  try { return JSON.parse(Buffer.concat(chunks).toString('utf8')); }
+  catch { throw Object.assign(new Error('Ungültiges JSON.'), { status: 400 }); }
+}
+
+function sendJson(res, status, payload) {
+  if (typeof res.status === 'function' && typeof res.json === 'function') return res.st

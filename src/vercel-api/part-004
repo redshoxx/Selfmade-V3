@@ -1,0 +1,108 @@
+y.note === undefined ? row.note : String(body.note).trim().slice(0, 140);
+    row.price = body.price === undefined ? row.price : (body.price === '' || body.price == null ? null : Math.max(0, asNumber(body.price)));
+    row.checked = body.checked === undefined ? row.checked : asBool(body.checked);
+    row.member_id = body.member_id === undefined ? row.member_id : (body.member_id ? Number(body.member_id) : null);
+    return result(getState(backup), 200, true);
+  }
+  if (shoppingId && method === 'DELETE') {
+    t.shopping_items = t.shopping_items.filter((item) => Number(item.id) !== shoppingId);
+    return result(getState(backup), 200, true);
+  }
+
+  if (pathname === '/api/checkout' && method === 'POST') {
+    const body = await readBody(req);
+    const selections = Array.isArray(body.items) ? body.items : [];
+    const selectedIds = selections.map((item) => Number(item.id)).filter(Number.isInteger);
+    const checkedRows = selectedIds.length ? t.shopping_items.filter((row) => selectedIds.includes(Number(row.id))) : t.shopping_items.filter((row) => row.checked);
+    if (!checkedRows.length) throw Object.assign(new Error('Es sind keine Artikel im Wagen.'), { status: 400 });
+    const submittedPrice = new Map(selections.map((item) => [Number(item.id), Math.max(0, asNumber(item.price))]));
+    const timestamp = nowIso();
+    let total = 0;
+    for (const row of checkedRows) {
+      const price = submittedPrice.has(Number(row.id)) ? submittedPrice.get(Number(row.id)) : asNumber(row.price);
+      total += price;
+      t.purchases.push({ id: nextId(t.purchases), name: row.name, quantity: row.quantity, category: row.category, price, store_name: String(body.store_name ?? '').slice(0, 60), purchased_on: isoDate(), source: 'checkout' });
+      if (row.category !== 'Haushalt') {
+        t.pantry_items.push({ id: nextId(t.pantry_items), name: row.name, quantity: row.quantity, unit: '', category: row.category, location: 'Vorratsschrank', expiry_date: null, purchase_date: isoDate(), opened_at: null, min_quantity: 0, price, note: '', buy_again: 0, inbox: 1, added_at: timestamp, updated_at: timestamp });
+      }
+    }
+    const purchasedIds = new Set(checkedRows.map((row) => Number(row.id)));
+    t.shopping_items = t.shopping_items.filter((row) => !purchasedIds.has(Number(row.id)));
+    if (total > 0) t.transactions.push({ id: nextId(t.transactions), type: 'expense', amount: Number(total.toFixed(2)), category: 'Lebensmittel', note: 'Einkauf', booked_on: isoDate(), member_id: null, created_at: timestamp });
+    return result({ total: Number(total.toFixed(2)), state: getState(backup) }, 200, true);
+  }
+
+  if (pathname === '/api/pantry' && method === 'POST') {
+    const body = await readBody(req);
+    const timestamp = nowIso();
+    t.pantry_items.push({ id: nextId(t.pantry_items), name: requireText(body.name, 'Produkt').slice(0, 80), quantity: String(body.quantity ?? '1').trim().slice(0, 30) || '1', unit: String(body.unit ?? '').trim().slice(0, 20), category: String(body.category ?? 'Sonstiges').trim().slice(0, 50) || 'Sonstiges', location: String(body.location ?? 'Vorratsschrank').trim().slice(0, 40) || 'Vorratsschrank', expiry_date: /^\d{4}-\d{2}-\d{2}$/.test(body.expiry_date ?? '') ? body.expiry_date : null, purchase_date: /^\d{4}-\d{2}-\d{2}$/.test(body.purchase_date ?? '') ? body.purchase_date : null, opened_at: /^\d{4}-\d{2}-\d{2}$/.test(body.opened_at ?? '') ? body.opened_at : null, min_quantity: Math.max(0, asNumber(body.min_quantity)), price: body.price === '' || body.price == null ? null : Math.max(0, asNumber(body.price)), note: String(body.note ?? '').trim().slice(0, 140), buy_again: asBool(body.buy_again), inbox: asBool(body.inbox), added_at: timestamp, updated_at: timestamp });
+    return result(getState(backup), 201, true);
+  }
+  const pantryId = routeId(pathname, '/api/pantry/');
+  if (pantryId && method === 'PATCH') {
+    const body = await readBody(req);
+    const row = t.pantry_items.find((item) => Number(item.id) === pantryId);
+    if (!row) throw Object.assign(new Error('Vorratsartikel nicht gefunden.'), { status: 404 });
+    row.name = body.name === undefined ? row.name : requireText(body.name, 'Produkt').slice(0, 80);
+    row.quantity = body.quantity === undefined ? row.quantity : String(body.quantity).trim().slice(0, 30) || '1';
+    row.unit = body.unit === undefined ? row.unit : String(body.unit).trim().slice(0, 20);
+    row.category = body.category === undefined ? row.category : String(body.category).trim().slice(0, 50) || 'Sonstiges';
+    row.location = body.location === undefined ? row.location : String(body.location).trim().slice(0, 40) || 'Vorratsschrank';
+    row.expiry_date = body.expiry_date === undefined ? row.expiry_date : (/^\d{4}-\d{2}-\d{2}$/.test(body.expiry_date ?? '') ? body.expiry_date : null);
+    row.purchase_date = body.purchase_date === undefined ? row.purchase_date : (/^\d{4}-\d{2}-\d{2}$/.test(body.purchase_date ?? '') ? body.purchase_date : null);
+    row.opened_at = body.opened_at === undefined ? row.opened_at : (/^\d{4}-\d{2}-\d{2}$/.test(body.opened_at ?? '') ? body.opened_at : null);
+    row.min_quantity = body.min_quantity === undefined ? row.min_quantity : Math.max(0, asNumber(body.min_quantity));
+    row.price = body.price === undefined ? row.price : (body.price === '' || body.price == null ? null : Math.max(0, asNumber(body.price)));
+    row.note = body.note === undefined ? row.note : String(body.note).trim().slice(0, 140);
+    row.buy_again = body.buy_again === undefined ? row.buy_again : asBool(body.buy_again);
+    row.inbox = body.inbox === undefined ? row.inbox : asBool(body.inbox);
+    row.updated_at = nowIso();
+    return result(getState(backup), 200, true);
+  }
+  if (pantryId && method === 'DELETE') {
+    t.pantry_items = t.pantry_items.filter((item) => Number(item.id) !== pantryId);
+    return result(getState(backup), 200, true);
+  }
+
+
+  if (pathname === '/api/recipes' && method === 'POST') {
+    const body = await readBody(req);
+    const timestamp = nowIso();
+    const ingredients = Array.isArray(body.ingredients) ? body.ingredients : [];
+    const steps = Array.isArray(body.steps) ? body.steps : [];
+    t.recipes.push({
+      id: nextId(t.recipes),
+      name: requireText(body.name, 'Rezeptname').slice(0, 120),
+      image_data_url: String(body.image_data_url || '').slice(0, 2_000_000),
+      description: String(body.description || '').trim().slice(0, 4000),
+      prep_minutes: Math.max(0, asNumber(body.prep_minutes)),
+      total_minutes: Math.max(0, asNumber(body.total_minutes)),
+      difficulty: ['Einfach', 'Mittel', 'Anspruchsvoll'].includes(body.difficulty) ? body.difficulty : 'Einfach',
+      category: String(body.category || 'Sonstiges').trim().slice(0, 50) || 'Sonstiges',
+      favorite: asBool(body.favorite),
+      servings: Math.max(1, Math.min(50, asNumber(body.servings, 2))),
+      ingredients: JSON.stringify(ingredients.slice(0, 100)),
+      steps: JSON.stringify(steps.slice(0, 80)),
+      notes: String(body.notes || '').trim().slice(0, 5000),
+      rating: 0,
+      actual_minutes: 0,
+      last_cooked_at: null,
+      finished_photo_data_url: '',
+      cook_note: '',
+      created_at: timestamp,
+      updated_at: timestamp
+    });
+    return result(getState(backup), 201, true);
+  }
+
+  const recipeShoppingMatch = pathname.match(/^\/api\/recipes\/(\d+)\/shopping$/);
+  if (recipeShoppingMatch && method === 'POST') {
+    const recipeId = Number(recipeShoppingMatch[1]);
+    const recipe = t.recipes.find((item) => Number(item.id) === recipeId);
+    if (!recipe) throw Object.assign(new Error('Rezept nicht gefunden.'), { status: 404 });
+    const body = await readBody(req);
+    const recipeServings = Math.max(1, asNumber(recipe.servings, 2));
+    const targetServings = Math.max(1, asNumber(body.servings, recipeServings));
+    const factor = targetServings / recipeServings;
+    const selected = Array.isArray(body.ingredients) ? body.ingredients : parseJsonArray(recipe.ingredients);
+    const consid

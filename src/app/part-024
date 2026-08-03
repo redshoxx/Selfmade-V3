@@ -1,0 +1,79 @@
+
+function ingredientRowEditorV19(item = {}, index = 0) {
+  return `<div class="recipe-editor-row-v19 ingredient-editor-row-v19" data-index="${index}">
+    <input class="input" name="ingredient_name" value="${escapeHtml(item.name || '')}" placeholder="Zutat" aria-label="Zutat">
+    <input class="input amount" name="ingredient_amount" type="number" inputmode="decimal" min="0" step="0.01" value="${escapeHtml(item.amount ?? '')}" placeholder="Menge" aria-label="Menge">
+    <input class="input unit" name="ingredient_unit" value="${escapeHtml(item.unit || '')}" placeholder="Einheit" aria-label="Einheit">
+    <input class="input category" name="ingredient_category" value="${escapeHtml(item.category || '')}" placeholder="Kategorie" aria-label="Kategorie">
+    <input class="input alternative" name="ingredient_alternative" value="${escapeHtml(item.alternative || '')}" placeholder="Alternative Zutat" aria-label="Alternative Zutat">
+    <button type="button" class="icon-button small" data-action="remove-recipe-row-v19" aria-label="Zutat entfernen">${icon('trash', 15)}</button>
+  </div>`;
+}
+
+function stepRowEditorV19(item = {}, index = 0) {
+  return `<div class="recipe-step-editor-v19" data-index="${index}">
+    <div class="recipe-step-number-v19">${index + 1}</div>
+    <div><input class="input" name="step_title" value="${escapeHtml(item.title || '')}" placeholder="Überschrift"><textarea class="textarea" name="step_text" placeholder="Arbeitsschritt beschreiben">${escapeHtml(item.text || '')}</textarea><input class="input" name="step_ingredients" value="${escapeHtml(Array.isArray(item.ingredients) ? item.ingredients.join(', ') : item.ingredients || '')}" placeholder="Benötigte Zutaten, mit Komma trennen"><input class="input" name="step_media_url" value="${escapeHtml(item.media_url || '')}" placeholder="Optional: Bild- oder Video-URL"></div>
+    <button type="button" class="icon-button small" data-action="remove-recipe-row-v19" aria-label="Schritt entfernen">${icon('trash', 15)}</button>
+  </div>`;
+}
+
+function openRecipeEditorV19(recipe = null) {
+  recipeImageDataV19 = recipe?.image_data_url || '';
+  const ingredients = recipe?.ingredients?.length ? recipe.ingredients : [{}];
+  const steps = recipe?.steps?.length ? recipe.steps : [{}];
+  openDialog(recipe ? 'Rezept bearbeiten' : 'Rezept anlegen', `
+    <input type="hidden" name="id" value="${recipe?.id || ''}">
+    <div class="recipe-image-editor-v19"><div id="recipe-image-preview-v19">${recipeImageDataV19 ? `<img src="${escapeHtml(recipeImageDataV19)}" alt="">` : icon('image', 25)}</div><label class="btn btn-secondary">${icon('camera', 15)} Bild auswählen<input id="recipe-image-file-v19" type="file" accept="image/*" capture="environment" hidden></label></div>
+    ${field('Rezeptname', 'name', recipe?.name || '', 'text', 'required maxlength="120" autofocus')}
+    <div class="field"><label for="recipe-description-v19">Beschreibung</label><textarea id="recipe-description-v19" class="textarea" name="description" maxlength="4000">${escapeHtml(recipe?.description || '')}</textarea></div>
+    <div class="form-row">${field('Zubereitung (Min.)', 'prep_minutes', recipe?.prep_minutes || '', 'number', 'min="0" step="1"')}${field('Gesamtzeit (Min.)', 'total_minutes', recipe?.total_minutes || '', 'number', 'min="0" step="1"')}</div>
+    <div class="form-row">${selectField('Schwierigkeit', 'difficulty', recipe?.difficulty || 'Einfach', ['Einfach','Mittel','Anspruchsvoll'].map((value) => [value,value]))}${selectField('Kategorie', 'category', recipe?.category || 'Hauptgericht', recipeCategoriesV19.map((value) => [value,value]))}</div>
+    <div class="form-row">${field('Portionen', 'servings', recipe?.servings || 2, 'number', 'min="1" max="50" step="1" required')}<label class="checkbox-row"><input type="checkbox" name="favorite" ${recipe?.favorite ? 'checked' : ''}><span>Als Favorit speichern</span></label></div>
+    <section class="recipe-editor-section-v19"><div><h3>Zutaten</h3><button type="button" class="btn btn-secondary small" data-action="add-ingredient-row-v19">${icon('plus', 14)} Zutat</button></div><div id="recipe-ingredients-editor-v19">${ingredients.map(ingredientRowEditorV19).join('')}</div></section>
+    <section class="recipe-editor-section-v19"><div><h3>Zubereitungsschritte</h3><button type="button" class="btn btn-secondary small" data-action="add-step-row-v19">${icon('plus', 14)} Schritt</button></div><div id="recipe-steps-editor-v19">${steps.map(stepRowEditorV19).join('')}</div></section>
+    <div class="field"><label for="recipe-notes-v19">Persönliche Notizen</label><textarea id="recipe-notes-v19" class="textarea" name="notes" maxlength="5000">${escapeHtml(recipe?.notes || '')}</textarea></div>
+    <div class="dialog-actions"><button type="button" class="btn btn-secondary" data-action="close-dialog">Abbrechen</button><button class="btn btn-primary">Rezept speichern</button></div>`, 'recipe-v19');
+  dialogRoot.querySelector('.dialog')?.classList.add('recipe-editor-dialog-v19');
+}
+
+function collectRecipeEditorV19(form) {
+  const ingredients = [...form.querySelectorAll('.ingredient-editor-row-v19')].map((row) => ({
+    name: row.querySelector('[name="ingredient_name"]')?.value.trim(),
+    amount: Number(row.querySelector('[name="ingredient_amount"]')?.value || 0),
+    unit: row.querySelector('[name="ingredient_unit"]')?.value.trim(),
+    category: row.querySelector('[name="ingredient_category"]')?.value.trim(),
+    alternative: row.querySelector('[name="ingredient_alternative"]')?.value.trim()
+  })).filter((item) => item.name);
+  const steps = [...form.querySelectorAll('.recipe-step-editor-v19')].map((row, index) => ({
+    title: row.querySelector('[name="step_title"]')?.value.trim() || `Schritt ${index + 1}`,
+    text: row.querySelector('[name="step_text"]')?.value.trim(),
+    ingredients: String(row.querySelector('[name="step_ingredients"]')?.value || '').split(',').map((value) => value.trim()).filter(Boolean),
+    media_url: row.querySelector('[name="step_media_url"]')?.value.trim()
+  })).filter((item) => item.text || item.title);
+  const fd = new FormData(form);
+  return {
+    name: fd.get('name'), image_data_url: recipeImageDataV19, description: fd.get('description'),
+    prep_minutes: Number(fd.get('prep_minutes') || 0), total_minutes: Number(fd.get('total_minutes') || 0),
+    difficulty: fd.get('difficulty'), category: fd.get('category'), favorite: fd.has('favorite'),
+    servings: Number(fd.get('servings') || 2), ingredients, steps, notes: fd.get('notes')
+  };
+}
+
+function openRecipeShoppingPreviewV19(recipe, servings = recipe.servings) {
+  const ingredients = (recipe.ingredients || []).map((item) => scaledIngredientV19(item, servings, recipe.servings));
+  openDialog('Zutaten hinzufügen', `<input type="hidden" name="recipe_id" value="${recipe.id}">
+    <div class="shopping-preview-head-v19"><div><strong>${escapeHtml(recipe.name)}</strong><span>Wähle nur die Zutaten, die du wirklich brauchst.</span></div><div class="portion-mini-v19"><button type="button" data-action="shopping-preview-portions-v19" data-delta="-1">−</button><input name="servings" value="${servings}" inputmode="numeric" readonly><button type="button" data-action="shopping-preview-portions-v19" data-delta="1">+</button></div></div>
+    <label class="checkbox-row"><input type="checkbox" name="consider_pantry" checked><span>Vorhandene Vorräte berücksichtigen</span></label>
+    <div id="recipe-shopping-ingredients-v19" class="recipe-shopping-list-v19">${ingredients.map((ingredient, index) => shoppingIngredientRowV19(ingredient, index)).join('')}</div>
+    <div class="dialog-actions"><button type="button" class="btn btn-secondary" data-action="close-dialog">Abbrechen</button><button class="btn btn-primary">Zur Einkaufsliste</button></div>`, 'recipe-shopping-v19');
+}
+
+function shoppingIngredientRowV19(ingredient, index) {
+  const pantry = pantryMatchV19(ingredient.name);
+  return `<label class="recipe-shopping-row-v19 ${pantry.length ? 'in-pantry' : ''}"><input type="checkbox" name="ingredient_selected" value="${index}" ${pantry.length ? '' : 'checked'}><span><strong>${escapeHtml(ingredient.name)}</strong><small>${pantry.length ? `Im Vorrat: ${pantry.map((item) => `${item.quantity} ${item.unit || ''}`.trim()).join(', ')}` : escapeHtml(ingredient.category || 'Wird automatisch zugeordnet')}</small></span><input class="input" name="ingredient_amount_${index}" type="number" inputmode="decimal" min="0" step="0.01" value="${ingredient.amount}"><input class="input" name="ingredient_unit_${index}" value="${escapeHtml(ingredient.unit || '')}"><input type="hidden" name="ingredient_name_${index}" value="${escapeHtml(ingredient.name)}"><input type="hidden" name="ingredient_category_${index}" value="${escapeHtml(ingredient.category || '')}"><input type="hidden" name="ingredient_alternative_${index}" value="${escapeHtml(ingredient.alternative || '')}"></label>`;
+}
+
+function openPlanRecipeV19(recipe, date = todayLocal(), mealType = 'Abendessen') {
+  openDialog('Rezept einplanen', `<input type="hidden" name="recipe_id" value="${recipe.id}"><div class="store-price-product-v17"><span>${recipe.image_data_url ? `<img src="${escapeHtml(recipe.image_data_url)}" alt="">` : '🍽️'}</span><div><strong>${escapeHtml(recipe.name)}</strong><small>${escapeHtml(recipe.category)} · ${recipe.servings} Portionen</small></div></div><div class="form-row">${field('Datum', 'plan_date', date, 'date', 'required')}${selectField('Mahlzeit', 'meal_type', mealType, mealTypesV19.map((value) => [value,value]))}</div>${field('Portionen', 'servings', recipe.servings, 'number', 'min="1" max="50" step="1" required')}<div class="dialog-actions"><button type="button" class="btn btn-secondary" data-action="close-dialog">Abbrechen</button><button class="btn btn-primary">Einplanen</button></div>`, 'plan-recipe-v19');
+}

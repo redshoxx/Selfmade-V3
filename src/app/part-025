@@ -1,0 +1,133 @@
+
+const renderAppBeforeCookingV19 = renderApp;
+renderApp = function renderAppCookingV19(force = false) {
+  if (cookingModeV19?.active) {
+    applyTheme();
+    document.body.classList.add('cooking-active-v19');
+    shell.innerHTML = renderCookingModeV19();
+    queueMicrotask(updateCookingTimersV19);
+    return;
+  }
+  document.body.classList.remove('cooking-active-v19');
+  return renderAppBeforeCookingV19(force);
+};
+
+function cookingRecipeV19() { return recipeByIdV19(cookingModeV19?.recipeId); }
+function cookingScaledIngredientsV19(recipe = cookingRecipeV19()) {
+  return (recipe?.ingredients || []).map((item) => scaledIngredientV19(item, cookingModeV19.servings, recipe.servings));
+}
+
+async function acquireWakeLockV19() {
+  if (!('wakeLock' in navigator) || !cookingModeV19?.active) return;
+  try {
+    cookingWakeLockV19 = await navigator.wakeLock.request('screen');
+    cookingWakeLockV19.addEventListener('release', () => { cookingWakeLockV19 = null; });
+  } catch {}
+}
+async function releaseWakeLockV19() {
+  try { await cookingWakeLockV19?.release(); } catch {}
+  cookingWakeLockV19 = null;
+}
+
+function startCookingV19(recipe, servings = recipe.servings) {
+  cookingModeV19 = {
+    active: true, recipeId: recipe.id, stepIndex: 0, view: 'steps', servings: Math.max(1, Number(servings || recipe.servings || 1)),
+    usedIngredients: new Set(), startedAt: Date.now(), notes: recipe.cook_note || '', temperatureUnit: 'C', completion: false
+  };
+  document.body.classList.add('cooking-active-v19');
+  renderApp(true);
+  acquireWakeLockV19();
+}
+
+async function exitCookingV19() {
+  stopVoiceControlV19();
+  await releaseWakeLockV19();
+  cookingModeV19 = null;
+  cookingTimersV19.forEach((timer) => clearTimeout(timer.timeout));
+  cookingTimersV19.clear();
+  clearInterval(cookingTimerTickerV19);
+  cookingTimerTickerV19 = 0;
+  renderApp(true);
+}
+
+function stepTimersV19(text) {
+  const timers = [];
+  const regex = /(\d+(?:[.,]\d+)?)[\s-]*(sekunden?|sek\.?|minuten?|min\.?|stunden?|std\.?)\b/gi;
+  let match;
+  while ((match = regex.exec(String(text || '')))) {
+    const amount = Number(match[1].replace(',', '.'));
+    const unit = match[2].toLowerCase();
+    const seconds = unit.startsWith('sek') ? amount : unit.startsWith('st') ? amount * 3600 : amount * 60;
+    const before = String(text).slice(Math.max(0, match.index - 35), match.index).trim().split(/[.!?]/).pop().trim();
+    timers.push({ seconds: Math.round(seconds), label: before.split(/\s+/).slice(-3).join(' ') || `${match[1]} ${match[2]}`, display: match[0] });
+  }
+  return timers.slice(0, 5);
+}
+
+function convertTemperaturesV19(text) {
+  const unit = cookingModeV19?.temperatureUnit || 'C';
+  return escapeHtml(String(text || '')).replace(/(\d{2,3})\s*°?\s*([CF])\b/gi, (_, amount, source) => {
+    const value = Number(amount);
+    const from = source.toUpperCase();
+    if (from === unit) return `${value} °${unit}`;
+    const converted = unit === 'F' ? Math.round(value * 9 / 5 + 32) : Math.round((value - 32) * 5 / 9);
+    return `${converted} °${unit}`;
+  });
+}
+
+function displayCookAmountV19(ingredient) {
+  let amount = Number(ingredient.amount || 0);
+  let unit = ingredient.unit || '';
+  if (unit.toLowerCase() === 'g' && amount >= 1000) { amount /= 1000; unit = 'kg'; }
+  if (unit.toLowerCase() === 'kg' && amount < 1) { amount *= 1000; unit = 'g'; }
+  if (unit.toLowerCase() === 'ml' && amount >= 1000) { amount /= 1000; unit = 'l'; }
+  if (unit.toLowerCase() === 'l' && amount < 1) { amount *= 1000; unit = 'ml'; }
+  return `${formatAmountV19(amount)} ${unit}`.trim();
+}
+
+function renderCookingModeV19() {
+  const recipe = cookingRecipeV19();
+  if (!recipe) { queueMicrotask(exitCookingV19); return ''; }
+  if (cookingModeV19.completion) return renderCookingCompletionV19(recipe);
+  const steps = recipe.steps || [];
+  const index = Math.min(cookingModeV19.stepIndex, Math.max(0, steps.length - 1));
+  cookingModeV19.stepIndex = index;
+  const step = steps[index] || { title: 'Zubereitung', text: recipe.description || 'Keine Schritte erfasst.', ingredients: [] };
+  const progress = steps.length ? ((index + 1) / steps.length) * 100 : 100;
+  return `<div class="cook-mode-v19" data-view="${cookingModeV19.view}">
+    <header class="cook-header-v19"><div><span>KOCHMODUS</span><strong>${escapeHtml(recipe.name)}</strong></div><button data-action="exit-cooking-v19">Beenden</button></header>
+    <div class="cook-progress-v19"><i style="width:${progress}%"></i></div>
+    <div class="cook-tabs-v19"><button class="${cookingModeV19.view === 'steps' ? 'active' : ''}" data-action="cooking-view-v19" data-view="steps">Schritte</button><button class="${cookingModeV19.view === 'ingredients' ? 'active' : ''}" data-action="cooking-view-v19" data-view="ingredients">Zutaten</button><button data-action="toggle-temperature-v19">°${cookingModeV19.temperatureUnit}</button><button class="${cookingVoiceEnabledV19 ? 'active' : ''}" data-action="toggle-voice-v19" aria-label="Sprachsteuerung">${icon('microphone', 17)}</button></div>
+    <main class="cook-content-v19" id="cook-swipe-area-v19">${cookingModeV19.view === 'ingredients' ? renderCookingIngredientsV19(recipe) : renderCookingStepV19(recipe, step, index)}</main>
+    ${cookingTimersV19.size ? `<section class="active-timers-v19" id="active-timers-v19">${renderActiveTimersV19()}</section>` : ''}
+    <footer class="cook-footer-v19"><button data-action="cooking-prev-v19" ${index === 0 ? 'disabled' : ''}>${icon('chevronLeft', 21)} Zurück</button><div><span>Schritt ${index + 1} von ${Math.max(1, steps.length)}</span><small>${Math.round(progress)} %</small></div><button class="primary" data-action="cooking-next-v19">${index >= steps.length - 1 ? 'Fertig' : 'Weiter'} ${icon('chevronRight', 21)}</button></footer>
+  </div>`;
+}
+
+function renderCookingStepV19(recipe, step, index) {
+  const timers = stepTimersV19(step.text);
+  const needed = Array.isArray(step.ingredients) && step.ingredients.length ? step.ingredients : [];
+  const ingredientMap = cookingScaledIngredientsV19(recipe).filter((ingredient) => needed.some((name) => normalizeFoodV19(name) === normalizeFoodV19(ingredient.name)));
+  return `<article class="cook-step-v19"><div class="cook-step-count-v19">${index + 1}</div><h1>${escapeHtml(step.title || `Schritt ${index + 1}`)}</h1><p>${convertTemperaturesV19(step.text)}</p>
+    ${step.media_url ? (/\.(mp4|webm|mov)(\?|$)/i.test(step.media_url) ? `<video controls playsinline src="${escapeHtml(step.media_url)}"></video>` : `<img src="${escapeHtml(step.media_url)}" alt="Arbeitsschritt ${index + 1}">`) : ''}
+    ${ingredientMap.length ? `<section class="step-needed-v19"><strong>Jetzt benötigt</strong>${ingredientMap.map((item) => `<span><b>${displayCookAmountV19(item)}</b> ${escapeHtml(item.name)}</span>`).join('')}</section>` : ''}
+    ${timers.length ? `<div class="detected-timers-v19">${timers.map((timer) => `<button data-action="start-cook-timer-v19" data-seconds="${timer.seconds}" data-label="${escapeHtml(timer.label)}">${icon('timer', 16)} ${escapeHtml(timer.display)}-Timer starten</button>`).join('')}</div>` : ''}<button class="custom-timer-trigger-v19" data-action="custom-cook-timer-v19">${icon('plus', 15)} Eigenen Timer anlegen</button>
+    <label class="cook-note-inline-v19"><span>Notiz während des Kochens</span><textarea id="cooking-note-v19" placeholder="Für das nächste Mal …">${escapeHtml(cookingModeV19.notes)}</textarea></label>
+  </article>`;
+}
+
+function renderCookingIngredientsV19(recipe) {
+  const ingredients = cookingScaledIngredientsV19(recipe);
+  return `<div class="cook-ingredients-v19"><div class="cook-ingredients-head-v19"><div><h1>Zutaten</h1><p>Für ${cookingModeV19.servings} Portionen</p></div><div><button data-action="cooking-portions-v19" data-delta="-1">−</button><strong>${cookingModeV19.servings}</strong><button data-action="cooking-portions-v19" data-delta="1">+</button></div></div>${ingredients.map((ingredient, index) => { const used = cookingModeV19.usedIngredients.has(index); const available = pantryMatchV19(ingredient.name).length; return `<button class="cook-ingredient-v19 ${used ? 'used' : ''}" data-action="toggle-cook-ingredient-v19" data-index="${index}"><span class="check ${used ? 'checked' : ''}">${used ? icon('check', 14) : ''}</span><div><strong>${escapeHtml(ingredient.name)}</strong>${ingredient.alternative ? `<small>Alternative: ${escapeHtml(ingredient.alternative)}</small>` : ''}${available ? `<em>Im Vorrat</em>` : `<em class="missing">Fehlt</em>`}</div><b>${displayCookAmountV19(ingredient)}</b></button>`; }).join('')}<button class="btn btn-secondary block" data-action="cooking-missing-shopping-v19">Fehlende Zutaten zur Einkaufsliste</button></div>`;
+}
+
+function renderCookingCompletionV19(recipe) {
+  const elapsed = Math.max(1, Math.round((Date.now() - cookingModeV19.startedAt) / 60000));
+  return `<div class="cook-mode-v19 cook-complete-v19"><header class="cook-header-v19"><div><span>ABSCHLUSS</span><strong>${escapeHtml(recipe.name)}</strong></div><button data-action="exit-cooking-v19">Schließen</button></header><main><div class="cook-complete-icon-v19">${icon('check', 35)}</div><h1>Gericht fertig</h1><p>Tatsächliche Kochzeit: <strong>${elapsed} Minuten</strong></p><form data-form="cooking-complete-v19" class="cook-complete-form-v19"><input type="hidden" name="recipe_id" value="${recipe.id}"><input type="hidden" name="actual_minutes" value="${elapsed}"><input type="hidden" name="servings" value="${cookingModeV19.servings}"><div class="rating-stars-v19" role="radiogroup" aria-label="Bewertung">${[1,2,3,4,5].map((value) => `<label><input type="radio" name="rating" value="${value}" ${value === 5 ? 'checked' : ''}><span>${icon('star', 24, true)}</span></label>`).join('')}</div><label class="cook-photo-v19"><span id="cook-photo-preview-v19">${recipe.finished_photo_data_url ? `<img src="${escapeHtml(recipe.finished_photo_data_url)}" alt="">` : icon('camera', 24)}</span><strong>Foto des Gerichts speichern</strong><input id="cook-photo-file-v19" type="file" accept="image/*" capture="environment" hidden></label><div class="field"><label for="cook-complete-note-v19">Notiz für das nächste Mal</label><textarea class="textarea" id="cook-complete-note-v19" name="cook_note">${escapeHtml(cookingModeV19.notes || recipe.cook_note || '')}</textarea></div><label class="checkbox-row"><input type="checkbox" name="reduce_pantry" checked><span>Verwendete Vorräte automatisch reduzieren</span></label><label class="checkbox-row"><input type="checkbox" name="plan_again"><span>Für kommende Woche vormerken</span></label><button class="btn btn-primary block">Kochen abschließen</button></form></main></div>`;
+}
+
+function renderActiveTimersV19() {
+  return [...cookingTimersV19.values()].map((timer) => `<div class="active-timer-v19" data-timer-id="${timer.id}"><span>${icon('timer', 15)}</span><div><strong>${escapeHtml(timer.label)}</strong><b>${formatTimerV19(timer.remaining)}</b></div><button data-action="pause-cook-timer-v19" data-id="${timer.id}">${timer.running ? 'Pause' : 'Weiter'}</button><button data-action="extend-cook-timer-v19" data-id="${timer.id}">+1 Min.</button><button data-action="cancel-cook-timer-v19" data-id="${timer.id}" aria-label="Timer abbrechen">${icon('close', 14)}</button></div>`).join('');
+}
+
+function formatTimerV19(seconds) { const value = Math.max(0, Math.ceil(seconds)); return `${padV19(Math.floor(value / 60))}:${padV19(value % 60)}`; }

@@ -1,0 +1,118 @@
+
+/* Version 19 – Rezepte, Mahlzeitenplaner und Kochmodus */
+tabs.push('recipes');
+if (location.hash.slice(1) === 'recipes' || localStorage.getItem('selfmade-tab') === 'recipes') activeTab = 'recipes';
+Object.assign(icons, {
+  recipes: '<path d="M6 3h11a2 2 0 0 1 2 2v16H8a3 3 0 0 1-3-3V4a1 1 0 0 1 1-1Z"/><path d="M8 3v18M11 8h5M11 12h5M11 16h3"/>',
+  chef: '<path d="M6 10a4 4 0 0 1 1-7 5 5 0 0 1 10 0 4 4 0 0 1 1 7v9H6Z"/><path d="M8 15h8M9 19v2M15 19v2"/>',
+  timer: '<circle cx="12" cy="13" r="8"/><path d="M12 9v5l3 2M9 2h6M12 2v3"/>',
+  microphone: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/>',
+  star: '<path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9Z"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  utensils: '<path d="M6 3v8M3 3v5a3 3 0 0 0 6 0V3M6 11v10M15 3v18M15 3c4 2 4 7 0 9"/>',
+  image: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 20"/>',
+  voice: '<path d="M4 12h2l2-5 4 10 2-5h6"/>'
+});
+
+let recipesModeV19 = localStorage.getItem('selfmade-recipes-mode-v19') || 'recipes';
+let recipeSearchV19 = '';
+let recipeCategoryV19 = 'Alle';
+let recipeFavoritesOnlyV19 = false;
+let mealWeekStartV19 = (() => {
+  const stored = localStorage.getItem('selfmade-meal-week-v19');
+  if (stored && /^\d{4}-\d{2}-\d{2}$/.test(stored)) return stored;
+  const d = new Date();
+  const day = (d.getDay() + 6) % 7;
+  d.setDate(d.getDate() - day);
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 10);
+})();
+let recipeImageDataV19 = '';
+let recipeIngredientDraftsV19 = [];
+let recipeStepDraftsV19 = [];
+let cookingModeV19 = null;
+let cookingWakeLockV19 = null;
+let cookingRecognitionV19 = null;
+let cookingVoiceEnabledV19 = false;
+let cookingTimersV19 = new Map();
+let cookingTimerTickerV19 = 0;
+let cookingTouchStartV19 = null;
+
+const mealTypesV19 = ['Frühstück', 'Mittagessen', 'Abendessen', 'Snack'];
+const recipeCategoriesV19 = ['Frühstück', 'Hauptgericht', 'Beilage', 'Suppe', 'Salat', 'Backen', 'Dessert', 'Getränk', 'Snack', 'Sonstiges'];
+
+function recipeByIdV19(id) { return (data?.recipes || []).find((item) => Number(item.id) === Number(id)); }
+function mealRecipeV19(entry) { return recipeByIdV19(entry?.recipe_id); }
+function padV19(value) { return String(value).padStart(2, '0'); }
+function dateIsoV19(date) {
+  const d = new Date(date);
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 10);
+}
+function shiftIsoV19(value, days) {
+  const d = new Date(`${value}T12:00:00`);
+  d.setDate(d.getDate() + days);
+  return dateIsoV19(d);
+}
+function weekDatesV19(start = mealWeekStartV19) { return Array.from({ length: 7 }, (_, index) => shiftIsoV19(start, index)); }
+function shortDayV19(value) { return new Intl.DateTimeFormat('de-AT', { weekday: 'short', day: 'numeric', month: 'numeric' }).format(new Date(`${value}T12:00:00`)); }
+function weekLabelV19() {
+  const dates = weekDatesV19();
+  return `${new Intl.DateTimeFormat('de-AT', { day: 'numeric', month: 'short' }).format(new Date(`${dates[0]}T12:00:00`))} – ${new Intl.DateTimeFormat('de-AT', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(`${dates[6]}T12:00:00`))}`;
+}
+function scaledIngredientV19(ingredient, servings, recipeServings) {
+  const factor = Math.max(1, Number(servings || 1)) / Math.max(1, Number(recipeServings || 1));
+  return { ...ingredient, amount: Number((Number(ingredient.amount || 0) * factor).toFixed(2)) };
+}
+function formatAmountV19(amount) {
+  const value = Number(amount || 0);
+  return Number.isInteger(value) ? String(value) : String(Number(value.toFixed(2))).replace('.', ',');
+}
+function normalizeFoodV19(value) {
+  return String(value || '').toLocaleLowerCase('de-AT').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9äöüß]+/g, ' ').trim();
+}
+function pantryMatchV19(name) {
+  const key = normalizeFoodV19(name);
+  return (data?.pantry || []).filter((item) => {
+    const itemKey = normalizeFoodV19(item.name);
+    return itemKey && (itemKey === key || itemKey.includes(key) || key.includes(itemKey));
+  });
+}
+function recipeMissingCountV19(recipe, servings = recipe.servings) {
+  return (recipe.ingredients || []).filter((ingredient) => {
+    const scaled = scaledIngredientV19(ingredient, servings, recipe.servings);
+    return scaled.amount > 0 && !pantryMatchV19(ingredient.name).length;
+  }).length;
+}
+function recipeTimeLabelV19(recipe) {
+  const total = Number(recipe.total_minutes || recipe.prep_minutes || 0);
+  if (!total) return 'Zeit offen';
+  if (total < 60) return `${total} Min.`;
+  return `${Math.floor(total / 60)} Std. ${total % 60 ? `${total % 60} Min.` : ''}`.trim();
+}
+
+const headerRendererV19 = header;
+header = function headerV19() {
+  if (activeTab !== 'recipes') return headerRendererV19();
+  return `<header class="page-header recipes-header-v19">
+    <div class="page-title-wrap"><h1 class="page-title compact">Rezepte</h1><p class="recipes-header-sub-v19">${recipesModeV19 === 'planner' ? weekLabelV19() : `${(data.recipes || []).length} gespeichert`}</p></div>
+    <div class="header-actions">
+      ${recipesModeV19 === 'recipes' ? `<button class="icon-button small" data-action="recipe-search-focus-v19" aria-label="Rezepte durchsuchen">${icon('search', 17)}</button><button class="round-button primary" data-action="add-recipe-v19" aria-label="Rezept hinzufügen">${icon('plus', 19)}</button>` : `<button class="icon-button small" data-action="copy-previous-week-v19" aria-label="Vorwoche übernehmen">${icon('repeat', 17)}</button>`}
+    </div>
+  </header>`;
+};
+
+const tabBarRendererV19 = tabBar;
+tabBar = function tabBarV19() {
+  const tabData = [
+    ['start', 'home', 'Start', 0], ['money', 'wallet', 'Geld', 0], ['shopping', 'cart', 'Einkauf', data.badges.shopping],
+    ['pantry', 'pantry', 'Vorrat', data.badges.pantry], ['recipes', 'recipes', 'Rezepte', data.badges.recipes || 0], ['notes', 'notes', 'Notizen', 0]
+  ];
+  return `<nav class="tab-bar tab-bar-six-v19" aria-label="Hauptnavigation">${tabData.map(([id, iconName, label, badge]) => `<button class="tab-button ${activeTab === id ? 'active' : ''}" data-action="tab" data-tab="${id}"><span class="tab-icon">${icon(iconName, 20)}${badge ? `<span class="tab-badge">${badge}</span>` : ''}</span><span>${label}</span></button>`).join('')}</nav>`;
+};
+
+const renderContentRendererV19 = renderContent;
+renderContent = function renderContentV19() {
+  if (activeTab === 'recipes') return renderRecipesAreaV19();
+  return renderContentRendererV19();
+};

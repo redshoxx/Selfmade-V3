@@ -13,14 +13,14 @@ test('cloud refresh does not emit a visible sync toast', () => {
 });
 
 test('service worker uses fast cached assets and a fresh cache version', () => {
-  assert.match(sw, /selfmade-v18-performance/);
+  assert.match(sw, /selfmade-v19-recipes-cooking/);
   assert.match(sw, /cacheFirstWithRefresh/);
   assert.match(sw, /navigationNetworkFirst/);
   assert.match(sw, /caches\.delete/);
 });
 
 test('core frontend assets are cache-busted', () => {
-  assert.match(index, /styles\.css\?v=18/);
-  assert.match(index, /app\.js\?v=18/);
+  assert.match(index, /styles\.css\?v=19/);
+  assert.match(index, /app\.js\?v=19/);
   assert.match(app, /navigator\.serviceWorker\.register\('\/sw\.js'/);
 });
