@@ -553,8 +553,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .dialog-actions { display: flex; gap: 8px; margin-top: 18px; }
 .dialog-actions .btn { flex: 1; }
 
-#toast-root { position: fixed; left: 50%; bottom: 24px; z-index: 200; transform: translateX(-50%); width: min(calc(100% - 28px), 390px); pointer-events: none; display: grid; gap: 8px; }
-.toast { padding: 12px 14px; border-radius: 12px; background: var(--text); color: var(--app-bg); box-shadow: var(--shadow); font-size: 12px; font-weight: 750; animation: toast-in .2s ease-out; }
+#toast-root { position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 10px); z-index: 300; transform: translateX(-50%); width: min(calc(100% - 28px), 390px); pointer-events: none; display: grid; gap: 7px; }
+.toast { padding: 10px 13px; min-height: 42px; border-radius: 14px; background: color-mix(in srgb, var(--text) 94%, transparent); color: var(--app-bg); box-shadow: 0 12px 30px rgba(15,23,42,.22); font-size: 12px; font-weight: 750; line-height: 1.25; animation: toast-in .18s ease-out; pointer-events: auto; backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
 .toast.error { background: var(--red); color: #fff; }
 
 .empty-state { min-height: 170px; display: grid; place-content: center; gap: 8px; text-align: center; color: var(--muted); padding: 20px; }
@@ -601,7 +601,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 @keyframes shimmer { to { transform: translateX(100%); } }
 @keyframes fade-in { from { opacity: 0; } }
 @keyframes sheet-up { from { transform: translateY(18px); opacity: .6; } }
-@keyframes toast-in { from { transform: translateY(10px); opacity: 0; } }
+@keyframes toast-in { from { transform: translateY(-10px) scale(.98); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
 
 @media (max-width: 360px) {
   .content-scroll { padding-left: 10px; padding-right: 10px; }

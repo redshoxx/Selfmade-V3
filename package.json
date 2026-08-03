@@ -1,9 +1,9 @@
 {
   "name": "selfmade-haushaltsapp",
-  "version": "9.0.0",
+  "version": "12.0.0",
   "private": true,
   "type": "module",
-  "description": "Vercel- und iPhone-optimierte Haushalts-PWA mit Supabase, leerem Startzustand und Safari-kompatiblem Barcode-Scanner ohne künstliche iPhone-Statusleiste.",
+  "description": "Vercel- und iPhone-optimierte Haushalts-PWA mit Supabase und vollständig stiller Cloud-Synchronisierung.",
   "engines": {
     "node": "22.x"
   },

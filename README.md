@@ -1,56 +1,24 @@
-# Selfmade V8 – iPhone Barcode Scanner
+# Selfmade V12 – vollständig stille Cloud-Synchronisierung
 
-Selfmade ist eine iPhone-optimierte Haushalts-PWA für Geld, Einkauf, Vorrat, Notizen, Barcode- und Kassenbon-Funktionen.
+Diese Version entfernt die sichtbare Meldung „Cloud-Daten aktualisiert“ dauerhaft.
 
-## Änderungen in V8
+## Technische Korrekturen
 
-- der Hinweis „Als iPhone-App verwenden“ wurde vollständig entfernt
-- keine Demo-, Beispiel- oder Platzhalterdaten
-- neue Haushalte starten vollständig leer
-- Safari-/Homescreen-kompatibler Barcode-Scanner
-- Live-Kamera mit bevorzugter Rückkamera
-- automatische Fokus- und Zoomoptimierung, soweit das iPhone sie freigibt
-- Taschenlampen-Schalter, wenn die Kamera ihn unterstützt
-- ZXing-Fallback für Safari, wenn `BarcodeDetector` nicht verfügbar ist
-- native iPhone-Fotoaufnahme als zusätzlicher Scanner-Fallback
-- automatische Aktualisierung der Homescreen-App nach einem neuen Service Worker
-- Scannerbibliothek wird über eine gleichnamige Vercel-Route geladen und anschließend vom Service Worker gecacht
+- Cloud-Hintergrundabgleich erzeugt keine Toast-Meldung.
+- Der Toast-Renderer blockiert alle reinen Cloud-Synchronisationshinweise zusätzlich zentral.
+- Ein DOM-Wächter entfernt versehentlich verbliebene alte Synchronisations-Toasts.
+- Der Service Worker verwendet für HTML, JavaScript, CSS und Manifest jetzt Network-first.
+- Alte PWA-Caches werden beim Aktivieren vollständig gelöscht.
+- `app.js`, `styles.css` und Manifest verwenden Version 12 als Cache-Buster.
+- Die Service-Worker-Aktualisierung wird bei jedem Start mit `updateViaCache: "none"` geprüft.
+- Nach Übernahme eines neuen Service Workers wird die App einmal automatisch neu geladen.
 
-## Supabase
-
-Bei einem bestehenden Projekt zuerst den Hotfix im Supabase SQL Editor ausführen:
-
-```text
-supabase/migrations/20260803_fix_bootstrap_household_id_ambiguity.sql
-```
-
-Bei einem neuen Projekt die vollständige Migration ausführen:
-
-```text
-supabase/migrations/20260803_selfmade_cloud.sql
-```
-
-## Vercel
+## Deployment
 
 ```bash
-npm test
 npm run build
 ```
 
-Danach das Projekt neu auf Vercel deployen. Die Build-Ausgabe liegt in `dist/`.
+Vercel verwendet anschließend den Ordner `dist`.
 
-## Kamera auf dem iPhone
-
-1. Die Website beziehungsweise Homescreen-App muss über HTTPS laufen.
-2. Im Barcode-Dialog auf **Kamera starten** tippen.
-3. Den Barcode gerade und vollständig in den Rahmen halten.
-4. Falls iOS keinen Live-Stream bereitstellt, **Foto aufnehmen** verwenden. Das Foto wird lokal im Browser ausgewertet.
-5. Bei verweigertem Zugriff die Website in Safari öffnen und unter **Seitenmenü → Mehr → Kamera → Erlauben** freigeben.
-
-## Datenschutz
-
-Das Kamerabild und aufgenommene Barcode-Foto werden nur lokal im Browser ausgewertet. Für den Barcode-Lookup wird ausschließlich die erkannte Nummer an die vorhandene API gesendet.
-
-## Version 9 – echte iPhone-Statusleiste
-
-Die zuvor im App-Layout nachgebildete Statusleiste mit Uhrzeit, Mobilfunk und Akku wurde vollständig entfernt. Im Safari-Homescreen-Modus wird ausschließlich die echte iOS-Systemstatusleiste angezeigt.
+Nach dem Deployment die Homescreen-App vollständig aus dem App-Umschalter schließen und neu öffnen. Ein Entfernen vom Homescreen ist mit dieser Version normalerweise nicht mehr nötig.

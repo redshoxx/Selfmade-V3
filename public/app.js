@@ -262,7 +262,7 @@ async function flushOfflineQueue() {
   }
   localStorage.setItem('selfmade-offline-queue', JSON.stringify(remaining));
   if (remaining.length < queue.length) {
-    try { data = await api('/api/state'); renderApp(); toast(`${queue.length - remaining.length} Offline-Änderungen synchronisiert`); } catch {}
+    try { data = await api('/api/state'); renderApp(); } catch {}
   }
 }
 
@@ -284,6 +284,17 @@ function renderAuthScreen(message = '') {
     </section>
   </div>`;
 }
+
+function removeStaleCloudSyncToasts() {
+  const forbidden = /cloud[- ]daten (aktualisiert|synchronisiert)|offline[- ]änderungen synchronisiert/i;
+  [...toastRoot.querySelectorAll('.toast')].forEach((item) => {
+    if (forbidden.test(item.textContent || '')) item.remove();
+  });
+}
+
+const toastCleanupObserver = new MutationObserver(removeStaleCloudSyncToasts);
+toastCleanupObserver.observe(toastRoot, { childList: true, subtree: true });
+removeStaleCloudSyncToasts();
 
 async function bootstrapApplication() {
   try {
@@ -316,7 +327,6 @@ async function cloudBackgroundRefresh() {
     if (!data || nextVersion > beforeVersion) {
       data = next;
       renderApp();
-      if (beforeVersion) toast('Cloud-Daten aktualisiert');
     }
   } catch (error) {
     if (error.status === 401) {
@@ -1297,13 +1307,46 @@ function openTransactionMenu(item) {
 }
 
 function toast(message, type = '', actionLabel = '', actionFn = null) {
+  // Reine Cloud-Synchronisationsmeldungen bleiben vollständig unsichtbar.
+  // Die Synchronisierung läuft weiterhin im Hintergrund.
+  const normalizedMessage = String(message || '')
+    .toLocaleLowerCase('de-AT')
+    .replace(/[–—]/g, '-')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const silentCloudMessages = [
+    'cloud-daten aktualisiert',
+    'cloud daten aktualisiert',
+    'cloud-daten synchronisiert',
+    'cloud daten synchronisiert',
+    'offline-änderungen synchronisiert',
+    'offline änderungen synchronisiert'
+  ];
+  if (silentCloudMessages.some((text) => normalizedMessage.includes(text))) return;
+
+  // Kurze Statusmeldungen erscheinen oben und ersetzen ältere Hinweise,
+  // damit sie auf dem iPhone weder Inhalt noch Bottom Navigation verdecken.
+  if (!actionFn) {
+    [...toastRoot.querySelectorAll('.toast:not([data-has-action="true"])')].forEach((item) => item.remove());
+  }
+
   const el = document.createElement('div');
   el.className = `toast ${type}`;
+  el.dataset.hasAction = actionFn ? 'true' : 'false';
   const id = actionFn ? `toast-${Date.now()}-${Math.random().toString(16).slice(2)}` : '';
   if (actionFn) toastActions.set(id, actionFn);
   el.innerHTML = `<span>${escapeHtml(message)}</span>${actionFn ? `<button data-toast-action="${id}">${escapeHtml(actionLabel)}</button>` : ''}`;
-  toastRoot.append(el);
-  setTimeout(() => { toastActions.delete(id); el.remove(); }, actionFn ? 6000 : 3200);
+  toastRoot.prepend(el);
+
+  // Normal: 1,8 s · Fehler: 2,8 s · Rückgängig-Aktion: 4,2 s
+  const duration = actionFn ? 4200 : (type === 'error' ? 2800 : 1800);
+  setTimeout(() => {
+    toastActions.delete(id);
+    el.animate(
+      [{ opacity: 1, transform: 'translateY(0)' }, { opacity: 0, transform: 'translateY(-8px)' }],
+      { duration: 150, easing: 'ease-in', fill: 'forwards' }
+    ).finished.finally(() => el.remove());
+  }, duration);
 }
 
 async function deleteWithUndo(kind, item) {
@@ -1697,19 +1740,23 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
   if (data?.settings?.theme === 'system') applyTheme();
 });
 
-setInterval(() => {
-  const time = document.querySelector('.status-time');
-  if (time) time.textContent = new Intl.DateTimeFormat('de-AT', { hour: '2-digit', minute: '2-digit' }).format(new Date());
-}, 30000);
-
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   let reloadingForServiceWorker = false;
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
+  const reloadForFreshApp = () => {
     if (reloadingForServiceWorker) return;
     reloadingForServiceWorker = true;
     location.reload();
+  };
+  navigator.serviceWorker.addEventListener('controllerchange', reloadForFreshApp);
+  navigator.serviceWorker.addEventListener('message', (event) => {
+    if (event.data?.type === 'SELFMADE_UPDATED' && Number(event.data.version) >= 12) reloadForFreshApp();
   });
-  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+  window.addEventListener('load', async () => {
+    try {
+      const registration = await navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' });
+      await registration.update();
+    } catch {}
+  });
 }
 
 setInterval(cloudBackgroundRefresh, 15000);
