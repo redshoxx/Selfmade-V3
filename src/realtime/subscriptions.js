@@ -1,0 +1,4 @@
+import{connectRealtime,disconnectRealtime}from'./connection.js';import{store}from'../store.js';
+let fallback=null;let config=null;
+export function startSubscriptions(options){config=options;const connect=()=>connectRealtime({...options,token:store.session?.access_token,householdId:store.state?.cloud?.household_id,onChange:async()=>{if(!document.hidden&&!store.ui.dirty)await options.refresh({silent:true})},onStatus:status=>{store.sync.realtime=status;clearInterval(fallback);if(status!=='connected')fallback=setInterval(()=>{if(navigator.onLine&&!document.hidden&&!store.ui.dirty)options.refresh({silent:true}).catch(()=>{})},60000)}});connect();document.addEventListener('visibilitychange',()=>{if(document.hidden)disconnectRealtime();else connect()});window.addEventListener('online',connect)}
+export function stopSubscriptions(){clearInterval(fallback);fallback=null;disconnectRealtime();config=null}

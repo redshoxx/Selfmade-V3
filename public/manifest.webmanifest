@@ -1,60 +1,25 @@
 {
-  "name": "Selfmade Haushalts-App",
+  "id": "/",
+  "name": "Selfmade",
   "short_name": "Selfmade",
-  "description": "Moderne Haushalts-App für Geld, Einkauf, Vorrat, Notizen, Barcode und Kassenbons.",
-  "start_url": "/?source=homescreen",
+  "description": "Haushalt, Finanzen, Einkauf, Vorrat, Notizen und Kassenbons.",
+  "version": "15.0.0",
+  "start_url": "/#start",
   "scope": "/",
   "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#F3F6FB",
-  "theme_color": "#4361EE",
-  "lang": "de-AT",
+  "display_override": ["standalone", "fullscreen"],
+  "orientation": "portrait-primary",
+  "background_color": "#f4f6fb",
+  "theme_color": "#f4f6fb",
+  "categories": ["finance", "productivity", "utilities"],
   "icons": [
-    {
-      "src": "/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    }
+    {"src":"/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},
+    {"src":"/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"},
+    {"src":"/icon-1024.png","sizes":"1024x1024","type":"image/png","purpose":"any"}
   ],
   "shortcuts": [
-    {
-      "name": "Einkauf öffnen",
-      "short_name": "Einkauf",
-      "url": "/#shopping"
-    },
-    {
-      "name": "Geld öffnen",
-      "short_name": "Geld",
-      "url": "/#money"
-    },
-    {
-      "name": "Notizen öffnen",
-      "short_name": "Notizen",
-      "url": "/#notes"
-    }
-  ],
-  "id": "selfmade-household-app",
-  "display_override": [
-    "standalone",
-    "fullscreen"
-  ],
-  "categories": [
-    "utilities",
-    "finance",
-    "lifestyle"
-  ],
-  "prefer_related_applications": false
+    {"name":"Einkauf","url":"/#shopping","icons":[{"src":"/icon-192.png","sizes":"192x192"}]},
+    {"name":"Vorrat","url":"/#pantry","icons":[{"src":"/icon-192.png","sizes":"192x192"}]},
+    {"name":"Kassenbon","url":"/#receipts","icons":[{"src":"/icon-192.png","sizes":"192x192"}]}
+  ]
 }

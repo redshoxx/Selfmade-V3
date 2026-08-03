@@ -1,0 +1,1 @@
+const format=new Intl.NumberFormat('de-AT',{style:'currency',currency:'EUR'});export const money=value=>format.format(Number(value||0));export const decimal=value=>Number(String(value??'').replace(',','.').replace(/[^0-9.-]/g,''))||0;

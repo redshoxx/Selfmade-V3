@@ -1,0 +1,2 @@
+import{icon}from'./icons.js';
+export function navigation(active,badges={}){const tabs=[['start','home','Start'],['money','wallet','Geld'],['shopping','cart','Einkauf'],['pantry','pantry','Vorrat'],['notes','notes','Notizen']];return `<div class="tabbar-wrap"><nav class="tabbar" aria-label="Hauptnavigation">${tabs.map(([id,i,l])=>`<button class="tab ${active===id?'active':''}" data-tab="${id}">${icon(i,22)}<span>${l}</span>${badges[id]?`<b class="badge">${badges[id]}</b>`:''}</button>`).join('')}</nav></div>`}

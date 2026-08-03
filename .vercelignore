@@ -1,6 +1,4 @@
-data/
-*.sqlite
-*.sqlite-shm
-*.sqlite-wal
+tests/
 coverage/
-.DS_Store
+.git/
+*.zip

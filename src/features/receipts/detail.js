@@ -1,0 +1,8 @@
+import{openDialog,dialogRoot,closeDialog}from'../../components/dialog.js';
+import{signedReceiptUrl}from'../../api/receipts.js';
+import{operation}from'../../api/operations.js';
+import{escapeHtml}from'../../utils/escape-html.js';
+import{money}from'../../utils/currency.js';
+import{store}from'../../store.js';
+import{startReceiptEdit}from'./editor.js';
+export async function receiptDetail(receipt){let image='';try{image=await signedReceiptUrl(receipt.image_path,store.cloud,store.session)}catch{}openDialog({title:receipt.store_name||'Kassenbon',body:`${image?`<img class="receipt-preview" src="${escapeHtml(image)}" alt="Kassenbon">`:''}<div class="card pad"><div class="summary-line"><span>Datum</span><strong>${escapeHtml(receipt.receipt_date)}</strong></div><div class="summary-line"><span>Summe</span><strong>${money(receipt.total)}</strong></div></div><div class="receipt-items">${receipt.parsed_items.map(item=>`<div class="card pad"><div class="summary-line"><span>${escapeHtml(item.name)}</span><strong>${money(item.price)}</strong></div></div>`).join('')}</div>`,footer:'<button type="button" class="btn danger" data-delete>Löschen</button><button type="button" class="btn ghost" data-edit>Bearbeiten</button><button type="button" class="btn primary" data-close>Schließen</button>'});const root=dialogRoot();root.querySelector('[data-close]').onclick=()=>closeDialog();root.querySelector('[data-edit]').onclick=()=>startReceiptEdit(receipt);root.querySelector('[data-delete]').onclick=async()=>{if(confirm('Kassenbon löschen?')){await operation({entity:'receipt',action:'delete',recordId:receipt.id,payload:{image_path:receipt.image_path||''},baseUpdatedAt:receipt.updated_at});closeDialog(true)}}}

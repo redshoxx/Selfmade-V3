@@ -1,24 +1,25 @@
 {
   "name": "selfmade-haushaltsapp",
-  "version": "14.0.0",
+  "version": "15.0.0",
   "private": true,
   "type": "module",
-  "description": "Vercel- und iPhone-optimierte Haushalts-PWA mit Supabase und nativer iPhone-PWA-Oberfläche, Supabase, optimierten Formularen und gesperrter Skalierung.",
+  "description": "Selfmade V15 Stability & Smart Receipt – iPhone-optimierte Haushalts-PWA mit Supabase, IndexedDB und Realtime.",
   "engines": {
     "node": "22.x"
   },
   "scripts": {
-    "dev": "node --watch server.mjs",
+    "dev": "node server.mjs",
     "start": "node server.mjs",
     "test": "node --test tests/*.test.mjs",
-    "reset": "node scripts/reset-db.mjs",
-    "build": "node scripts/build-vercel.mjs",
+    "lint": "node scripts/lint.mjs",
+    "build": "node scripts/build.mjs",
     "vercel-build": "npm run build",
-    "dev:vercel": "vercel dev",
-    "prepare:assets": "node scripts/assemble-assets.mjs",
-    "predev": "npm run prepare:assets",
-    "prestart": "npm run prepare:assets",
-    "pretest": "npm run prepare:assets",
-    "prebuild": "npm run prepare:assets"
+    "postinstall": "node scripts/vendor-assets.mjs",
+    "ci": "npm run lint && npm test && npm run build",
+    "prebuild": "node scripts/vendor-assets.mjs",
+    "predev": "node scripts/vendor-assets.mjs"
+  },
+  "dependencies": {
+    "@zxing/browser": "0.2.1"
   }
 }

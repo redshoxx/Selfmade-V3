@@ -1,0 +1,6 @@
+export function today(){const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)}
+export function monthNow(){return today().slice(0,7)}
+export function dateLabel(value=new Date()){return new Intl.DateTimeFormat('de-AT',{weekday:'long',day:'numeric',month:'long'}).format(new Date(value))}
+export function monthLabel(value){const [y,m]=String(value).split('-').map(Number);return new Intl.DateTimeFormat('de-AT',{month:'long',year:'numeric'}).format(new Date(y,m-1,1))}
+export function shiftMonth(value,delta){const [y,m]=String(value).split('-').map(Number);const d=new Date(y,m-1+delta,1);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`}
+export function expiryInfo(value){if(!value)return{days:99999,label:'Kein Datum',kind:'ok'};const a=new Date(`${today()}T12:00:00`),b=new Date(`${value}T12:00:00`),days=Math.round((b-a)/86400000);if(days<0)return{days,label:`seit ${Math.abs(days)} Tag${Math.abs(days)===1?'':'en'} abgelaufen`,kind:'danger'};if(days===0)return{days,label:'heute abgelaufen',kind:'danger'};if(days===1)return{days,label:'läuft morgen ab',kind:'warning'};return{days,label:`in ${days} Tagen`,kind:days<=7?'warning':'ok'}}

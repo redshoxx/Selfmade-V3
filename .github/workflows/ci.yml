@@ -1,0 +1,38 @@
+name: Selfmade CI
+
+on:
+  push:
+    branches: ['main', 'release/**']
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+      - name: Node.js 22 einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Abhängigkeiten installieren
+        run: npm install
+      - name: Tests ausführen
+        run: npm test
+      - name: Quellcode prüfen
+        run: npm run lint
+      - name: Produktions-Build erstellen
+        run: npm run build
+      - name: Build-Assets prüfen
+        run: |
+          test -s dist/index.html
+          test -s dist/src/app.js
+          test -s dist/src/styles/app.css
+          test -s dist/manifest.webmanifest
+          test -s dist/sw.js
+          test $(wc -c < dist/vendor/zxing-browser.min.js) -gt 100000
+          ! grep -R -E "unpkg|jsdelivr|cdnjs" dist/index.html dist/src dist/sw.js
