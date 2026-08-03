@@ -4,6 +4,11 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 
+async function materializeBase64Asset(sourceFile, outputFile) {
+  const encoded = (await readFile(path.join(root, sourceFile), 'utf8')).trim();
+  await writeFile(path.join(root, outputFile), Buffer.from(encoded, 'base64'));
+}
+
 async function assemble(sourceDirectory, outputFile) {
   const source = path.join(root, sourceDirectory);
   const parts = (await readdir(source)).filter((name) => name.startsWith('part-')).sort();
@@ -15,4 +20,9 @@ async function assemble(sourceDirectory, outputFile) {
 await assemble('src/app', 'public/app.js');
 await assemble('src/styles', 'public/styles.css');
 await assemble('src/vercel-api', 'vercel-api.mjs');
-console.log('App- und API-Assets wurden vollständig zusammengesetzt.');
+await Promise.all([
+  materializeBase64Asset('src/branding/icon-192.png.b64', 'public/icon-192.png'),
+  materializeBase64Asset('src/branding/icon-512.png.b64', 'public/icon-512.png'),
+  materializeBase64Asset('src/branding/apple-touch-icon.png.b64', 'public/apple-touch-icon.png')
+]);
+console.log('App-, API- und Branding-Assets wurden vollständig zusammengesetzt.');

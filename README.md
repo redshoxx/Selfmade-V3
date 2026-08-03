@@ -1,35 +1,34 @@
-# Selfmade V19.1 – GuteKueche-Linkimport
+# HaushaltKlar V19.2
 
-Selfmade ist eine für den iPhone-Homescreen optimierte Haushalts-PWA mit Supabase-Speicherung und Vercel-Deployment.
+HaushaltKlar ist eine für den iPhone-Homescreen optimierte Haushalts-PWA mit Supabase-Speicherung und Vercel-Deployment.
 
-## GuteKueche.at-Linkimport
+## Neues in Version 19.2
 
-- einzelner, benutzergesteuerter Import über einen direkten Rezeptlink
-- ausschließlich HTTPS-Rezeptseiten von `gutekueche.at`
-- Prüfansicht im vorhandenen Rezeptformular vor dem Speichern
-- Übernahme von Name, Beschreibung, Zeiten, Portionen, Zutaten und Zubereitungsschritten
-- Quellenkennzeichnung bleibt am Rezept gespeichert
-- kein Massenimport, keine automatische Katalogspiegelung und keine Bildkopie
-- Zeitlimit und Größenbegrenzung beim Abrufen der Rezeptseite
+- neuer professioneller Markenname **HaushaltKlar**
+- neues App-Icon mit Haus- und Klarheits-/Check-Symbol
+- hochwertiger Splashscreen beim Öffnen der App
+- neu gestaltete Startseite mit Begrüßung und Haushaltsübersicht
+- kompakte schwebende Bottom Navigation für sechs Hauptbereiche
+- aktive Navigation als kleine blaue Icon-Fläche statt großer Karte
+- verbesserte Light- und Dark-Mode-Farben
+- neue Startkarten für Einkauf, Vorrat, Essensplanung, ablaufende Produkte und Notizen
+- iPhone-Safe-Areas und Bildschirmtastatur bleiben vollständig berücksichtigt
 
-## Rezepte und Kochen
+## Bestehende Funktionen
 
-- persönliche Rezepte mit Zutaten und strukturierten Schritten
-- Suche, Kategorien, Favoriten und variable Portionen
-- Wochenplan für Frühstück, Mittagessen, Abendessen und Snacks
-- Zutatenübernahme mit Vorratsabgleich und Zusammenfassung doppelter Produkte
-- Vollbild-Kochmodus mit Wischgesten, optionaler Sprachsteuerung und parallelen Timern
-- Kochabschluss mit Bewertung, Notiz, Foto und Vorratsreduzierung
+- Geld und Budgets
+- Einkaufsliste und Ladenmodus
+- Vorrat
+- Rezepte und GuteKueche-Linkimport
+- Mahlzeitenplaner
+- Vollbild-Kochmodus und Küchentimer
+- Notizen
+- Barcode-Scanner und Kassenbon-Import
+- Supabase-Cloudspeicherung
 
 ## Supabase
 
-V19.1 erweitert den vorhandenen JSONB-Haushaltsdatenstand. Eine zusätzliche Migration ist nicht erforderlich.
-
-Für ein neues Supabase-Projekt:
-
-```text
-supabase/migrations/20260803_selfmade_cloud.sql
-```
+V19.2 verwendet weiterhin den bestehenden JSONB-Haushaltsdatenstand. Eine zusätzliche Migration ist nicht erforderlich.
 
 ## Vercel
 
@@ -45,11 +44,4 @@ Output Directory: dist
 Node.js: 22.x
 ```
 
-Environment Variables:
-
-```env
-SUPABASE_URL=https://ecflcrigkfyhifekwfxq.supabase.co
-SUPABASE_PUBLISHABLE_KEY=sb_publishable_1EpIlW3NxMKtGL4MjF2xtg_aYacqCx3
-```
-
-Nach einem Deployment die Homescreen-App vollständig schließen und erneut öffnen. Service Worker V19.1 entfernt ältere App-Caches automatisch.
+Nach einem Deployment die Homescreen-App vollständig schließen und erneut öffnen. Der Service Worker V19.2 entfernt ältere App-Caches automatisch.

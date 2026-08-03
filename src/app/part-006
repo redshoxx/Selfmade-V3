@@ -40,8 +40,8 @@ function endFormSubmission(form) {
 }
 
 function showOnboarding() {
-  openDialog('Willkommen bei Selfmade', `
-    <div class="onboarding-hero"><img src="/icon-192.png" alt="Selfmade"><div><strong>Dein Haushalt. Klar organisiert.</strong><small>Einkauf, Vorrat, Geld, Notizen, Barcodes und Kassenbons greifen ineinander.</small></div></div>
+  openDialog('Willkommen bei HaushaltKlar', `
+    <div class="onboarding-hero"><img src="/icon-192.png" alt="HaushaltKlar"><div><strong>Dein Haushalt. Klar organisiert.</strong><small>Einkauf, Vorrat, Finanzen, Rezepte und Notizen greifen nahtlos ineinander.</small></div></div>
     ${field('Dein Name', 'display_name', data.settings.display_name, 'text', 'maxlength="40" required')}
     ${field('Haushaltsname', 'household_name', data.settings.household_name || '', 'text', 'maxlength="60" required')}
     <label class="checkbox-row"><input type="checkbox" name="notifications">Ablauf- und Routinehinweise aktivieren</label>
@@ -93,7 +93,7 @@ function checkNotifications(force = false) {
   const recurring = (data.recurring || []).filter((item) => item.due);
   if (!urgent.length && !recurring.length) return;
   const body = [urgent.length ? `${urgent.length} Vorratsprodukte laufen bald ab.` : '', recurring.length ? `${recurring.length} Routinen sind fällig.` : ''].filter(Boolean).join(' ');
-  try { new Notification('Selfmade – heute wichtig', { body, icon: '/icon-192.png' }); } catch {}
+  try { new Notification('HaushaltKlar – heute wichtig', { body, icon: '/icon-192.png' }); } catch {}
   localStorage.setItem(key, '1');
 }
 

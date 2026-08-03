@@ -1,9 +1,9 @@
 {
   "name": "selfmade-haushaltsapp",
-  "version": "19.1.0",
+  "version": "19.2.0",
   "private": true,
   "type": "module",
-  "description": "Selfmade V19.1 mit Rezeptverwaltung, GuteKueche-Linkimport, Wochenplaner, Kochmodus und Küchentimern.",
+  "description": "HaushaltKlar V19.2 mit neuem Markenauftritt, kompakter iPhone-Navigation, Rezeptverwaltung, Wochenplaner und Kochmodus.",
   "engines": {
     "node": "22.x"
   },

@@ -1,0 +1,51 @@
+
+/* Version 19.2 – verbleibende sichtbare Markenbezeichnungen */
+exportData = async function exportDataV192() {
+  try {
+    const payload = await api('/api/export');
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `haushaltklar-backup-${todayLocal()}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast('Backup erstellt');
+  } catch (error) { toast(error.message, 'error'); }
+};
+
+exportTransactionsCsv = function exportTransactionsCsvV192() {
+  const header = ['Datum', 'Typ', 'Kategorie', 'Beschreibung', 'Mitglied', 'Betrag'];
+  const rows = data.transactions.map((item) => [
+    item.booked_on,
+    item.type === 'income' ? 'Einnahme' : 'Ausgabe',
+    item.category,
+    item.note,
+    item.member_id ? memberName(item.member_id) : '',
+    Number(item.amount).toFixed(2).replace('.', ',')
+  ]);
+  const csv = '\uFEFF' + [header, ...rows].map((row) => row.map(csvCell).join(';')).join('\r\n');
+  downloadBlob(`haushaltklar-buchungen-${data.month}.csv`, csv, 'text/csv;charset=utf-8');
+  toast('CSV exportiert');
+};
+
+printMoneyReport = function printMoneyReportV192() {
+  const popup = window.open('', '_blank', 'noopener,noreferrer,width=900,height=700');
+  if (!popup) return toast('Pop-up wurde blockiert.', 'error');
+  const budgets = data.budgets.map((item) => `<tr><td>${escapeHtml(item.name)}</td><td>${money(item.spent)}</td><td>${money(item.limit_amount)}</td><td>${money(item.limit_amount - item.spent)}</td></tr>`).join('');
+  const transactions = data.transactions.map((item) => `<tr><td>${escapeHtml(item.booked_on)}</td><td>${item.type === 'income' ? 'Einnahme' : 'Ausgabe'}</td><td>${escapeHtml(item.category)}</td><td>${escapeHtml(item.note || '')}</td><td>${item.type === 'income' ? '+' : '−'}${money(item.amount)}</td></tr>`).join('');
+  popup.document.write(`<!doctype html><html lang="de"><head><meta charset="utf-8"><title>HaushaltKlar Finanzbericht ${escapeHtml(data.month)}</title><style>
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#111827;margin:36px}h1{margin:0 0 4px}p{color:#6b7280}.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:24px 0}.card{border:1px solid #e5e7eb;border-radius:14px;padding:16px}.card b{font-size:22px;display:block;margin-top:6px}table{width:100%;border-collapse:collapse;margin:10px 0 26px;font-size:12px}th,td{text-align:left;padding:9px;border-bottom:1px solid #e5e7eb}th{background:#f8fafc}@media print{body{margin:14mm}.no-print{display:none}}
+  </style></head><body><h1>HaushaltKlar Finanzbericht</h1><p>${escapeHtml(data.settings.household_name)} · ${escapeHtml(data.month)}</p><div class="summary"><div class="card">Einnahmen<b>${money(data.summary.income)}</b></div><div class="card">Ausgaben<b>${money(data.summary.expense)}</b></div><div class="card">Verbleibend<b>${money(data.summary.remaining)}</b></div></div><h2>Budgets</h2><table><thead><tr><th>Kategorie</th><th>Ausgegeben</th><th>Limit</th><th>Rest</th></tr></thead><tbody>${budgets}</tbody></table><h2>Buchungen</h2><table><thead><tr><th>Datum</th><th>Typ</th><th>Kategorie</th><th>Beschreibung</th><th>Betrag</th></tr></thead><tbody>${transactions}</tbody></table><script>window.onload=()=>{window.print()}<\/script></body></html>`);
+  popup.document.close();
+};
+
+finishCookTimerV19 = function finishCookTimerV192(timer) {
+  timer.remaining = 0;
+  timer.running = false;
+  timerSignalV19();
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification('HaushaltKlar Küchentimer', { body: `${timer.label} ist fertig.`, icon: '/icon-192.png' });
+  }
+  toast(`${timer.label}: Timer abgelaufen`, 'error');
+};
