@@ -10,8 +10,8 @@ android {
         applicationId = "at.selfmade.app"
         minSdk = 24
         targetSdk = 35
-        versionCode = 19100
-        versionName = "19.1.0"
+        versionCode = 19200
+        versionName = "19.2.0"
     }
 
     buildTypes {

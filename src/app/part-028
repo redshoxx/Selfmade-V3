@@ -1,0 +1,107 @@
+
+/* Version 19.2 – HaushaltKlar Branding, kompakte Navigation und Startseite */
+const APP_BRAND_V192 = 'HaushaltKlar';
+const APP_TAGLINE_V192 = 'Organisiert. Entspannt. Zuhause.';
+
+function greetingV192() {
+  const hour = new Date().getHours();
+  if (hour < 11) return 'Guten Morgen';
+  if (hour < 17) return 'Guten Tag';
+  return 'Guten Abend';
+}
+
+function displayNameV192() {
+  const name = String(data?.settings?.display_name || '').trim();
+  return name && !/^selfmade$/i.test(name) ? name : '';
+}
+
+function currentWeekBoundsV192() {
+  const today = new Date();
+  const monday = new Date(today);
+  monday.setHours(12, 0, 0, 0);
+  monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
+  const sunday = new Date(monday);
+  sunday.setDate(sunday.getDate() + 6);
+  return { start: dateIsoV19(monday), end: dateIsoV19(sunday) };
+}
+
+function dashboardMealsV192() {
+  const { start, end } = currentWeekBoundsV192();
+  const order = new Map(mealTypesV19.map((type, index) => [type, index]));
+  return (data?.meal_plan || [])
+    .filter((entry) => entry.plan_date >= start && entry.plan_date <= end && mealRecipeV19(entry))
+    .sort((a, b) => a.plan_date.localeCompare(b.plan_date) || (order.get(a.meal_type) ?? 99) - (order.get(b.meal_type) ?? 99))
+    .slice(0, 3);
+}
+
+function dashboardMealCardV192(entry) {
+  const recipe = mealRecipeV19(entry);
+  const date = new Date(`${entry.plan_date}T12:00:00`);
+  const day = new Intl.DateTimeFormat('de-AT', { weekday: 'short' }).format(date).replace('.', '');
+  return `<button class="home-meal-card-v192" data-action="open-recipe-v19" data-id="${recipe.id}">
+    <span class="home-meal-image-v192">${recipe.image_data_url ? `<img src="${escapeHtml(recipe.image_data_url)}" alt="">` : icon('utensils', 21)}</span>
+    <span><b>${escapeHtml(day)}</b><strong>${escapeHtml(recipe.name)}</strong><small>${escapeHtml(entry.meal_type)}</small></span>
+  </button>`;
+}
+
+const headerRendererV192 = header;
+header = function headerV192() {
+  if (activeTab !== 'start') return headerRendererV192();
+  return `<header class="page-header brand-header-v192">
+    <div class="brand-lockup-v192">
+      <img src="/icon-192.png" alt="">
+      <div><strong>${APP_BRAND_V192}</strong><span>${escapeHtml(data?.settings?.household_name || 'Mein Haushalt')}</span></div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-button small" data-action="global-search" aria-label="Suchen">${icon('search', 17)}</button>
+      <button class="icon-button small" data-action="settings" aria-label="Einstellungen">${icon('settings', 17)}</button>
+    </div>
+  </header>`;
+};
+
+renderDashboard = function renderDashboardV192() {
+  const urgent = (data?.pantry || [])
+    .filter((item) => !item.inbox && item.expiry_date)
+    .sort((a, b) => String(a.expiry_date || '').localeCompare(String(b.expiry_date || '')))
+    .slice(0, 2);
+  const meals = dashboardMealsV192();
+  const notes = [...(data?.notes || [])].sort((a, b) => String(b.updated_at || b.created_at || '').localeCompare(String(a.updated_at || a.created_at || '')));
+  const latestNote = notes[0];
+  const spentRatio = data?.summary?.income ? data.summary.expense / data.summary.income : 0;
+  const ratioPercent = Math.round(clamp(spentRatio * 100, 0, 100));
+  const name = displayNameV192();
+  const month = new Intl.DateTimeFormat('de-AT', { month: 'long' }).format(new Date());
+  const pantryCount = (data?.pantry || []).filter((item) => !item.inbox).length;
+
+  return `<div class="content-stack home-dashboard-v192">
+    <section class="home-welcome-v192">
+      <div><p>${escapeHtml(dateLabel())}</p><h1>${greetingV192()}${name ? `, ${escapeHtml(name)}` : ''}!</h1><span>Schön, dass du da bist.</span></div>
+      <button class="home-scan-v192" data-action="scan-barcode" aria-label="Barcode scannen">${icon('scan', 19)}</button>
+    </section>
+
+    <section class="card home-overview-v192">
+      <div class="home-overview-head-v192"><strong>Haushaltsübersicht</strong><span>${escapeHtml(month)}</span></div>
+      <div class="home-budget-v192">
+        <div><small>Verfügbar</small><b>${signedMoney(data.summary.remaining)}</b><span>${money(data.summary.income)} Einnahmen</span></div>
+        <div class="home-budget-ring-v192" style="--budget-progress:${ratioPercent * 3.6}deg"><strong>${ratioPercent}%</strong><small>verbraucht</small></div>
+      </div>
+      <div class="progress-track home-progress-v192"><div class="progress-fill" style="width:${ratioPercent}%"></div></div>
+    </section>
+
+    <div class="home-shortcuts-v192">
+      <button class="card home-shortcut-v192" data-action="tab" data-tab="shopping"><span>${icon('cart', 20)}</span><div><strong>Einkaufsliste</strong><small>${data.badges.shopping || 0} offen</small></div>${icon('chevronRight', 14)}</button>
+      <button class="card home-shortcut-v192" data-action="tab" data-tab="pantry"><span>${icon('pantry', 20)}</span><div><strong>Vorrat</strong><small>${pantryCount} Produkte</small></div>${icon('chevronRight', 14)}</button>
+    </div>
+
+    <section class="card home-planner-v192">
+      <div class="home-section-head-v192"><div><strong>Essensplanung</strong><small>Diese Woche</small></div><button data-action="tab" data-tab="recipes">Alle anzeigen ${icon('chevronRight', 13)}</button></div>
+      ${meals.length ? `<div class="home-meals-v192">${meals.map(dashboardMealCardV192).join('')}</div>` : `<button class="home-empty-action-v192" data-action="tab" data-tab="recipes"><span>${icon('calendar', 20)}</span><div><strong>Woche noch nicht geplant</strong><small>Rezepte für Frühstück, Mittag- oder Abendessen eintragen</small></div>${icon('chevronRight', 14)}</button>`}
+    </section>
+
+    ${urgent.length ? `<section class="card home-alerts-v192"><div class="home-section-head-v192"><div><strong>Bald verwenden</strong><small>${urgent.length} ${urgent.length === 1 ? 'Produkt' : 'Produkte'}</small></div><button data-action="tab" data-tab="pantry">Vorrat ${icon('chevronRight', 13)}</button></div>${urgent.map((item) => { const exp = expiryInfo(item.expiry_date); return `<button data-action="edit-pantry" data-id="${item.id}"><span>${emojiForItem(item)}</span><div><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.category || item.location || '')}</small></div><b>${escapeHtml(exp.label)}</b></button>`; }).join('')}</section>` : ''}
+
+    <button class="card home-note-v192" data-action="${latestNote ? 'edit-note' : 'tab'}" ${latestNote ? `data-id="${latestNote.id}"` : 'data-tab="notes"'}>
+      <span>${icon('notes', 20)}</span><div><strong>Notizen</strong><small>${latestNote ? escapeHtml(latestNote.title || 'Letzte Notiz') : 'Noch keine Notizen'}</small></div><b>${notes.length}</b>${icon('chevronRight', 14)}
+    </button>
+  </div>`;
+};

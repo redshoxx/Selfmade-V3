@@ -66,7 +66,7 @@ dialogRoot.addEventListener('submit', async (event) => {
       if (fd.has('notifications')) await enableNotifications();
       closeDialog();
       renderApp();
-      toast('Selfmade ist eingerichtet');
+      toast('HaushaltKlar ist eingerichtet');
     } catch (error) { toast(error.message, 'error'); }
   } else if (kind === 'settings') {
     await mutate(() => api('/api/settings', { method: 'PATCH', body: JSON.stringify({ display_name: values.display_name, household_name: values.household_name, theme: values.theme, savings: Number(values.savings) }) }), 'Einstellungen gespeichert');

@@ -122,11 +122,10 @@ async function flushOfflineQueue() {
   }
 }
 
-
 function renderAuthScreen(message = '') {
   const signup = authMode === 'signup';
   shell.innerHTML = `<div class="auth-screen">
-    <div class="auth-brand"><img src="/icon-192.png" alt="Selfmade"><div><strong>Selfmade Cloud</strong><small>Deine Haushaltsdaten sicher auf allen Geräten.</small></div></div>
+    <div class="auth-brand"><img src="/icon-192.png" alt="HaushaltKlar"><div><strong>HaushaltKlar Cloud</strong><small>Deine Haushaltsdaten sicher auf allen Geräten.</small></div></div>
     <section class="auth-card">
       <div class="auth-tabs"><button class="${signup ? '' : 'active'}" data-action="auth-mode" data-mode="signin">Anmelden</button><button class="${signup ? 'active' : ''}" data-action="auth-mode" data-mode="signup">Registrieren</button></div>
       ${message ? `<div class="auth-message">${escapeHtml(message)}</div>` : ''}

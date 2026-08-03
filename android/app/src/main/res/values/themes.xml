@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.Selfmade" parent="android:style/Theme.Material.Light.NoActionBar">
+    <style name="Theme.HaushaltKlar" parent="android:style/Theme.Material.Light.NoActionBar">
         <item name="android:fontFamily">sans</item>
         <item name="android:windowActionModeOverlay">true</item>
-        <item name="android:windowBackground">@color/selfmade_background</item>
-        <item name="android:colorAccent">@color/selfmade_accent</item>
-        <item name="android:navigationBarColor">@color/selfmade_background</item>
-        <item name="android:statusBarColor">@color/selfmade_background</item>
+        <item name="android:windowBackground">@color/haushaltklar_background</item>
+        <item name="android:colorAccent">@color/haushaltklar_accent</item>
+        <item name="android:navigationBarColor">@color/haushaltklar_background</item>
+        <item name="android:statusBarColor">@color/haushaltklar_background</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowLightNavigationBar">true</item>
     </style>

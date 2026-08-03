@@ -13,11 +13,11 @@
         android:fullBackupContent="@xml/backup_rules"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:icon="@drawable/ic_launcher"
-        android:label="Selfmade"
+        android:label="HaushaltKlar"
         android:networkSecurityConfig="@xml/network_security_config"
         android:roundIcon="@drawable/ic_launcher"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Selfmade"
+        android:theme="@style/Theme.HaushaltKlar"
         android:usesCleartextTraffic="false">
 
         <activity

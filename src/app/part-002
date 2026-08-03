@@ -44,7 +44,7 @@ function applyTheme() {
     ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
     : theme;
   document.documentElement.dataset.theme = resolved;
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', resolved === 'dark' ? '#0f0f12' : '#f0eee9');
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', resolved === 'dark' ? '#0f0f12' : '#f5f7fb');
 }
 
 function header() {
