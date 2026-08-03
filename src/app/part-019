@@ -1,0 +1,89 @@
+shell.addEventListener('click', async (event) => {
+  const target = event.target.closest('[data-action]');
+  if (!target) return;
+  const action = target.dataset.action;
+
+  if (action === 'open-shopping-add-v17') {
+    openShoppingAddSheetV17();
+  } else if (action === 'shopping-view-v17') {
+    shoppingViewV17 = target.dataset.view === 'list' ? 'list' : 'compact';
+    localStorage.setItem('selfmade-shopping-view-v17', shoppingViewV17);
+    renderApp();
+  } else if (action === 'toggle-shopping-group-v17') {
+    const category = target.dataset.category;
+    if (collapsedShoppingGroupsV17.has(category)) collapsedShoppingGroupsV17.delete(category);
+    else collapsedShoppingGroupsV17.add(category);
+    persistCollapsedGroupsV17();
+    renderApp();
+  } else if (action === 'toggle-completed-shopping-v17') {
+    showCompletedShoppingV17 = !showCompletedShoppingV17;
+    localStorage.setItem('selfmade-shopping-completed-v17', showCompletedShoppingV17 ? '1' : '0');
+    renderApp();
+  } else if (action === 'toggle-store-item-v17') {
+    const item = data.shopping.find((entry) => entry.id === Number(target.dataset.id));
+    if (!item) return;
+    await patchShopping(item.id, { checked: !item.checked });
+    const groups = storeCategories();
+    const current = groups[storeMode.categoryIndex];
+    if (current && current.items.every((entry) => entry.checked) && storeMode.categoryIndex < groups.length - 1) {
+      storeMode.categoryIndex += 1;
+      renderApp();
+    }
+  } else if (action === 'open-store-price-v17') {
+    openStorePriceSheetV17(data.shopping.find((entry) => entry.id === Number(target.dataset.id)));
+  } else if (action === 'store-prev-v17') {
+    storeMode.categoryIndex = Math.max(0, storeMode.categoryIndex - 1);
+    renderApp();
+  } else if (action === 'store-next-v17') {
+    const groups = storeCategories();
+    if (storeMode.categoryIndex >= groups.length - 1) storeMode.checkout = true;
+    else storeMode.categoryIndex += 1;
+    renderApp();
+  } else if (action === 'store-checkout-v17') {
+    storeMode.checkout = true;
+    renderApp();
+  } else if (action === 'store-back-from-checkout-v17') {
+    storeMode.checkout = false;
+    renderApp();
+  }
+});
+
+dialogRoot.addEventListener('input', (event) => {
+  if (event.target.id !== 'shopping-add-name-v17') return;
+  const results = dialogRoot.querySelector('#shopping-sheet-results-v17');
+  if (results) results.innerHTML = shoppingSheetMatchesV17(event.target.value);
+  const category = dialogRoot.querySelector('select[name="category"]');
+  if (category && event.target.value.trim()) category.value = inferShoppingCategoryV16(event.target.value);
+});
+
+dialogRoot.addEventListener('click', async (event) => {
+  const target = event.target.closest('[data-action]');
+  if (!target) return;
+  const action = target.dataset.action;
+
+  if (action === 'shopping-sheet-pick-v17') {
+    const form = target.closest('form');
+    if (!form) return;
+    form.elements.name.value = target.dataset.name || '';
+    form.elements.quantity.value = target.dataset.quantity || '1';
+    form.elements.category.value = target.dataset.category || 'Sonstiges';
+    form.elements.name.dispatchEvent(new Event('input', { bubbles: true }));
+    form.elements.name.focus();
+  } else if (action === 'shopping-sheet-scan-v17') {
+    closeDialog();
+    openBarcodeScanner();
+  } else if (action === 'shopping-sheet-routines-v17') {
+    closeDialog();
+    openRecurring();
+  } else if (action === 'save-store-price-v17') {
+    const raw = String(dialogRoot.querySelector('#store-price-input-v17')?.value || '').replace(/[^0-9,.-]/g, '').replace(',', '.');
+    storeMode.prices.set(Number(target.dataset.id), Math.max(0, Number(raw) || 0));
+    closeDialog();
+    renderApp();
+  } else if (action === 'clear-store-price-v17') {
+    storeMode.prices.set(Number(target.dataset.id), 0);
+    closeDialog();
+    renderApp();
+  }
+});
+
