@@ -1,0 +1,456 @@
+
+/* Version 17 – native Einkaufslistenansicht und neuer Ladenmodus */
+.shopping-header-v17 {
+  align-items: flex-end;
+}
+
+.shopping-header-actions-v17 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.shopping-header-add-v17 {
+  width: 42px;
+  height: 42px;
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.shopping-screen-v17 {
+  gap: 13px;
+  padding-bottom: 18px;
+}
+
+.shopping-toolbar-v17 {
+  display: block;
+}
+
+.shopping-view-toggle-v17 {
+  min-width: 0;
+  padding: 3px;
+  border-radius: 13px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  background: var(--surface);
+}
+
+.shopping-view-toggle-v17 button {
+  min-height: 38px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.shopping-view-toggle-v17 button.active {
+  background: var(--card);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+
+.shopping-add-trigger-v17 {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.shopping-progress-v17 {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 0 2px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.shopping-progress-v17 strong {
+  color: var(--text);
+  font-size: 12px;
+}
+
+.shopping-progress-v17 .progress-track {
+  height: 4px;
+}
+
+.shopping-groups-v17 {
+  display: grid;
+  gap: 14px;
+}
+
+.shopping-group-v17 {
+  display: grid;
+  gap: 7px;
+}
+
+.shopping-group-header-v17,
+.shopping-completed-header-v17 {
+  width: 100%;
+  min-height: 38px;
+  padding: 3px 2px;
+  border: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+}
+
+.shopping-group-identity-v17 {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.shopping-group-identity-v17 i {
+  width: 29px;
+  height: 29px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: var(--surface);
+  font-style: normal;
+  font-size: 15px;
+}
+
+.shopping-group-identity-v17 strong {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shopping-group-count-v17,
+.shopping-completed-header-v17 > span:last-child {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.shopping-group-items-v17 {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
+}
+
+.shopping-row-v17 {
+  min-width: 0;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+}
+
+.shopping-row-v17:last-child {
+  border-bottom: 0;
+}
+
+.shopping-row-v17.compact {
+  min-height: 54px;
+}
+
+.shopping-row-v17.list {
+  min-height: 69px;
+}
+
+.shopping-row-v17.is-completed {
+  opacity: .62;
+}
+
+.shopping-check-v17 {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border-width: 2px;
+}
+
+.shopping-row-main-v17 {
+  min-width: 0;
+  flex: 1;
+  padding: 5px 0;
+  border: 0;
+  display: grid;
+  gap: 3px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
+.shopping-row-main-v17 strong,
+.shopping-row-main-v17 small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shopping-row-main-v17 strong {
+  font-size: 14px;
+  font-weight: 830;
+}
+
+.shopping-row-main-v17 small {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.shopping-quantity-v17 {
+  max-width: 76px;
+  padding: 5px 8px;
+  border-radius: 9px;
+  overflow: hidden;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shopping-row-more-v17 {
+  width: 30px;
+  height: 34px;
+  flex: 0 0 30px;
+  border: 0;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  color: var(--muted);
+}
+
+.shopping-stepper-v17 {
+  flex: 0 0 auto;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.shopping-stepper-v17 .step-button {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: var(--card);
+}
+
+.shopping-stepper-v17 .step-value {
+  min-width: 23px;
+  font-size: 12px;
+}
+
+.shopping-completed-v17 {
+  padding-top: 2px;
+  border-top: 1px solid var(--line);
+}
+
+.shopping-completed-header-v17 > span:first-child {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.shopping-group-items-v17.completed {
+  margin-top: 6px;
+}
+
+.shopping-empty-v17 {
+  min-height: 250px;
+  padding: 28px 24px;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 9px;
+  text-align: center;
+}
+
+.shopping-empty-v17 > span {
+  width: 54px;
+  height: 54px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.shopping-empty-v17 strong {
+  font-size: 17px;
+}
+
+.shopping-empty-v17 p {
+  max-width: 260px;
+  margin: 0 0 7px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.shopping-sheet-search-v17 {
+  min-height: 52px;
+  padding: 0 13px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: var(--surface);
+  color: var(--muted);
+}
+
+.shopping-sheet-search-v17:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+
+.shopping-sheet-search-v17 input {
+  min-width: 0;
+  width: 100%;
+  height: 50px;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 16px;
+}
+
+.shopping-sheet-results-v17 {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: var(--card);
+}
+
+.shopping-sheet-results-v17 button {
+  width: 100%;
+  min-height: 52px;
+  padding: 8px 10px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 28px;
+  align-items: center;
+  gap: 9px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+}
+
+.shopping-sheet-results-v17 button:last-child {
+  border-bottom: 0;
+}
+
+.shopping-sheet-results-v17 i {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: var(--surface);
+  font-style: normal;
+}
+
+.shopping-sheet-results-v17 span {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.shopping-sheet-results-v17 strong,
+.shopping-sheet-results-v17 small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shopping-sheet-results-v17 strong {
+  font-size: 13px;
+}
+
+.shopping-sheet-results-v17 small {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.shopping-sheet-fields-v17 {
+  margin-top: 2px;
+}
+
+.shopping-sheet-shortcuts-v17 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.shopping-sheet-shortcuts-v17 button {
+  min-height: 45px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.shopping-sheet-recent-v17 {
+  display: grid;
+  gap: 7px;
+}
+
+.shopping-sheet-recent-v17 > span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.shopping-sheet-recent-v17 > div {
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  padding-bottom: 3px;
+  scrollbar-width: none;
+}
+
+.shopping-sheet-recent-v17 button {
+  min-height: 38px;
+  padding: 0 11px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--text);
+  font-size: 10px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
