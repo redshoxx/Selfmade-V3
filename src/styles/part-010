@@ -1,0 +1,37 @@
+
+
+/* Version 18 – Rendering-Containment für große Listen */
+.shopping-group-v17,
+.shopping-completed-v17,
+.category-block,
+.note-card,
+.budget-card,
+.expiry-row,
+.store-item-v17,
+.store-checkout-list-v17,
+.list-card {
+  content-visibility: auto;
+  contain: layout style paint;
+}
+
+.shopping-group-v17,
+.shopping-completed-v17,
+.category-block,
+.list-card {
+  contain-intrinsic-size: auto 180px;
+}
+
+.note-card,
+.budget-card,
+.expiry-row,
+.store-item-v17 {
+  contain-intrinsic-size: auto 72px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .store-overall-progress-v17 i,
+  .shopping-group-header-v17 svg,
+  .shopping-completed-header-v17 svg {
+    transition: none;
+  }
+}

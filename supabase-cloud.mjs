@@ -114,6 +114,20 @@ export function createSupabaseCloud(options = {}) {
     return Array.isArray(payload) ? payload : [];
   }
 
+  async function loadStateMeta(token, householdId = '') {
+    const filter = householdId ? `&household_id=eq.${encodeURIComponent(householdId)}` : '&order=updated_at.desc&limit=1';
+    const { payload } = await request(`/rest/v1/selfmade_household_states?select=household_id,version,updated_at${filter}`, {
+      token,
+      headers: { accept: 'application/json' }
+    });
+    const row = Array.isArray(payload) ? payload[0] : payload;
+    return row ? {
+      householdId: row.household_id,
+      version: Number(row.version),
+      updatedAt: row.updated_at
+    } : null;
+  }
+
   async function bootstrap(token, { displayName, householdName, initialState }) {
     const { payload } = await request('/rest/v1/rpc/selfmade_bootstrap', {
       method: 'POST',
@@ -140,11 +154,10 @@ export function createSupabaseCloud(options = {}) {
     if (!rows.length && householdId) rows = await loadStateRows(token, '');
     if (!rows.length) return bootstrap(token, { displayName, householdName, initialState });
     const row = rows[0];
-    const households = await listHouseholds(token);
-    const household = households.find((item) => item.id === row.household_id);
+    const stateHouseholdName = row.data?.tables?.settings?.[0]?.household_name;
     return {
       householdId: row.household_id,
-      householdName: household?.name || householdName || 'Mein Haushalt',
+      householdName: stateHouseholdName || householdName || 'Mein Haushalt',
       version: Number(row.version),
       data: row.data,
       updatedAt: row.updated_at
@@ -183,6 +196,7 @@ export function createSupabaseCloud(options = {}) {
     signOut,
     getUser,
     listHouseholds,
+    loadStateMeta,
     loadOrBootstrap,
     saveState
   };

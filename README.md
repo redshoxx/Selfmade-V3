@@ -1,4 +1,4 @@
-# Selfmade V17 – native iPhone-PWA
+# Selfmade V18 – Performance-Update
 
 Selfmade ist eine für den iPhone-Homescreen optimierte Haushalts-App mit Supabase-Speicherung und Vercel-Deployment.
 
@@ -24,16 +24,31 @@ Selfmade ist eine für den iPhone-Homescreen optimierte Haushalts-App mit Supaba
 - Barcode-Scanner mit begrenzter Kamerahöhe, Live-Erkennung und Foto-Fallback
 - keine Demo-, Beispiel- oder Platzhalterdaten
 
-## Einkauf in Version 17
+## Einkaufsseite Version 16
 
-- gruppierte Einkaufsliste ohne dauerhaft ausgeklapptes Eingabeformular
-- Produkt hinzufügen als iPhone-typisches Bottom Sheet
-- umschaltbare Kompakt- und Listenansicht
-- einklappbare Kategorien und erledigte Produkte
-- neu gestalteter Ladenmodus mit kompakten Produktkarten
-- Preise werden über ein eigenes Bottom Sheet erfasst
-- kompakte, Safe-Area-konforme Abschlussleiste
-- Fortschritt, Warenkorb und Abschluss bleiben jederzeit erreichbar
+- klar beschriftete Schnelleingabe direkt oben
+- Mengen wie `2 kg Kartoffeln` werden automatisch erkannt
+- Kategorie wird aus Katalog, Vorrat oder Produktname abgeleitet
+- passende Produkte aus dem eigenen Katalog erscheinen während der Eingabe
+- Barcode, Detailformular und Routinen sind direkt an der Eingabe erreichbar
+- offene und erledigte Artikel sind getrennt
+- keine künstlichen Beispielvorschläge
+
+## Performance-Optimierungen in V18
+
+- Barcode-Bibliothek wird erst beim Öffnen des Scanners geladen
+- adaptive Cloud-Synchronisierung ohne Polling im Hintergrund
+- kleiner Versionscheck statt vollständigem Datenabruf bei jeder Prüfung
+- zusammengefasste parallele State-Anfragen
+- verzögertes Offline-Cache-Schreiben außerhalb kritischer UI-Arbeit
+- deduplizierte identische Render-Aufrufe
+- zwischengespeicherte SVG-Icons und Datumsberechnungen
+- schnellere Supabase-Bridge ohne redundante Haushaltsabfrage
+- Cache-first für versionierte App-Assets mit Aktualisierung im Hintergrund
+- Browser-Cache für versionierte JavaScript-, CSS- und Icon-Dateien
+- Rendering-Containment für große Listen
+
+Es wurden keine Funktionen, Formulare oder sichtbaren Layouts verändert.
 
 ## Supabase
 
@@ -74,4 +89,15 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_1EpIlW3NxMKtGL4MjF2xtg_aYacqCx3
 
 ## iPhone-Aktualisierung
 
-Nach einem Vercel-Deployment die Homescreen-App vollständig schließen und erneut öffnen. Der Service Worker Version 17 entfernt ältere App-Caches automatisch.
+Nach einem Vercel-Deployment die Homescreen-App vollständig schließen und erneut öffnen. Der Service Worker Version 18 entfernt ältere App-Caches automatisch.
+
+
+## Einkauf in Version 17
+
+- gruppierte Einkaufsliste ohne dauerhaft ausgeklapptes Eingabeformular
+- Produkt hinzufügen als iPhone-typisches Bottom Sheet
+- umschaltbare Kompakt- und Listenansicht
+- einklappbare Kategorien und erledigte Produkte
+- neu gestalteter Ladenmodus mit kompakten Produktkarten
+- Preise werden über ein eigenes Bottom Sheet erfasst
+- kompakte, Safe-Area-konforme Abschlussleiste

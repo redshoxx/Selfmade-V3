@@ -33,9 +33,9 @@ test('store mode uses compact cards and price bottom sheet', () => {
   assert.match(styles, /\.store-price-sheet-v17/);
 });
 
-test('version 17 assets force a fresh homescreen cache', () => {
-  assert.match(index, /app\.js\?v=17/);
-  assert.match(index, /styles\.css\?v=17/);
-  assert.match(sw, /selfmade-v17-native-shopping-store/);
-  assert.match(sw, /version:\s*17/);
+test('version 18 preserves the V17 shopping UI with a fresh performance cache', () => {
+  assert.match(index, /app\.js\?v=18/);
+  assert.match(index, /styles\.css\?v=18/);
+  assert.match(sw, /selfmade-v18-performance/);
+  assert.match(sw, /version:\s*18/);
 });

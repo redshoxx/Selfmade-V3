@@ -28,6 +28,6 @@ test('shopping layout is compact and usable on iPhone 12', () => {
 });
 
 test('legacy V16 shopping code coexists with the current cache version', () => {
-  assert.match(index, /app\.js\?v=17/);
-  assert.match(index, /styles\.css\?v=17/);
+  assert.match(index, /app\.js\?v=18/);
+  assert.match(index, /styles\.css\?v=18/);
 });

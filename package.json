@@ -1,9 +1,9 @@
 {
   "name": "selfmade-haushaltsapp",
-  "version": "17.0.0",
+  "version": "18.0.0",
   "private": true,
   "type": "module",
-  "description": "Für iPhone optimierte Haushalts-PWA mit nativer Einkaufsliste, Bottom-Sheet-Produkterfassung, Kompakt-/Listenansicht und neuem Ladenmodus.",
+  "description": "Reines Performance-Update der Selfmade-PWA mit schnellerem Start, adaptiver Cloud-Synchronisierung und optimiertem Rendering.",
   "engines": {
     "node": "22.x"
   },

@@ -9,11 +9,23 @@ async function cloudBackgroundRefresh() {
   if (!cloudConfig.enabled || !authSession?.access_token || cloudPollBusy || busy || storeMode.active || dialogRoot.innerHTML || !navigator.onLine) return;
   cloudPollBusy = true;
   try {
-    const next = await api('/api/state');
     const beforeVersion = Number(data?.cloud?.version || 0);
-    const nextVersion = Number(next?.cloud?.version || 0);
+    let nextVersion = beforeVersion;
+    try {
+      const meta = await api('/api/state/version');
+      nextVersion = Number(meta?.version || 0);
+    } catch (error) {
+      if (error.status !== 404) throw error;
+      const next = await api('/api/state');
+      nextVersion = Number(next?.cloud?.version || 0);
+      if (!data || nextVersion > beforeVersion) {
+        data = next;
+        renderApp();
+      }
+      return;
+    }
     if (!data || nextVersion > beforeVersion) {
-      data = next;
+      data = await api('/api/state');
       renderApp();
     }
   } catch (error) {

@@ -12,14 +12,15 @@ test('cloud refresh does not emit a visible sync toast', () => {
   assert.match(app, /if \(silentCloudMessages\.some\(\(text\) => normalizedMessage\.includes\(text\)\)\) return/);
 });
 
-test('service worker uses network-first core assets and a new cache version', () => {
-  assert.match(sw, /selfmade-v17-native-shopping-store/);
-  assert.match(sw, /fetch\(event\.request, \{ cache: 'no-store' \}\)/);
+test('service worker uses fast cached assets and a fresh cache version', () => {
+  assert.match(sw, /selfmade-v18-performance/);
+  assert.match(sw, /cacheFirstWithRefresh/);
+  assert.match(sw, /navigationNetworkFirst/);
   assert.match(sw, /caches\.delete/);
 });
 
 test('core frontend assets are cache-busted', () => {
-  assert.match(index, /styles\.css\?v=17/);
-  assert.match(index, /app\.js\?v=17/);
+  assert.match(index, /styles\.css\?v=18/);
+  assert.match(index, /app\.js\?v=18/);
   assert.match(app, /navigator\.serviceWorker\.register\('\/sw\.js'/);
 });

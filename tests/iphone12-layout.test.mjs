@@ -29,7 +29,8 @@ test('Scannerbibliothek ist fest versioniert und nicht mehr auf einen fehlenden 
   const index = await read('public/index.html');
   const app = await read('public/app.js');
   assert.doesNotMatch(index, /\/vendor\/zxing-browser\.min\.js/);
-  assert.match(index, /https:\/\/unpkg\.com\/@zxing\/browser@0\.2\.1/);
+  assert.doesNotMatch(index, /zxing-browser-library/);
+  assert.match(app, /https:\/\/unpkg\.com\/@zxing\/browser@0\.2\.1/);
   assert.match(app, /cdn\.jsdelivr\.net\/npm\/@zxing\/browser@0\.2\.1/);
 });
 
