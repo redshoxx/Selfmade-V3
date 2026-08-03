@@ -1,9 +1,9 @@
-const CACHE = 'selfmade-v15-iphone12-layout';
+const CACHE = 'selfmade-v16-shopping-redesign';
 const VERSIONED_ASSETS = [
-  '/index.html?v=15',
-  '/styles.css?v=15',
-  '/app.js?v=15',
-  '/manifest.webmanifest?v=15',
+  '/index.html?v=16',
+  '/styles.css?v=16',
+  '/app.js?v=16',
+  '/manifest.webmanifest?v=16',
   '/icon.svg',
   '/icon-192.png',
   '/icon-512.png',
@@ -21,7 +21,7 @@ self.addEventListener('activate', (event) => {
     await Promise.all(keys.map((key) => key === CACHE ? Promise.resolve() : caches.delete(key)));
     await self.clients.claim();
     const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    clients.forEach((client) => client.postMessage({ type: 'SELFMADE_UPDATED', version: 15 }));
+    clients.forEach((client) => client.postMessage({ type: 'SELFMADE_UPDATED', version: 16 }));
   })());
 });
 
@@ -45,7 +45,7 @@ self.addEventListener('fetch', (event) => {
         }
         return response;
       } catch {
-        return (await caches.match(event.request)) || (await caches.match('/')) || (await caches.match('/index.html?v=15')) || Response.error();
+        return (await caches.match(event.request)) || (await caches.match('/')) || (await caches.match('/index.html?v=16')) || Response.error();
       }
     })());
     return;
