@@ -1,9 +1,9 @@
-const CACHE = 'selfmade-v16-shopping-redesign';
+const CACHE = 'selfmade-v17-native-shopping-store';
 const VERSIONED_ASSETS = [
-  '/index.html?v=16',
-  '/styles.css?v=16',
-  '/app.js?v=16',
-  '/manifest.webmanifest?v=16',
+  '/index.html?v=17',
+  '/styles.css?v=17',
+  '/app.js?v=17',
+  '/manifest.webmanifest?v=17',
   '/icon.svg',
   '/icon-192.png',
   '/icon-512.png',
@@ -21,7 +21,7 @@ self.addEventListener('activate', (event) => {
     await Promise.all(keys.map((key) => key === CACHE ? Promise.resolve() : caches.delete(key)));
     await self.clients.claim();
     const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    clients.forEach((client) => client.postMessage({ type: 'SELFMADE_UPDATED', version: 16 }));
+    clients.forEach((client) => client.postMessage({ type: 'SELFMADE_UPDATED', version: 17 }));
   })());
 });
 
@@ -30,8 +30,6 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   if (url.pathname.startsWith('/api/')) return;
 
-  // Navigation and core code are network-first so an old Homescreen cache
-  // can never keep obsolete app behavior alive after a deployment.
   const networkFirst = event.request.mode === 'navigate'
     || ['/index.html', '/app.js', '/styles.css', '/manifest.webmanifest', '/sw.js'].includes(url.pathname);
 
@@ -45,7 +43,7 @@ self.addEventListener('fetch', (event) => {
         }
         return response;
       } catch {
-        return (await caches.match(event.request)) || (await caches.match('/')) || (await caches.match('/index.html?v=16')) || Response.error();
+        return (await caches.match(event.request)) || (await caches.match('/')) || (await caches.match('/index.html?v=17')) || Response.error();
       }
     })());
     return;
