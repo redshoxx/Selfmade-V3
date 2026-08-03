@@ -1,4 +1,4 @@
-# Selfmade V15 – native iPhone-PWA
+# Selfmade V16 – native iPhone-PWA
 
 Selfmade ist eine für den iPhone-Homescreen optimierte Haushalts-App mit Supabase-Speicherung und Vercel-Deployment.
 
@@ -23,6 +23,16 @@ Selfmade ist eine für den iPhone-Homescreen optimierte Haushalts-App mit Supaba
 - lautlose Cloud-Synchronisierung
 - Barcode-Scanner mit begrenzter Kamerahöhe, Live-Erkennung und Foto-Fallback
 - keine Demo-, Beispiel- oder Platzhalterdaten
+
+## Einkaufsseite Version 16
+
+- klar beschriftete Schnelleingabe direkt oben
+- Mengen wie `2 kg Kartoffeln` werden automatisch erkannt
+- Kategorie wird aus Katalog, Vorrat oder Produktname abgeleitet
+- passende Produkte aus dem eigenen Katalog erscheinen während der Eingabe
+- Barcode, Detailformular und Routinen sind direkt an der Eingabe erreichbar
+- offene und erledigte Artikel sind getrennt
+- keine künstlichen Beispielvorschläge
 
 ## Supabase
 
@@ -63,4 +73,4 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_1EpIlW3NxMKtGL4MjF2xtg_aYacqCx3
 
 ## iPhone-Aktualisierung
 
-Nach einem Vercel-Deployment die Homescreen-App vollständig schließen und erneut öffnen. Der Service Worker Version 15 entfernt ältere App-Caches automatisch.
+Nach einem Vercel-Deployment die Homescreen-App vollständig schließen und erneut öffnen. Der Service Worker Version 16 entfernt ältere App-Caches automatisch.
