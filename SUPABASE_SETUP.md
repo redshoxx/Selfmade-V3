@@ -97,9 +97,3 @@ Die strukturierten Kassenbondaten werden in Supabase gespeichert. Die Bilddatei
 selbst liegt in dieser Version weiterhin auf dem App-Server. Für horizontal
 skalierte Deployments sollte als nächster Schritt ein privater Supabase-Storage-
 Bucket ergänzt werden.
-
-## Betrieb auf Vercel
-
-Für Vercel gelten zusätzlich die Schritte in `VERCEL_DEPLOY.md`. Dort werden
-`SUPABASE_URL` und `SUPABASE_PUBLISHABLE_KEY` als Vercel Environment Variables
-gesetzt. Eine dauerhafte SQLite-Datei wird auf Vercel nicht verwendet.

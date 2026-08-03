@@ -1,152 +1,55 @@
-# Vercel-Deployment
+# Selfmade auf Vercel bereitstellen
 
-## 1. Supabase vorbereiten
+## 1. Supabase-Migration ausführen
 
-Öffne im gewünschten Supabase-Projekt den SQL Editor und führe diese Datei aus:
+Im Supabase-Dashboard des Projekts `ecflcrigkfyhifekwfxq` den **SQL Editor** öffnen und den kompletten Inhalt dieser Datei ausführen:
 
 ```text
 supabase/migrations/20260803_selfmade_cloud.sql
 ```
 
-Die Migration erstellt:
+Ohne diese Migration funktionieren Registrierung und Anmeldung, aber Selfmade kann noch keinen Haushalt speichern. Die App meldet dann gezielt `migration_required`.
 
-- `selfmade_profiles`
-- `selfmade_households`
-- `selfmade_household_members`
-- `selfmade_household_states`
-- Row-Level-Security-Policies
-- Bootstrap- und Update-Funktionen
+## 2. Zu Vercel hochladen
 
-## 2. Supabase-Zugangsdaten holen
-
-Benötigt werden ausschließlich:
-
-```env
-SUPABASE_URL=https://DEIN_PROJECT_REF.supabase.co
-SUPABASE_PUBLISHABLE_KEY=sb_publishable_DEIN_KEY
-```
-
-Keinen Secret- oder Service-Role-Key im Frontend oder in öffentlich sichtbaren
-Dateien speichern.
-
-## 3. Projekt zu Vercel bringen
-
-### Variante A – GitHub
-
-1. Projektordner in ein GitHub-Repository hochladen.
-2. In Vercel `Add New → Project` öffnen.
-3. Repository importieren.
-4. Als Root Directory den Ordner wählen, in dem `package.json` und
-   `vercel.json` liegen.
-
-### Variante B – Vercel CLI
+Entweder das Projekt mit GitHub verbinden oder die Vercel CLI verwenden:
 
 ```bash
-npm install -g vercel
+npm install
+npm run build
 vercel
 ```
 
-Für das Produktionsdeployment:
+Vercel erkennt die Konfiguration in `vercel.json`.
 
-```bash
-vercel --prod
+## 3. Supabase-Konfiguration
+
+Die mitgelieferte **öffentliche** Publishable-Konfiguration ist bereits hinterlegt. Optional können im Vercel-Dashboard unter **Settings → Environment Variables** dieselben Werte gesetzt werden; Umgebungsvariablen überschreiben die mitgelieferten Werte:
+
+```env
+SUPABASE_URL=https://ecflcrigkfyhifekwfxq.supabase.co
+SUPABASE_PUBLISHABLE_KEY=sb_publishable_1EpIlW3NxMKtGL4MjF2xtg_aYacqCx3
 ```
 
-## 4. Environment Variables in Vercel
+Niemals einen `service_role`- oder `sb_secret_...`-Key in der App oder in öffentlich zugänglichen Dateien eintragen.
 
-In `Project Settings → Environment Variables` eintragen:
-
-```text
-SUPABASE_URL
-SUPABASE_PUBLISHABLE_KEY
-```
-
-Beide Variablen für Production, Preview und Development aktivieren.
-
-Nicht erforderlich auf Vercel:
-
-```text
-DATABASE_PATH
-HOST
-PORT
-```
-
-## 5. Build-Einstellungen
-
-Die Einstellungen werden aus `vercel.json` übernommen:
-
-```text
-Build Command: npm run build
-Output Directory: dist
-Node.js: 22.x
-```
-
-Die API-Aufrufe unter `/api/*` werden intern an `api/handler.mjs` weitergeleitet.
-
-## 6. Supabase Auth URLs
-
-Nach dem ersten Vercel-Deployment die erzeugte Domain in Supabase unter den
-Auth-URL-Einstellungen eintragen.
-
-Beispiel:
-
-```text
-Site URL:
-https://selfmade-example.vercel.app
-
-Additional Redirect URLs:
-https://selfmade-example.vercel.app/**
-https://*-dein-team.vercel.app/**
-```
-
-Das ist besonders relevant, wenn die E-Mail-Bestätigung in Supabase aktiviert
-ist.
-
-## 7. Funktionstest
-
-Öffne nach dem Deployment:
+## 4. Deployment prüfen
 
 ```text
 https://DEINE-DOMAIN.vercel.app/api/health
 ```
 
-Erwartete Antwort:
+Erwartet:
 
 ```json
-{
-  "ok": true,
-  "storage": "supabase"
-}
+{"ok":true,"storage":"supabase"}
 ```
 
-Danach die App öffnen, registrieren und eine Testnotiz anlegen. Nach einem
-Neuladen oder auf einem zweiten Gerät muss die Notiz weiterhin vorhanden sein.
+Danach die App öffnen, registrieren und anmelden.
 
-## 8. Fehlerbehebung
+## Fehlerdiagnose
 
-### `supabase_not_configured`
-
-Mindestens eine der beiden Vercel-Variablen fehlt oder das Deployment wurde
-nach dem Setzen nicht neu gestartet.
-
-### Registrierung funktioniert, aber keine App-Daten
-
-Die Supabase-Migration fehlt oder wurde im falschen Projekt ausgeführt.
-
-### 401 / Bitte zuerst anmelden
-
-Die Sitzung ist abgelaufen. Abmelden, neu anmelden und erneut testen.
-
-### Änderungen auf zwei Geräten kollidieren
-
-Die App verwendet Versionskontrolle und verhindert stilles Überschreiben. Auf
-dem älteren Gerät neu laden und die Änderung erneut durchführen.
-
-### API funktioniert lokal, aber nicht auf Vercel
-
-Prüfen:
-
-- Node.js-Version 22.x
-- `vercel.json` liegt im Root Directory
-- `api/handler.mjs` wurde mit hochgeladen
-- Supabase-Variablen sind für die aktuelle Deployment-Umgebung gesetzt
+- **500 direkt beim Start:** alte Version mit SQLite-Vercel-Function deployed. Diese V6 neu deployen.
+- **migration_required:** SQL-Migration wurde noch nicht ausgeführt.
+- **401:** nicht angemeldet oder Sitzung abgelaufen.
+- **Invalid login credentials:** E-Mail/Passwort falsch oder E-Mail muss erst bestätigt werden.

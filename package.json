@@ -1,6 +1,6 @@
 {
   "name": "selfmade-haushaltsapp",
-  "version": "5.0.0",
+  "version": "6.0.0",
   "private": true,
   "type": "module",
   "description": "Vercel- und iPhone-optimierte Haushalts-PWA mit Supabase Cloud, Geld, Einkauf, Vorrat, Notizen, Barcode und Kassenbon.",

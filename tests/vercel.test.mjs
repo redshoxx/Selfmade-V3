@@ -51,3 +51,12 @@ test('Vercel handler rejects deployments without Supabase variables', async () =
   assert.equal(res.statusCode, 503);
   assert.equal(res.json().code, 'supabase_not_configured');
 });
+
+test('production Vercel handler starts with embedded publishable configuration', async () => {
+  const { createPureVercelHandler } = await import('../vercel-api.mjs');
+  const handler = createPureVercelHandler();
+  const res = response();
+  await handler(request('/api/cloud/config'), res);
+  assert.equal(res.statusCode, 200);
+  assert.deepEqual(res.json(), { enabled: true, storage: 'supabase' });
+});

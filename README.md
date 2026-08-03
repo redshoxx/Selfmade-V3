@@ -1,104 +1,37 @@
-# Selfmade Haushalts-App V5 – Vercel + Supabase
+# Selfmade V6 – Vercel + Supabase
 
-Moderne iPhone-optimierte Haushalts-PWA für Vercel. Das Frontend wird als
-statische Website über das Vercel-CDN ausgeliefert. Die vorhandene REST-API
-läuft als Vercel Function und speichert sämtliche produktiven App-Daten in
-Supabase.
+Selfmade ist eine iPhone-optimierte Haushalts-PWA für Geld, Einkauf, Vorrat, Notizen, Barcode- und Kassenbon-Funktionen.
 
-## Funktionen
+## V6-Korrekturen
 
-- Dashboard mit Prioritäten und intelligenten Vorschlägen
-- Geldverwaltung, Budgets und Preisverlauf
-- gemeinsame Einkaufsliste und Ladenmodus
-- Vorrat, Lagerorte, Mindestbestände und Ablaufwarnungen
-- Notizen, Tags, Checklisten und Fälligkeiten
-- Barcode-Katalog und Open-Food-Facts-Suche
-- Kassenbon-Import und strukturierte Positionen
-- wiederkehrende Artikel
-- Haushaltsmitglieder
-- Backup-Import und -Export
-- iPhone-PWA mit Safe Areas, App-Icon und Homescreen-Modus
-- Supabase Auth, RLS, Cloud-Synchronisierung und Konflikterkennung
-- Vercel Functions und statischer Vercel-Build
+- Vercel Function vollständig ohne `node:sqlite`
+- keine persistente lokale Datei in der Serverless-Runtime
+- Supabase als alleinige dauerhafte Cloud-Speicherung
+- öffentliche Supabase-Konfiguration bereits hinterlegt
+- Vercel Environment Variables können die Standardwerte überschreiben
+- verständliche Fehlermeldung, wenn die Supabase-Migration fehlt
+- PWA, Homescreen-Modus und iPhone Safe Areas bleiben erhalten
 
-## Architektur auf Vercel
-
-```text
-Browser / iPhone PWA
-        │
-        ├── statische Dateien aus dist/
-        │
-        └── /api/*
-              │
-              └── Vercel Function api/handler.mjs
-                        │
-                        └── Supabase Auth + Postgres
-```
-
-Auf Vercel wird keine lokale Datenbank als dauerhafter Speicher verwendet.
-SQLite läuft ausschließlich kurzzeitig im Speicher der Function, damit die
-bestehende Transaktionslogik kompatibel bleibt. Die dauerhafte Speicherung
-erfolgt in Supabase.
-
-## Vercel-Deployment
-
-Die vollständige Anleitung befindet sich in:
-
-```text
-VERCEL_DEPLOY.md
-```
-
-Kurzablauf:
-
-1. Supabase-Migration ausführen.
-2. Projekt zu GitHub hochladen oder in Vercel importieren.
-3. In Vercel die Environment Variables setzen:
-
-```env
-SUPABASE_URL=https://DEIN_PROJECT_REF.supabase.co
-SUPABASE_PUBLISHABLE_KEY=sb_publishable_DEIN_KEY
-```
-
-4. Deployment starten.
-
-Vercel erkennt `vercel.json` und führt automatisch aus:
+## Lokal prüfen
 
 ```bash
-npm run build
-```
-
-Der statische Build wird in `dist/` erzeugt.
-
-## Lokal entwickeln
-
-Klassischer lokaler Node-Server:
-
-```bash
-npm start
-```
-
-```text
-http://127.0.0.1:4173
-```
-
-Vercel-kompatibler lokaler Test mit installierter Vercel CLI:
-
-```bash
-npm run dev:vercel
-```
-
-## Build und Tests
-
-```bash
-npm run build
+npm install
 npm test
+npm run build
 ```
 
-## Wichtige Dateien
+## Vercel
 
-- `vercel.json` – Vercel-Build, API-Rewrite und Header
-- `api/handler.mjs` – zentrale Vercel Function
-- `scripts/build-vercel.mjs` – kopiert die PWA nach `dist/`
-- `supabase/migrations/20260803_selfmade_cloud.sql` – Cloud-Datenmodell und RLS
-- `.env.example` – benötigte Umgebungsvariablen
-- `VERCEL_DEPLOY.md` – Schritt-für-Schritt-Anleitung
+Siehe [VERCEL_DEPLOY.md](./VERCEL_DEPLOY.md).
+
+## Supabase
+
+Vor dem ersten produktiven Login muss folgende Migration im Supabase SQL Editor ausgeführt werden:
+
+```text
+supabase/migrations/20260803_selfmade_cloud.sql
+```
+
+## Sicherheit
+
+Der eingetragene `sb_publishable_...`-Key ist ein öffentlicher App-Key. Die Sicherheit der Haushaltsdaten erfolgt über Supabase Auth und Row Level Security. Ein Service-Role- oder Secret-Key wird nicht verwendet.

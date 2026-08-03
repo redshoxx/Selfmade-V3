@@ -1,0 +1,683 @@
+export const INITIAL_BACKUP = {
+  "version": 3,
+  "exported_at": "2026-08-03T12:12:45.309Z",
+  "tables": {
+    "settings": [
+      {
+        "id": 1,
+        "display_name": "Lena",
+        "household_name": "Mein Haushalt",
+        "theme": "light",
+        "savings": 1240,
+        "selected_month": "2026-08",
+        "updated_at": "2026-08-03T12:12:45.212Z"
+      }
+    ],
+    "members": [
+      {
+        "id": 1,
+        "name": "Lena",
+        "avatar": "L",
+        "role": "Organisatorin",
+        "created_at": "2026-08-03T12:12:45.212Z"
+      },
+      {
+        "id": 2,
+        "name": "Jonas",
+        "avatar": "J",
+        "role": "Mitglied",
+        "created_at": "2026-08-03T12:12:45.212Z"
+      }
+    ],
+    "budgets": [
+      {
+        "id": 1,
+        "name": "Lebensmittel",
+        "icon": "cart",
+        "limit_amount": 500,
+        "accent": "orange",
+        "sort_order": 1
+      },
+      {
+        "id": 2,
+        "name": "Freizeit",
+        "icon": "film",
+        "limit_amount": 150,
+        "accent": "red",
+        "sort_order": 2
+      },
+      {
+        "id": 3,
+        "name": "Wohnen",
+        "icon": "home",
+        "limit_amount": 1200,
+        "accent": "green",
+        "sort_order": 3
+      },
+      {
+        "id": 4,
+        "name": "Mobilität",
+        "icon": "car",
+        "limit_amount": 120,
+        "accent": "purple",
+        "sort_order": 4
+      },
+      {
+        "id": 5,
+        "name": "Haushalt",
+        "icon": "basket",
+        "limit_amount": 400,
+        "accent": "blue",
+        "sort_order": 5
+      }
+    ],
+    "transactions": [
+      {
+        "id": 1,
+        "type": "income",
+        "amount": 2980,
+        "category": "Einkommen",
+        "note": "Gehalt",
+        "booked_on": "2026-08-01",
+        "member_id": null,
+        "created_at": "2026-08-03T12:12:45.212Z"
+      },
+      {
+        "id": 2,
+        "type": "expense",
+        "amount": 1180,
+        "category": "Wohnen",
+        "note": "Miete",
+        "booked_on": "2026-08-01",
+        "member_id": null,
+        "created_at": "2026-08-03T12:12:45.212Z"
+      },
+      {
+        "id": 3,
+        "type": "expense",
+        "amount": 377.7,
+        "category": "Lebensmittel",
+        "note": "Weitere Einkäufe",
+        "booked_on": "2026-08-02",
+        "member_id": null,
+        "created_at": "2026-08-03T12:12:45.212Z"
+      },
+      {
+        "id": 4,
+        "type": "expense",
+        "amount": 28.4,
+        "category": "Lebensmittel",
+        "note": "Wocheneinkauf",
+        "booked_on": "2026-08-03",
+        "member_id": null,
+        "created_at": "2026-08-03T12:12:45.212Z"
+      },
+      {
+        "id": 5,
+        "type": "expense",
+        "amount": 6.5,
+        "category": "Lebensmittel",
+        "note": "Unterwegs",
+        "booked_on": "2026-08-03",
+        "member_id": null,
+        "created_at": "2026-08-03T12:12:45.212Z"
+      },
+      {
+        "id": 6,
+        "type": "expense",
+        "amount": 168,
+        "category": "Freizeit",
+        "note": "Freizeit",
+        "booked_on": "2026-08-02",
+        "member_id": null,
+        "created_at": "2026-08-03T12:12:45.212Z"
+      },
+      {
+        "id": 7,
+        "type": "expense",
+        "amount": 98,
+        "category": "Mobilität",
+        "note": "Mobilität",
+        "booked_on": "2026-08-02",
+        "member_id": null,
+        "created_at": "2026-08-03T12:12:45.212Z"
+      },
+      {
+        "id": 8,
+        "type": "expense",
+        "amount": 350,
+        "category": "Haushalt",
+        "note": "Haushalt",
+        "booked_on": "2026-08-02",
+        "member_id": null,
+        "created_at": "2026-08-03T12:12:45.212Z"
+      },
+      {
+        "id": 9,
+        "type": "expense",
+        "amount": 200,
+        "category": "Versicherung",
+        "note": "Versicherungen",
+        "booked_on": "2026-08-02",
+        "member_id": null,
+        "created_at": "2026-08-03T12:12:45.212Z"
+      },
+      {
+        "id": 10,
+        "type": "expense",
+        "amount": 158.6,
+        "category": "Sonstiges",
+        "note": "Sonstiges",
+        "booked_on": "2026-08-02",
+        "member_id": null,
+        "created_at": "2026-08-03T12:12:45.212Z"
+      }
+    ],
+    "recurring_items": [
+      {
+        "id": 1,
+        "name": "Vollmilch",
+        "quantity": "2",
+        "category": "Kühlregal",
+        "frequency_days": 7,
+        "next_due": "2026-08-03",
+        "enabled": 1,
+        "created_at": "2026-08-03T12:12:45.212Z",
+        "updated_at": "2026-08-03T12:12:45.212Z"
+      },
+      {
+        "id": 2,
+        "name": "Klopapier",
+        "quantity": "1 Packung",
+        "category": "Haushalt",
+        "frequency_days": 30,
+        "next_due": "2026-08-08",
+        "enabled": 1,
+        "created_at": "2026-08-03T12:12:45.212Z",
+        "updated_at": "2026-08-03T12:12:45.212Z"
+      },
+      {
+        "id": 3,
+        "name": "Katzenfutter",
+        "quantity": "6",
+        "category": "Haushalt",
+        "frequency_days": 10,
+        "next_due": "2026-08-05",
+        "enabled": 1,
+        "created_at": "2026-08-03T12:12:45.212Z",
+        "updated_at": "2026-08-03T12:12:45.212Z"
+      }
+    ],
+    "shopping_items": [
+      {
+        "id": 1,
+        "name": "Tomaten",
+        "quantity": "500 g",
+        "category": "Obst & Gemüse",
+        "note": "",
+        "price": 2.49,
+        "checked": 0,
+        "member_id": null,
+        "sort_order": 1,
+        "created_at": "2026-08-03T12:12:45.212Z"
+      },
+      {
+        "id": 2,
+        "name": "Bananen",
+        "quantity": "6",
+        "category": "Obst & Gemüse",
+        "note": "",
+        "price": 1.89,
+        "checked": 0,
+        "member_id": null,
+        "sort_order": 2,
+        "created_at": "2026-08-03T12:12:45.212Z"
+      },
+      {
+        "id": 3,
+        "name": "Vollkornbrot",
+        "quantity": "1",
+        "category": "Backwaren",
+        "note": "geschnitten · von Jonas",
+        "price": 2.29,
+        "checked": 0,
+        "member_id": null,
+        "sort_order": 3,
+        "created_at": "2026-08-03T12:12:45.212Z"
+      },
+      {
+        "id": 4,
+        "name": "Vollmilch",
+        "quantity": "5",
+        "category": "Kühlregal",
+        "note": "",
+        "price": 1.29,
+        "checked": 1,
+        "member_id": null,
+        "sort_order": 4,
+        "created_at": "2026-08-03T12:12:45.212Z"
+      },
+      {
+        "id": 5,
+        "name": "Joghurt natur",
+        "quantity": "4",
+        "category": "Kühlregal",
+        "note": "",
+        "price": 0.79,
+        "checked": 1,
+        "member_id": null,
+        "sort_order": 5,
+        "created_at": "2026-08-03T12:12:45.212Z"
+      },
+      {
+        "id": 6,
+        "name": "Butter",
+        "quantity": "1",
+        "category": "Kühlregal",
+        "note": "",
+        "price": 2.29,
+        "checked": 1,
+        "member_id": null,
+        "sort_order": 6,
+        "created_at": "2026-08-03T12:12:45.212Z"
+      },
+      {
+        "id": 7,
+        "name": "Frischkäse",
+        "quantity": "1",
+        "category": "Kühlregal",
+        "note": "",
+        "price": 1.79,
+        "checked": 0,
+        "member_id": null,
+        "sort_order": 7,
+        "created_at": "2026-08-03T12:12:45.212Z"
+      },
+      {
+        "id": 8,
+        "name": "Klopapier",
+        "quantity": "1",
+        "category": "Haushalt",
+        "note": "die große Packung",
+        "price": 4.99,
+        "checked": 0,
+        "member_id": null,
+        "sort_order": 8,
+        "created_at": "2026-08-03T12:12:45.212Z"
+      },
+      {
+        "id": 9,
+        "name": "Spülmittel",
+        "quantity": "1",
+        "category": "Haushalt",
+        "note": "",
+        "price": 1.99,
+        "checked": 0,
+        "member_id": null,
+        "sort_order": 9,
+        "created_at": "2026-08-03T12:12:45.212Z"
+      },
+      {
+        "id": 10,
+        "name": "Haferflocken",
+        "quantity": "1",
+        "category": "Vorrat",
+        "note": "",
+        "price": 1.49,
+        "checked": 0,
+        "member_id": null,
+        "sort_order": 10,
+        "created_at": "2026-08-03T12:12:45.212Z"
+      }
+    ],
+    "pantry_items": [
+      {
+        "id": 1,
+        "name": "Vollmilch",
+        "quantity": "2 Stück",
+        "unit": "",
+        "category": "Kühlregal",
+        "location": "Vorratsschrank",
+        "expiry_date": null,
+        "purchase_date": null,
+        "opened_at": null,
+        "min_quantity": 0,
+        "price": null,
+        "note": "",
+        "buy_again": 0,
+        "inbox": 1,
+        "added_at": "2026-08-03T12:12:45.212Z",
+        "updated_at": "2026-08-03T12:12:45.212Z"
+      },
+      {
+        "id": 2,
+        "name": "Hähnchenbrust",
+        "quantity": "1 Stück",
+        "unit": "",
+        "category": "Kühlregal",
+        "location": "Vorratsschrank",
+        "expiry_date": null,
+        "purchase_date": null,
+        "opened_at": null,
+        "min_quantity": 0,
+        "price": null,
+        "note": "",
+        "buy_again": 0,
+        "inbox": 1,
+        "added_at": "2026-08-03T12:12:45.212Z",
+        "updated_at": "2026-08-03T12:12:45.212Z"
+      },
+      {
+        "id": 3,
+        "name": "Tomaten",
+        "quantity": "500 g",
+        "unit": "",
+        "category": "Obst & Gemüse",
+        "location": "Vorratsschrank",
+        "expiry_date": null,
+        "purchase_date": null,
+        "opened_at": null,
+        "min_quantity": 0,
+        "price": null,
+        "note": "",
+        "buy_again": 0,
+        "inbox": 1,
+        "added_at": "2026-08-03T12:12:45.212Z",
+        "updated_at": "2026-08-03T12:12:45.212Z"
+      },
+      {
+        "id": 4,
+        "name": "Hackfleisch",
+        "quantity": "400 g",
+        "unit": "",
+        "category": "Kühlregal",
+        "location": "Vorratsschrank",
+        "expiry_date": "2026-08-02",
+        "purchase_date": null,
+        "opened_at": null,
+        "min_quantity": 0,
+        "price": null,
+        "note": "",
+        "buy_again": 0,
+        "inbox": 0,
+        "added_at": "2026-08-03T12:12:45.212Z",
+        "updated_at": "2026-08-03T12:12:45.212Z"
+      },
+      {
+        "id": 5,
+        "name": "Joghurt natur",
+        "quantity": "2 Becher",
+        "unit": "",
+        "category": "Kühlregal",
+        "location": "Vorratsschrank",
+        "expiry_date": "2026-08-04",
+        "purchase_date": null,
+        "opened_at": null,
+        "min_quantity": 0,
+        "price": null,
+        "note": "",
+        "buy_again": 1,
+        "inbox": 0,
+        "added_at": "2026-08-03T12:12:45.212Z",
+        "updated_at": "2026-08-03T12:12:45.212Z"
+      },
+      {
+        "id": 6,
+        "name": "Feldsalat",
+        "quantity": "1 Beutel",
+        "unit": "",
+        "category": "Obst & Gemüse",
+        "location": "Vorratsschrank",
+        "expiry_date": "2026-08-05",
+        "purchase_date": null,
+        "opened_at": null,
+        "min_quantity": 0,
+        "price": null,
+        "note": "",
+        "buy_again": 0,
+        "inbox": 0,
+        "added_at": "2026-08-03T12:12:45.212Z",
+        "updated_at": "2026-08-03T12:12:45.212Z"
+      },
+      {
+        "id": 7,
+        "name": "Käseaufschnitt",
+        "quantity": "1 Packung",
+        "unit": "",
+        "category": "Kühlregal",
+        "location": "Vorratsschrank",
+        "expiry_date": "2026-08-07",
+        "purchase_date": null,
+        "opened_at": null,
+        "min_quantity": 0,
+        "price": null,
+        "note": "",
+        "buy_again": 0,
+        "inbox": 0,
+        "added_at": "2026-08-03T12:12:45.212Z",
+        "updated_at": "2026-08-03T12:12:45.212Z"
+      },
+      {
+        "id": 8,
+        "name": "Tiefkühl-Erbsen",
+        "quantity": "2 Beutel",
+        "unit": "",
+        "category": "Tiefkühl",
+        "location": "Vorratsschrank",
+        "expiry_date": "2026-11-01",
+        "purchase_date": null,
+        "opened_at": null,
+        "min_quantity": 0,
+        "price": null,
+        "note": "",
+        "buy_again": 0,
+        "inbox": 0,
+        "added_at": "2026-08-03T12:12:45.212Z",
+        "updated_at": "2026-08-03T12:12:45.212Z"
+      }
+    ],
+    "notes": [
+      {
+        "id": 1,
+        "title": "Packliste Wochenende",
+        "content": "",
+        "accent": "blue",
+        "pinned": 1,
+        "checklist_done": 5,
+        "checklist_total": 11,
+        "tag": "",
+        "due_date": null,
+        "related_type": "",
+        "related_name": "",
+        "archived": 0,
+        "created_at": "2026-08-03T12:12:45.212Z",
+        "updated_at": "2026-08-03T12:12:45.212Z"
+      },
+      {
+        "id": 2,
+        "title": "Lasagne wie bei Oma",
+        "content": "500 g Hack, 2 Dosen Tomaten, Béchamel aus 50 g Butter, 50 g Mehl, 500 ml Milch. 45 Minuten bei 180 °C.",
+        "accent": "green",
+        "pinned": 0,
+        "checklist_done": 0,
+        "checklist_total": 0,
+        "tag": "",
+        "due_date": null,
+        "related_type": "",
+        "related_name": "",
+        "archived": 0,
+        "created_at": "2026-08-03T12:12:45.212Z",
+        "updated_at": "2026-08-03T12:12:45.212Z"
+      },
+      {
+        "id": 3,
+        "title": "Maße Regal Flur",
+        "content": "Nische 78,5 cm breit, 212 cm hoch. Sockelleiste 6 cm.",
+        "accent": "orange",
+        "pinned": 0,
+        "checklist_done": 0,
+        "checklist_total": 0,
+        "tag": "",
+        "due_date": null,
+        "related_type": "",
+        "related_name": "",
+        "archived": 0,
+        "created_at": "2026-08-03T12:12:45.212Z",
+        "updated_at": "2026-08-03T12:12:45.212Z"
+      },
+      {
+        "id": 4,
+        "title": "WLAN Gäste",
+        "content": "Passwort steht am Kühlschrank.",
+        "accent": "yellow",
+        "pinned": 0,
+        "checklist_done": 0,
+        "checklist_total": 0,
+        "tag": "",
+        "due_date": null,
+        "related_type": "",
+        "related_name": "",
+        "archived": 0,
+        "created_at": "2026-08-03T12:12:45.212Z",
+        "updated_at": "2026-08-03T12:12:45.212Z"
+      },
+      {
+        "id": 5,
+        "title": "Geschenke Dezember",
+        "content": "",
+        "accent": "purple",
+        "pinned": 0,
+        "checklist_done": 1,
+        "checklist_total": 5,
+        "tag": "",
+        "due_date": null,
+        "related_type": "",
+        "related_name": "",
+        "archived": 0,
+        "created_at": "2026-08-03T12:12:45.212Z",
+        "updated_at": "2026-08-03T12:12:45.212Z"
+      },
+      {
+        "id": 6,
+        "title": "Handwerker",
+        "content": "Heizung entlüften, Termin Mo 10 Uhr.",
+        "accent": "red",
+        "pinned": 0,
+        "checklist_done": 0,
+        "checklist_total": 0,
+        "tag": "",
+        "due_date": null,
+        "related_type": "",
+        "related_name": "",
+        "archived": 0,
+        "created_at": "2026-08-03T12:12:45.212Z",
+        "updated_at": "2026-08-03T12:12:45.212Z"
+      }
+    ],
+    "product_catalog": [
+      {
+        "id": 1,
+        "barcode": "9000000000011",
+        "name": "Vollmilch",
+        "brand": "Beispielmarke",
+        "category": "Kühlregal",
+        "default_quantity": "1 l",
+        "last_price": 1.29,
+        "updated_at": "2026-08-03T12:12:45.212Z"
+      },
+      {
+        "id": 2,
+        "barcode": "9000000000028",
+        "name": "Joghurt natur",
+        "brand": "Beispielmarke",
+        "category": "Kühlregal",
+        "default_quantity": "4 Becher",
+        "last_price": 0.79,
+        "updated_at": "2026-08-03T12:12:45.212Z"
+      },
+      {
+        "id": 3,
+        "barcode": "9000000000035",
+        "name": "Vollkornbrot",
+        "brand": "Bäckerei",
+        "category": "Backwaren",
+        "default_quantity": "1",
+        "last_price": 2.29,
+        "updated_at": "2026-08-03T12:12:45.212Z"
+      },
+      {
+        "id": 4,
+        "barcode": "9000000000042",
+        "name": "Tomaten",
+        "brand": "Regional",
+        "category": "Obst & Gemüse",
+        "default_quantity": "500 g",
+        "last_price": 2.49,
+        "updated_at": "2026-08-03T12:12:45.212Z"
+      },
+      {
+        "id": 5,
+        "barcode": "9000000000059",
+        "name": "Spülmittel",
+        "brand": "Haushalt",
+        "category": "Haushalt",
+        "default_quantity": "1",
+        "last_price": 1.99,
+        "updated_at": "2026-08-03T12:12:45.212Z"
+      }
+    ],
+    "purchases": [
+      {
+        "id": 1,
+        "name": "Vollmilch",
+        "quantity": "2",
+        "category": "Kühlregal",
+        "price": 1.29,
+        "store_name": "BILLA",
+        "purchased_on": "2026-07-26",
+        "source": "seed"
+      },
+      {
+        "id": 2,
+        "name": "Vollmilch",
+        "quantity": "2",
+        "category": "Kühlregal",
+        "price": 1.35,
+        "store_name": "SPAR",
+        "purchased_on": "2026-07-19",
+        "source": "seed"
+      },
+      {
+        "id": 3,
+        "name": "Joghurt natur",
+        "quantity": "4",
+        "category": "Kühlregal",
+        "price": 0.79,
+        "store_name": "BILLA",
+        "purchased_on": "2026-07-27",
+        "source": "seed"
+      },
+      {
+        "id": 4,
+        "name": "Tomaten",
+        "quantity": "500 g",
+        "category": "Obst & Gemüse",
+        "price": 2.69,
+        "store_name": "Hofer",
+        "purchased_on": "2026-07-24",
+        "source": "seed"
+      }
+    ],
+    "receipts": [],
+    "challenge": [
+      {
+        "id": 1,
+        "current_field": 22,
+        "completed_fields": 21,
+        "total_fields": 52,
+        "saved_amount": 231,
+        "target_amount": 1378
+      }
+    ]
+  }
+};
