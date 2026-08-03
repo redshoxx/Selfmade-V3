@@ -10,7 +10,7 @@ function renderShopping() {
   return `<div class="content-stack">
     <div class="shopping-progress"><div class="progress-track"><div class="progress-fill green" style="width:${total ? checked / total * 100 : 0}%"></div></div><span>${checked} / ${total}</span></div>
     <div class="quick-chips">
-      ${(data.suggestions?.length ? data.suggestions : ['Spülmittel', 'Haferflocken', 'Olivenöl'].map((name) => ({ name, quantity: '1', category: name === 'Spülmittel' ? 'Haushalt' : 'Vorrat', reason: 'Vorschlag' }))).map((item) => `<button class="pill dashed" data-action="add-suggestion" data-name="${escapeHtml(item.name)}" data-quantity="${escapeHtml(item.quantity)}" data-category="${escapeHtml(item.category)}">+ ${escapeHtml(item.name)}</button>`).join('')}
+      ${(data.suggestions || []).map((item) => `<button class="pill dashed" data-action="add-suggestion" data-name="${escapeHtml(item.name)}" data-quantity="${escapeHtml(item.quantity)}" data-category="${escapeHtml(item.category)}">+ ${escapeHtml(item.name)}</button>`).join('')}
       <button class="pill active" data-action="recurring">${icon('repeat', 13)} Routinen</button>
     </div>
     ${shoppingGroups().map(([category, items]) => `<section class="category-block">
