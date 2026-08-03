@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="selfmade_background">#F0EEE9</color>
+    <color name="selfmade_accent">#4361EE</color>
+    <color name="selfmade_text">#17171B</color>
+    <color name="white">#FFFFFF</color>
+</resources>
