@@ -1,74 +1,66 @@
-# Selfmade V11
+# Selfmade V14 – native iPhone-PWA
 
-Cloud-Synchronisierung läuft lautlos im Hintergrund. Erfolgreiche Cloud-Aktualisierungen erzeugen keine Benachrichtigung mehr. Fehler-, Offline-, Speicher- und Rückgängig-Meldungen bleiben sichtbar.
+Selfmade ist eine für den iPhone-Homescreen optimierte Haushalts-App mit Supabase-Speicherung und Vercel-Deployment.
 
-# Selfmade V8 – iPhone Barcode Scanner
+## Schwerpunkte dieser Version
 
-Selfmade ist eine iPhone-optimierte Haushalts-PWA für Geld, Einkauf, Vorrat, Notizen, Barcode- und Kassenbon-Funktionen.
-
-## Änderungen in V8
-
-- der Hinweis „Als iPhone-App verwenden“ wurde vollständig entfernt
+- vollständige Standalone-PWA-Konfiguration
+- echte iPhone-Safe-Areas für Dynamic Island, Statusleiste und Home-Indikator
+- dynamische Anpassung an die iOS-Bildschirmtastatur
+- Bottom Navigation wird bei geöffneter Tastatur ausgeblendet
+- keine Browser-Skalierung, kein Pinch-Zoom und kein Doppeltipp-Zoom
+- keine horizontale Verschiebung oder abgeschnittenen Formulare
+- große Touch-Ziele für Buttons und Navigation
+- hochwertige einspaltige Formulare auf iPhones
+- native Eingabetastaturen über `inputmode`
+- sinnvolle Autovervollständigung und Großschreibung
+- dauerhafte Labels statt Informationen nur im Platzhalter
+- Pflichtfeld-Markierung und verständliche Validierung
+- Schutz vor doppeltem Absenden
+- sichtbarer Ladezustand beim Speichern
+- fixierte Formularaktionen über der iPhone-Tastatur
+- destruktive Aktionen getrennt vom Speichern
+- lautlose Cloud-Synchronisierung
+- Barcode-Scanner mit Live-Kamera und Foto-Fallback
 - keine Demo-, Beispiel- oder Platzhalterdaten
-- neue Haushalte starten vollständig leer
-- Safari-/Homescreen-kompatibler Barcode-Scanner
-- Live-Kamera mit bevorzugter Rückkamera
-- automatische Fokus- und Zoomoptimierung, soweit das iPhone sie freigibt
-- Taschenlampen-Schalter, wenn die Kamera ihn unterstützt
-- ZXing-Fallback für Safari, wenn `BarcodeDetector` nicht verfügbar ist
-- native iPhone-Fotoaufnahme als zusätzlicher Scanner-Fallback
-- automatische Aktualisierung der Homescreen-App nach einem neuen Service Worker
-- Scannerbibliothek wird über eine gleichnamige Vercel-Route geladen und anschließend vom Service Worker gecacht
 
 ## Supabase
 
-Bei einem bestehenden Projekt zuerst den Hotfix im Supabase SQL Editor ausführen:
-
-```text
-supabase/migrations/20260803_fix_bootstrap_household_id_ambiguity.sql
-```
-
-Bei einem neuen Projekt die vollständige Migration ausführen:
+Für ein neues Projekt:
 
 ```text
 supabase/migrations/20260803_selfmade_cloud.sql
 ```
 
+Für eine bestehende Installation mit dem früheren `household_id`-Fehler zusätzlich:
+
+```text
+supabase/migrations/20260803_fix_bootstrap_household_id_ambiguity.sql
+```
+
 ## Vercel
 
 ```bash
+npm install
 npm test
 npm run build
 ```
 
-Danach das Projekt neu auf Vercel deployen. Die Build-Ausgabe liegt in `dist/`.
+Vercel-Konfiguration:
 
-## Kamera auf dem iPhone
+```text
+Build Command: npm run build
+Output Directory: dist
+Node.js: 22.x
+```
 
-1. Die Website beziehungsweise Homescreen-App muss über HTTPS laufen.
-2. Im Barcode-Dialog auf **Kamera starten** tippen.
-3. Den Barcode gerade und vollständig in den Rahmen halten.
-4. Falls iOS keinen Live-Stream bereitstellt, **Foto aufnehmen** verwenden. Das Foto wird lokal im Browser ausgewertet.
-5. Bei verweigertem Zugriff die Website in Safari öffnen und unter **Seitenmenü → Mehr → Kamera → Erlauben** freigeben.
+Erforderliche Environment Variables:
 
-## Datenschutz
+```env
+SUPABASE_URL=https://ecflcrigkfyhifekwfxq.supabase.co
+SUPABASE_PUBLISHABLE_KEY=sb_publishable_1EpIlW3NxMKtGL4MjF2xtg_aYacqCx3
+```
 
-Das Kamerabild und aufgenommene Barcode-Foto werden nur lokal im Browser ausgewertet. Für den Barcode-Lookup wird ausschließlich die erkannte Nummer an die vorhandene API gesendet.
+## iPhone-Aktualisierung
 
-## Version 9 – echte iPhone-Statusleiste
-
-Die zuvor im App-Layout nachgebildete Statusleiste mit Uhrzeit, Mobilfunk und Akku wurde vollständig entfernt. Im Safari-Homescreen-Modus wird ausschließlich die echte iOS-Systemstatusleiste angezeigt.
-
-
-## Version 10 – Benachrichtigungen
-
-- Toast-Meldungen erscheinen oben unterhalb der echten iPhone-Statusleiste.
-- Normale Hinweise verschwinden nach 1,8 Sekunden.
-- Fehlermeldungen verschwinden nach 2,8 Sekunden.
-- Rückgängig-Aktionen bleiben 4,2 Sekunden sichtbar.
-- Neue Statushinweise ersetzen ältere Hinweise, damit keine Meldungsstapel entstehen.
-
-
-## iPhone-Homescreen: Zoom gesperrt
-
-Version 13 sperrt Pinch-Zoom, Doppeltipp-Zoom, Fokus-Zoom bei Formularfeldern und Browser-/Trackpad-Zoom. Vertikales Scrollen innerhalb der App bleibt erhalten. Das Layout ist zusätzlich gegen horizontales Überlaufen abgesichert.
+Nach einem Vercel-Deployment die Homescreen-App vollständig schließen und erneut öffnen. Der Service Worker Version 14 entfernt ältere App-Caches automatisch.

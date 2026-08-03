@@ -19,14 +19,14 @@ test('cloud refresh does not emit a visible sync toast', async () => {
 
 test('service worker uses network-first core assets and a new cache version', async () => {
   const source = await readFile(swPath, 'utf8');
-  assert.match(source, /selfmade-v12-no-sync-toast/);
+  assert.match(source, /selfmade-v14-native-iphone/);
   assert.match(source, /cache:\s*'no-store'/);
   assert.match(source, /SELFMADE_UPDATED/);
 });
 
 test('core frontend assets are cache-busted', async () => {
   const source = await readFile(indexPath, 'utf8');
-  assert.match(source, /styles\.css\?v=12/);
-  assert.match(source, /app\.js\?v=12/);
-  assert.match(source, /manifest\.webmanifest\?v=12/);
+  assert.match(source, /styles\.css\?v=14/);
+  assert.match(source, /app\.js\?v=14/);
+  assert.match(source, /manifest\.webmanifest\?v=14/);
 });

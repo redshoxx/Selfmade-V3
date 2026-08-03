@@ -1,9 +1,9 @@
-const CACHE = 'selfmade-v12-no-sync-toast';
+const CACHE = 'selfmade-v14-native-iphone';
 const VERSIONED_ASSETS = [
-  '/index.html?v=12',
-  '/styles.css?v=12',
-  '/app.js?v=12',
-  '/manifest.webmanifest?v=12',
+  '/index.html?v=14',
+  '/styles.css?v=14',
+  '/app.js?v=14',
+  '/manifest.webmanifest?v=14',
   '/icon.svg',
   '/icon-192.png',
   '/icon-512.png',
@@ -21,7 +21,7 @@ self.addEventListener('activate', (event) => {
     await Promise.all(keys.map((key) => key === CACHE ? Promise.resolve() : caches.delete(key)));
     await self.clients.claim();
     const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    clients.forEach((client) => client.postMessage({ type: 'SELFMADE_UPDATED', version: 12 }));
+    clients.forEach((client) => client.postMessage({ type: 'SELFMADE_UPDATED', version: 14 }));
   })());
 });
 
@@ -45,7 +45,7 @@ self.addEventListener('fetch', (event) => {
         }
         return response;
       } catch {
-        return (await caches.match(event.request)) || (await caches.match('/')) || (await caches.match('/index.html?v=12')) || Response.error();
+        return (await caches.match(event.request)) || (await caches.match('/')) || (await caches.match('/index.html?v=14')) || Response.error();
       }
     })());
     return;

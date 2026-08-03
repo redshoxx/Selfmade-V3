@@ -1,0 +1,122 @@
+  shell.innerHTML = `<div class="app">${header()}<main class="content-scroll">${renderContent()}</main>${tabBar()}</div>`;
+}
+
+function storeCategories() {
+  return shoppingGroups().map(([category, items]) => ({ category, items }));
+}
+
+function storeTotal() {
+  return data.shopping.filter((item) => item.checked).reduce((sum, item) => sum + Number(storeMode.prices.get(item.id) ?? item.price ?? 0), 0);
+}
+
+function renderStoreMode() {
+  const groups = storeCategories();
+  if (!groups.length) {
+    storeMode.active = false;
+    queueMicrotask(renderApp);
+    return '';
+  }
+  const idx = clamp(storeMode.categoryIndex, 0, groups.length - 1);
+  storeMode.categoryIndex = idx;
+  const current = groups[idx];
+  if (storeMode.checkout) return renderCheckout(groups);
+  const checkedCount = current.items.filter((item) => item.checked).length;
+  const totalChecked = data.shopping.filter((item) => item.checked).length;
+  return `<div class="store-mode">
+    <header class="store-header">
+      <div class="store-kicker"><span>IM LADEN</span><button class="btn btn-soft small" data-action="end-store">Beenden</button></div>
+      <div class="store-progress">${groups.map((_, i) => `<i class="${i < idx ? 'done' : i === idx ? 'current' : ''}"></i>`).join('')}</div>
+    </header>
+    <main class="store-content">
+      <h1 class="store-title">${emojiForCategory(current.category)} ${escapeHtml(current.category)}</h1>
+      <div class="store-subtitle">Abteilung ${idx + 1} von ${groups.length} · ${checkedCount} von ${current.items.length} Sachen</div>
+      ${current.items.map((item) => `<div class="store-item ${item.checked ? 'done' : ''}">
+        <button class="check ${item.checked ? 'checked' : ''}" data-action="toggle-store-item" data-id="${item.id}">${item.checked ? icon('check', 15) : ''}</button>
+        <div class="row-body"><div class="row-title">${escapeHtml(item.name)}</div><div class="row-sub">${escapeHtml(item.quantity)}${item.note ? ` · ${escapeHtml(item.note)}` : ''}</div></div>
+        <input class="price-input" inputmode="decimal" aria-label="Preis ${escapeHtml(item.name)}" data-action="store-price" data-id="${item.id}" value="${number.format(storeMode.prices.get(item.id) ?? item.price ?? 0)} €">
+      </div>`).join('')}
+      ${totalChecked ? `<section class="card pad store-cart"><div class="section-title-row"><h2 class="section-title">Im Wagen · ${totalChecked}</h2><strong>${money(storeTotal())}</strong></div></section>` : ''}
+    </main>
+    <footer class="store-footer"><div class="store-footer-row"><button class="btn btn-soft" data-action="store-prev" ${idx === 0 ? 'disabled' : ''}>${icon('chevronLeft', 18)}</button><button class="btn btn-primary" data-action="store-next">${idx === groups.length - 1 ? 'Einkauf fertig' : `Weiter zu ${groups[idx + 1].category}`}</button></div></footer>
+  </div>`;
+}
+
+function renderCheckout(groups) {
+  const checked = data.shopping.filter((item) => item.checked);
+  const total = storeTotal();
+  return `<div class="store-mode">
+    <header class="store-header">
+      <div class="store-kicker"><span>ABSCHLUSS</span><button class="btn btn-soft small" data-action="end-store">Beenden</button></div>
+      <div class="store-progress">${groups.map(() => '<i class="done"></i>').join('')}</div>
+    </header>
+    <main class="store-content" style="display:grid;align-content:end">
+      <section class="card checkout-panel">
+        <div><div class="metric-label">Einkauf abschließen</div><div class="row-sub">${escapeHtml(dateLabel())} · ${checked.length} Sachen</div></div>
+        <div><div class="metric-label">Summe der eingetippten Preise</div><div class="checkout-total">${money(total)}</div><div class="checkout-warning">1 Eintrag ohne Preis zählt nicht mit.</div></div>
+        <div class="check-option"><span class="ok">${icon('check', 12)}</span>Als Ausgabe in Lebensmittel buchen</div>
+        <div class="check-option"><span class="ok">${icon('check', 12)}</span>${checked.filter((item) => item.category !== 'Haushalt').length} Posten in Vorrat hochzählen</div>
+        <div class="check-option"><span class="ok">${icon('check', 12)}</span>Reihenfolge dieses Ladens merken</div>
+      </section>
+    </main>
+    <footer class="store-footer"><div class="money-actions"><button class="btn btn-soft" data-action="end-store">Nur wegräumen</button><button class="btn btn-primary" data-action="checkout">Abschließen</button></div></footer>
+  </div>`;
+}
+
+function openDialog(title, content, form = null) {
+  dialogReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  document.body.classList.add('dialog-open');
+  dialogRoot.innerHTML = `<div class="dialog-backdrop" data-action="backdrop-close"><section class="dialog" role="dialog" aria-modal="true" aria-label="${escapeHtml(title)}">
+    <div class="dialog-handle" aria-hidden="true"></div>
+    <div class="dialog-header"><h2 class="dialog-title">${escapeHtml(title)}</h2><button class="icon-button small" data-action="close-dialog" aria-label="Schließen">${icon('close', 17)}</button></div>
+    ${form ? `<form class="form-grid" data-form="${form}" novalidate>${content}</form>` : content}
+  </section></div>`;
+  queueMicrotask(() => {
+    enhanceFormNavigation(dialogRoot);
+    const explicit = dialogRoot.querySelector('[autofocus]');
+    const closeButton = dialogRoot.querySelector('[data-action="close-dialog"]');
+    if (explicit) explicit.focus({ preventScroll: true });
+    else if (!coarsePointer) dialogRoot.querySelector('input, textarea, select')?.focus({ preventScroll: true });
+    else closeButton?.focus({ preventScroll: true });
+  });
+}
+
+function closeDialog() {
+  stopScanner();
+  dialogRoot.innerHTML = '';
+  receiptImageData = '';
+  document.body.classList.remove('dialog-open', 'keyboard-open');
+  syncNativeViewport();
+  if (dialogReturnFocus?.isConnected) dialogReturnFocus.focus({ preventScroll: true });
+  dialogReturnFocus = null;
+}
+
+function inputDefaults(name, type, extra = '') {
+  const attrs = [];
+  const lowerName = String(name).toLowerCase();
+  const has = (attribute) => new RegExp(`\\b${attribute}\\s*=`, 'i').test(extra);
+  const decimalNames = /amount|price|savings|limit|min_quantity|checklist_done|checklist_total|frequency_days/;
+  const sensitive = ['email', 'password', 'barcode'].includes(type) || /email|password|barcode/.test(lowerName);
+  if (!has('autocomplete')) {
+    if (type === 'email') attrs.push('autocomplete="email"');
+    else if (type === 'password') attrs.push('autocomplete="current-password"');
+    else if (/display_name|name/.test(lowerName) && !/product|household/.test(lowerName)) attrs.push('autocomplete="name"');
+    else attrs.push('autocomplete="off"');
+  }
+  if (!has('inputmode')) {
+    if (type === 'email') attrs.push('inputmode="email"');
+    else if (type === 'number' || decimalNames.test(lowerName)) attrs.push('inputmode="decimal"');
+    else if (/barcode/.test(lowerName)) attrs.push('inputmode="numeric"');
+  }
+  if (!has('enterkeyhint') && !['date', 'month', 'time'].includes(type)) attrs.push('enterkeyhint="next"');
+  if (!has('autocapitalize')) attrs.push(`autocapitalize="${sensitive ? 'none' : (/name|title|product/.test(lowerName) ? 'words' : 'sentences')}"`);
+  if (!has('spellcheck')) attrs.push(`spellcheck="${sensitive || type === 'number' ? 'false' : 'true'}"`);
+  return attrs.join(' ');
+}
+
+function field(label, name, value = '', type = 'text', extra = '') {
+  const defaults = inputDefaults(name, type, extra);
+  const required = /\brequired\b/i.test(extra);
+  return `<div class="field"><label for="field-${name}">${label}${required ? '<span class="required-mark" aria-hidden="true">*</span>' : ''}</label><input class="input" id="field-${name}" name="${name}" type="${type}" value="${escapeHtml(value)}" ${defaults} ${extra}></div>`;
+}
+
+function selectField(label, name, value, options) {

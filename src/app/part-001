@@ -1,0 +1,169 @@
+  const name = String(item?.name ?? '').toLocaleLowerCase('de');
+  if (name.includes('hackfleisch') || name.includes('hähnchen') || name.includes('fleisch')) return '🥩';
+  if (name.includes('milch') || name.includes('joghurt') || name.includes('butter')) return '🥛';
+  if (name.includes('tomat') || name.includes('salat') || name.includes('banane')) return '🥬';
+  if (name.includes('brot')) return '🥖';
+  if (name.includes('käse')) return '🧀';
+  return emojiForCategory(item?.category);
+}
+
+function budgetIcon(name) {
+  return ({ cart: 'cart', film: 'film', home: 'home', car: 'car', basket: 'basket' })[name] ?? 'wallet';
+}
+
+function todayLocal() {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 10);
+}
+
+function dateLabel() {
+  return new Intl.DateTimeFormat('de-AT', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
+}
+
+function monthLabel(value) {
+  const [year, month] = value.split('-').map(Number);
+  return new Intl.DateTimeFormat('de-AT', { month: 'short', year: '2-digit' }).format(new Date(year, month - 1, 1)).replace('.', '');
+}
+
+function expiryInfo(date) {
+  if (!date) return { label: 'Datum?', className: 'ok', days: 9999 };
+  const a = new Date(`${todayLocal()}T12:00:00`);
+  const b = new Date(`${date}T12:00:00`);
+  const days = Math.round((b - a) / 86400000);
+  if (days < 0) return { label: days === -1 ? 'gestern abgelaufen' : `seit ${Math.abs(days)} Tagen abgelaufen`, className: 'urgent', days };
+  if (days === 0) return { label: 'heute', className: 'urgent', days };
+  if (days === 1) return { label: 'morgen', className: 'soon', days };
+  if (days < 14) return { label: `in ${days} Tagen`, className: 'soon', days };
+  if (days < 60) return { label: `in ${Math.round(days / 7)} Wochen`, className: 'ok', days };
+  return { label: `in ${Math.round(days / 30)} Monaten`, className: 'ok', days };
+}
+
+function recipeIdeas() {
+  const urgent = data?.pantry?.filter((item) => !item.inbox && item.expiry_date && expiryInfo(item.expiry_date).days <= 3) || [];
+  if (!urgent.length) return [];
+  const names = urgent.slice(0, 3).map((item) => item.name);
+  return [{
+    title: 'Bald ablaufende Produkte verwenden',
+    content: `Heute einplanen: ${names.join(', ')}.`
+  }];
+}
+
+function cacheAppState(payload) {
+  const statePayload = payload?.state || (payload?.settings && payload?.summary ? payload : null);
+  if (statePayload) {
+    try { localStorage.setItem('selfmade-state-cache', JSON.stringify(statePayload)); } catch {}
+  }
+}
+
+async function api(path, options = {}, allowRefresh = true) {
+  const requestOptions = {
+    ...options,
+    headers: {
+      'content-type': 'application/json',
+      ...cloudHeaders(),
+      ...(options.headers ?? {})
+    }
+  };
+  try {
+    const response = await fetch(path, requestOptions);
+    const payload = response.status === 204 ? null : await response.json().catch(() => ({}));
+    if (response.status === 401 && cloudConfig.enabled && allowRefresh && authSession?.refresh_token && !path.startsWith('/api/auth/')) {
+      await refreshAuthSession();
+      return api(path, options, false);
+    }
+    if (!response.ok) {
+      const error = new Error(payload?.error ?? payload?.message ?? `Fehler ${response.status}`);
+      error.status = response.status;
+      error.code = payload?.code;
+      throw error;
+    }
+    cacheAppState(payload);
+    const statePayload = payload?.state || (payload?.settings && payload?.summary ? payload : null);
+    if (statePayload?.cloud?.household_id) localStorage.setItem('selfmade-cloud-household', statePayload.cloud.household_id);
+    return payload;
+  } catch (error) {
+    const method = String(options.method || 'GET').toUpperCase();
+    const isNetworkError = error instanceof TypeError || !navigator.onLine;
+    if (!isNetworkError) throw error;
+    if (method === 'GET' && path === '/api/state') {
+      const cached = localStorage.getItem('selfmade-state-cache');
+      if (cached) {
+        toast('Offline – zwischengespeicherte Daten werden angezeigt.');
+        return JSON.parse(cached);
+      }
+    }
+    if (method !== 'GET' && !path.startsWith('/api/auth/')) {
+      const body = String(options.body || '');
+      if (body.length > 750000) throw new Error('Diese große Änderung kann offline nicht vorgemerkt werden.');
+      const queue = JSON.parse(localStorage.getItem('selfmade-offline-queue') || '[]');
+      queue.push({ path, method, body, queued_at: new Date().toISOString() });
+      localStorage.setItem('selfmade-offline-queue', JSON.stringify(queue.slice(-50)));
+      toast('Offline gespeichert – wird bei Verbindung synchronisiert.');
+      return data || JSON.parse(localStorage.getItem('selfmade-state-cache') || 'null');
+    }
+    throw new Error('Keine Verbindung und keine Offline-Daten verfügbar.');
+  }
+}
+
+async function flushOfflineQueue() {
+  const queue = JSON.parse(localStorage.getItem('selfmade-offline-queue') || '[]');
+  if (!queue.length || !navigator.onLine) return;
+  const remaining = [];
+  for (const item of queue) {
+    try {
+      const response = await fetch(item.path, { method: item.method, headers: { 'content-type': 'application/json', ...cloudHeaders() }, body: item.body || undefined });
+      if (!response.ok) remaining.push(item);
+    } catch { remaining.push(item); }
+  }
+  localStorage.setItem('selfmade-offline-queue', JSON.stringify(remaining));
+  if (remaining.length < queue.length) {
+    try { data = await api('/api/state'); renderApp(); } catch {}
+  }
+}
+
+
+function renderAuthScreen(message = '') {
+  const signup = authMode === 'signup';
+  shell.innerHTML = `<div class="auth-screen">
+    <div class="auth-brand"><img src="/icon-192.png" alt="Selfmade"><div><strong>Selfmade Cloud</strong><small>Deine Haushaltsdaten sicher auf allen Geräten.</small></div></div>
+    <section class="auth-card">
+      <div class="auth-tabs"><button class="${signup ? '' : 'active'}" data-action="auth-mode" data-mode="signin">Anmelden</button><button class="${signup ? 'active' : ''}" data-action="auth-mode" data-mode="signup">Registrieren</button></div>
+      ${message ? `<div class="auth-message">${escapeHtml(message)}</div>` : ''}
+      <form data-auth-form="${signup ? 'signup' : 'signin'}" class="form-grid">
+        ${signup ? field('Name', 'display_name', '', 'text', 'autocomplete="name" maxlength="80" required') : ''}
+        ${field('E-Mail', 'email', '', 'email', 'autocomplete="email" required')}
+        ${field('Passwort', 'password', '', 'password', `autocomplete="${signup ? 'new-password' : 'current-password'}" minlength="8" required`)}
+        <button class="btn btn-primary block">${signup ? 'Konto erstellen' : 'Anmelden'}</button>
+      </form>
+      <p class="auth-footnote">Die App verwendet den Supabase-Publishable-Key. Der Service-Role-Key wird nicht im Browser gespeichert.</p>
+    </section>
+  </div>`;
+  queueMicrotask(() => enhanceFormNavigation(shell));
+}
+
+function removeStaleCloudSyncToasts() {
+  const forbidden = /cloud[- ]daten (aktualisiert|synchronisiert)|offline[- ]änderungen synchronisiert/i;
+  [...toastRoot.querySelectorAll('.toast')].forEach((item) => {
+    if (forbidden.test(item.textContent || '')) item.remove();
+  });
+}
+
+const toastCleanupObserver = new MutationObserver(removeStaleCloudSyncToasts);
+toastCleanupObserver.observe(toastRoot, { childList: true, subtree: true });
+removeStaleCloudSyncToasts();
+
+async function bootstrapApplication() {
+  try {
+    const response = await fetch('/api/cloud/config', { headers: { accept: 'application/json' } });
+    cloudConfig = response.ok ? await response.json() : { enabled: false, storage: 'sqlite' };
+  } catch {
+    cloudConfig = { enabled: false, storage: 'sqlite' };
+  }
+
+  if (cloudConfig.enabled) {
+    if (!authSession?.access_token) {
+      renderAuthScreen();
+      return;
+    }
+    if (authSession.expires_at && authSession.expires_at < Date.now() + 60_000) {

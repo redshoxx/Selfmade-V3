@@ -1,0 +1,8 @@
+node_modules/
+dist/
+public/app.js
+public/styles.css
+data/*.sqlite
+data/*.sqlite-*
+.env
+.DS_Store

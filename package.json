@@ -1,9 +1,9 @@
 {
   "name": "selfmade-haushaltsapp",
-  "version": "13.0.0",
+  "version": "14.0.0",
   "private": true,
   "type": "module",
-  "description": "Vercel- und iPhone-optimierte Haushalts-PWA mit Supabase und vollständig stiller Cloud-Synchronisierung und gesperrter iPhone-Skalierung.",
+  "description": "Vercel- und iPhone-optimierte Haushalts-PWA mit Supabase und nativer iPhone-PWA-Oberfläche, Supabase, optimierten Formularen und gesperrter Skalierung.",
   "engines": {
     "node": "22.x"
   },
@@ -14,6 +14,11 @@
     "reset": "node scripts/reset-db.mjs",
     "build": "node scripts/build-vercel.mjs",
     "vercel-build": "npm run build",
-    "dev:vercel": "vercel dev"
+    "dev:vercel": "vercel dev",
+    "prepare:assets": "node scripts/assemble-assets.mjs",
+    "predev": "npm run prepare:assets",
+    "prestart": "npm run prepare:assets",
+    "pretest": "npm run prepare:assets",
+    "prebuild": "npm run prepare:assets"
   }
 }

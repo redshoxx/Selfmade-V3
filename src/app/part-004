@@ -1,0 +1,99 @@
+    const ai = order.indexOf(a[0]);
+    const bi = order.indexOf(b[0]);
+    return (ai < 0 ? 99 : ai) - (bi < 0 ? 99 : bi);
+  });
+}
+
+function renderShopping() {
+  const checked = data.shopping.filter((item) => item.checked).length;
+  const total = data.shopping.length;
+  return `<div class="content-stack">
+    <div class="shopping-progress"><div class="progress-track"><div class="progress-fill green" style="width:${total ? checked / total * 100 : 0}%"></div></div><span>${checked} / ${total}</span></div>
+    <div class="quick-chips">
+      ${(data.suggestions?.length ? data.suggestions : ['Spülmittel', 'Haferflocken', 'Olivenöl'].map((name) => ({ name, quantity: '1', category: name === 'Spülmittel' ? 'Haushalt' : 'Vorrat', reason: 'Vorschlag' }))).map((item) => `<button class="pill dashed" data-action="add-suggestion" data-name="${escapeHtml(item.name)}" data-quantity="${escapeHtml(item.quantity)}" data-category="${escapeHtml(item.category)}">+ ${escapeHtml(item.name)}</button>`).join('')}
+      <button class="pill active" data-action="recurring">${icon('repeat', 13)} Routinen</button>
+    </div>
+    ${shoppingGroups().map(([category, items]) => `<section class="category-block">
+      <div class="category-heading"><span class="category-name">${emojiForCategory(category)} &nbsp;${escapeHtml(category)}</span><span class="category-count">${items.length}</span></div>
+      <div class="card list-card">
+        ${items.map((item) => shoppingRow(item)).join('')}
+      </div>
+    </section>`).join('') || `<div class="card empty-state"><div class="empty-icon">${icon('cart', 25)}</div><strong>Liste ist leer</strong><span>Füge unten den ersten Artikel hinzu.</span></div>`}
+    <div class="bottom-composer">
+      <form class="composer-row" data-form="quick-shopping"><input class="input composer-input" name="name" autocomplete="off"><button class="round-button primary" aria-label="Hinzufügen">${icon('plus', 19)}</button></form>
+    </div>
+  </div>`;
+}
+
+function shoppingRow(item) {
+  const numeric = /^\d+$/.test(item.quantity);
+  return `<div class="list-row shopping-row">
+    <button class="check ${item.checked ? 'checked' : ''}" data-action="toggle-shopping" data-id="${item.id}" aria-label="${item.checked ? 'Abhaken rückgängig' : 'Abhaken'}">${item.checked ? icon('check', 15) : ''}</button>
+    <button class="row-body" style="border:0;background:transparent;color:inherit;text-align:left;padding:0" data-action="edit-shopping" data-id="${item.id}"><span class="row-title">${escapeHtml(item.name)}</span>${item.note || item.member_id ? `<span class="row-sub">${[item.note, memberName(item.member_id)].filter(Boolean).map(escapeHtml).join(' · ')}</span>` : ''}</button>
+    ${numeric ? `<span class="quantity-stepper"><button class="step-button" data-action="quantity" data-id="${item.id}" data-delta="-1">−</button><span class="step-value">${escapeHtml(item.quantity)}</span><button class="step-button" data-action="quantity" data-id="${item.id}" data-delta="1">+</button></span>` : `<span class="row-chip">${escapeHtml(item.quantity)}</span>`}
+  </div>`;
+}
+
+function renderPantry() {
+  const inbox = data.pantry.filter((item) => item.inbox);
+  let items = data.pantry.filter((item) => !item.inbox);
+  if (pantryFilter === 'expiry') items = items.filter((item) => expiryInfo(item.expiry_date).days <= 14);
+  if (pantryFilter === 'buy') items = items.filter((item) => item.buy_again || item.low_stock);
+  return `<div class="content-stack">
+    ${inbox.length ? `<section class="pantry-inbox">
+      <div class="inbox-top"><span class="inbox-title">${inbox.length} Sachen einräumen</span><button class="pill active" data-action="arrange-all">Alle</button></div>
+      <div class="inbox-list">${inbox.map((item) => `<div class="inbox-item"><span>${emojiForCategory(item.category)}</span><span>${escapeHtml(item.name)} · ${escapeHtml(item.quantity)}</span><button class="pill" data-action="arrange-pantry" data-id="${item.id}">Datum?</button></div>`).join('')}</div>
+      <div class="inbox-note">Verschwindet zwei Stunden nach dem Einkauf von selbst.</div>
+    </section>` : ''}
+    <div class="filter-tabs">
+      <button class="${pantryFilter === 'expiry' ? 'active' : ''}" data-action="pantry-filter" data-filter="expiry">Läuft ab</button>
+      <button class="${pantryFilter === 'buy' ? 'active' : ''}" data-action="pantry-filter" data-filter="buy">Nachkaufen</button>
+      <button class="${pantryFilter === 'all' ? 'active' : ''}" data-action="pantry-filter" data-filter="all">Alles</button>
+    </div>
+    <div class="card list-card">
+      ${items.length ? items.map((item) => {
+        const exp = expiryInfo(item.expiry_date);
+        return `<button class="list-row clickable expiry-row ${exp.className}" style="width:100%;border-left:0;border-right:0;border-top:0;background:transparent;color:inherit;text-align:left" data-action="edit-pantry" data-id="${item.id}">
+          <span class="row-body"><span class="row-title">${escapeHtml(item.name)}</span><span class="row-sub expiry-copy ${exp.className}">${escapeHtml(item.location || item.category)} · ${escapeHtml(exp.label)}${item.buy_again || item.low_stock ? ' · nachkaufen' : ''}${item.note ? ` · ${escapeHtml(item.note)}` : ''}</span></span>
+          <span class="pantry-quantity"><strong>${escapeHtml(item.quantity)}${item.unit ? ` ${escapeHtml(item.unit)}` : ''}</strong>${item.low_stock ? `<small>Mindestbestand</small>` : ''}</span>
+        </button>`;
+      }).join('') : `<div class="empty-state"><div class="empty-icon">${icon('pantry', 25)}</div><strong>Keine Treffer</strong><span>In diesem Bereich sind keine Artikel.</span></div>`}
+    </div>
+  </div>`;
+}
+
+const noteColor = {
+  blue: 'var(--accent)', green: 'var(--green)', orange: 'var(--orange)', yellow: 'var(--yellow)', purple: 'var(--purple)', red: 'var(--red)'
+};
+
+function notesGridHtml() {
+  const query = noteQuery.trim().toLocaleLowerCase('de');
+  const notes = data.notes.filter((item) => !query || `${item.title} ${item.content} ${item.tag || ''} ${item.related_name || ''}`.toLocaleLowerCase('de').includes(query));
+  if (!notes.length) return `<div class="card empty-state" style="grid-column:1/-1"><div class="empty-icon">${icon('search', 25)}</div><strong>Keine Notiz gefunden</strong><span>Prüfe den Suchbegriff oder lege eine neue Notiz an.</span></div>`;
+  return notes.map((item) => `<article class="card note-card" style="--note-accent:${noteColor[item.accent] ?? 'var(--accent)'}" data-action="edit-note" data-id="${item.id}" tabindex="0">
+    ${item.pinned ? `<div class="note-kicker">${icon('pin', 9)} angeheftet</div>` : ''}
+    <h2 class="note-title">${escapeHtml(item.title)}</h2>
+    ${item.content ? `<div class="note-content">${escapeHtml(item.content)}</div>` : ''}
+    ${item.tag || item.due_date || item.related_name ? `<div class="note-meta-row">${item.tag ? `<span>${escapeHtml(item.tag)}</span>` : ''}${item.due_date ? `<span>${escapeHtml(item.due_date)}</span>` : ''}${item.related_name ? `<span>${escapeHtml(item.related_name)}</span>` : ''}</div>` : ''}
+    ${item.checklist_total ? `<div class="note-progress"><div class="progress-track"><div class="progress-fill green" style="width:${clamp(item.checklist_done / item.checklist_total * 100, 0, 100)}%"></div></div><span>${item.checklist_done} von ${item.checklist_total} erledigt</span></div>` : ''}
+  </article>`).join('');
+}
+
+function renderNotes() {
+  return `<div class="content-stack">
+    <div class="search-field">${icon('search', 16)}<input class="input" id="note-search" value="${escapeHtml(noteQuery)}" autocomplete="off"></div>
+    <div class="notes-grid">${notesGridHtml()}</div>
+  </div>`;
+}
+
+function renderContent() {
+  return ({ start: renderDashboard, money: renderMoney, shopping: renderShopping, pantry: renderPantry, notes: renderNotes })[activeTab]();
+}
+
+function renderApp() {
+  if (!data) return;
+  applyTheme();
+  if (storeMode.active) {
+    shell.innerHTML = renderStoreMode();
+    return;
+  }

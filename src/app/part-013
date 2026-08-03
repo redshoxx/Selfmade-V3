@@ -1,0 +1,105 @@
+  else if (action === 'parse-receipt') parseReceiptDialog();
+  else if (action === 'delete-recurring') await mutate(() => api(`/api/recurring/${target.dataset.id}`, { method: 'DELETE' }), 'Routine gelöscht');
+  else if (action === 'confirm-reset') {
+    openDialog('Alles zurücksetzen?', `<div class="alert danger">Alle gespeicherten App-Daten dieses Haushalts werden dauerhaft gelöscht.</div><div class="dialog-actions"><button class="btn btn-secondary" data-action="close-dialog">Abbrechen</button><button class="btn btn-danger" data-action="reset">Zurücksetzen</button></div>`);
+  } else if (action === 'reset') await mutate(() => api('/api/reset', { method: 'POST', body: '{}' }), 'Alle App-Daten wurden gelöscht');
+  else if (action === 'delete-shopping') await deleteWithUndo('shopping', data.shopping.find((item) => item.id === Number(target.dataset.id)));
+  else if (action === 'delete-pantry') await deleteWithUndo('pantry', data.pantry.find((item) => item.id === Number(target.dataset.id)));
+  else if (action === 'archive-note') await mutate(() => api(`/api/notes/${target.dataset.id}`, { method: 'PATCH', body: JSON.stringify({ archived: true }) }), 'Notiz archiviert');
+  else if (action === 'delete-note') await deleteWithUndo('note', data.notes.find((item) => item.id === Number(target.dataset.id)));
+  else if (action === 'delete-transaction') await deleteWithUndo('transaction', data.transactions.find((item) => item.id === Number(target.dataset.id)));
+  else if (action === 'note-color') {
+    dialogRoot.querySelector('input[name="accent"]').value = target.dataset.color;
+    dialogRoot.querySelectorAll('.color-dot').forEach((el) => el.classList.toggle('selected', el === target));
+  }
+});
+
+dialogRoot.addEventListener('input', (event) => {
+  if (event.target.id === 'global-search') renderGlobalSearch(event.target.value);
+});
+
+dialogRoot.addEventListener('change', async (event) => {
+  if (event.target.id === 'backup-file') {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+      const backup = JSON.parse(await file.text());
+      data = await api('/api/import', { method: 'POST', body: JSON.stringify(backup) });
+      closeDialog();
+      renderApp();
+      toast('Backup importiert');
+    } catch (error) { toast(error.message || 'Backup konnte nicht importiert werden.', 'error'); }
+    return;
+  }
+  if (event.target.id === 'barcode-photo') {
+    const file = event.target.files?.[0];
+    if (file) await scanBarcodePhoto(file);
+    return;
+  }
+  if (event.target.id !== 'receipt-file') return;
+  const file = event.target.files?.[0];
+  if (!file) return;
+  try {
+    receiptImageData = await imageFileToDataUrl(file);
+    const preview = dialogRoot.querySelector('#receipt-preview');
+    if (preview) { preview.src = receiptImageData; preview.hidden = false; }
+    toast('Bonbild übernommen');
+  } catch {
+    toast('Bild konnte nicht verarbeitet werden.', 'error');
+  }
+});
+
+dialogRoot.addEventListener('submit', async (event) => {
+  const form = event.target.closest('form[data-form]');
+  if (!form) return;
+  event.preventDefault();
+  if (!beginFormSubmission(form)) return;
+  try {
+  const fd = new FormData(form);
+  const values = Object.fromEntries(fd);
+  const kind = form.dataset.form;
+
+  if (kind === 'onboarding') {
+    try {
+      data = await api('/api/settings', { method: 'PATCH', body: JSON.stringify({ display_name: values.display_name, household_name: values.household_name }) });
+      localStorage.setItem('selfmade-onboarded-v3', '1');
+      if (fd.has('notifications')) await enableNotifications();
+      closeDialog();
+      renderApp();
+      toast('Selfmade ist eingerichtet');
+    } catch (error) { toast(error.message, 'error'); }
+  } else if (kind === 'settings') {
+    await mutate(() => api('/api/settings', { method: 'PATCH', body: JSON.stringify({ display_name: values.display_name, household_name: values.household_name, theme: values.theme, savings: Number(values.savings) }) }), 'Einstellungen gespeichert');
+  } else if (kind === 'savings') {
+    await mutate(() => api('/api/settings', { method: 'PATCH', body: JSON.stringify({ savings: Number(values.savings) }) }), 'Sparbetrag gespeichert');
+  } else if (kind === 'transaction') {
+    await mutate(() => api('/api/transactions', { method: 'POST', body: JSON.stringify({ ...values, amount: Number(values.amount) }) }), 'Buchung gespeichert');
+  } else if (kind === 'budget') {
+    const payload = { name: values.name, limit_amount: Number(values.limit_amount) };
+    await mutate(() => values.id ? api(`/api/budgets/${values.id}`, { method: 'PATCH', body: JSON.stringify(payload) }) : api('/api/budgets', { method: 'POST', body: JSON.stringify(payload) }), 'Budget gespeichert');
+  } else if (kind === 'shopping') {
+    const payload = { name: values.name, quantity: values.quantity, category: values.category, member_id: values.member_id || null, note: values.note, price: values.price === '' ? null : Number(values.price) };
+    await mutate(() => values.id ? api(`/api/shopping/${values.id}`, { method: 'PATCH', body: JSON.stringify(payload) }) : api('/api/shopping', { method: 'POST', body: JSON.stringify(payload) }), 'Artikel gespeichert');
+  } else if (kind === 'pantry') {
+    const payload = { name: values.name, quantity: values.quantity, unit: values.unit, category: values.category, location: values.location, expiry_date: values.expiry_date || null, purchase_date: values.purchase_date || null, opened_at: values.opened_at || null, min_quantity: Number(values.min_quantity || 0), price: values.price === '' ? null : Number(values.price), note: values.note, buy_again: fd.has('buy_again'), inbox: values.inbox === '1' };
+    if (values.id && values.inbox === '0') payload.inbox = false;
+    await mutate(() => values.id ? api(`/api/pantry/${values.id}`, { method: 'PATCH', body: JSON.stringify(payload) }) : api('/api/pantry', { method: 'POST', body: JSON.stringify(payload) }), values.inbox === '0' ? 'Artikel eingeräumt' : 'Vorrat gespeichert');
+  } else if (kind === 'note') {
+    const payload = { title: values.title, content: values.content, tag: values.tag, due_date: values.due_date || null, related_type: values.related_type, related_name: values.related_name, accent: values.accent, pinned: fd.has('pinned'), checklist_done: Number(values.checklist_done), checklist_total: Number(values.checklist_total) };
+    await mutate(() => values.id ? api(`/api/notes/${values.id}`, { method: 'PATCH', body: JSON.stringify(payload) }) : api('/api/notes', { method: 'POST', body: JSON.stringify(payload) }), 'Notiz gespeichert');
+  } else if (kind === 'member') {
+    const payload = { name: values.name, avatar: values.avatar, role: values.role };
+    await mutate(() => values.id ? api(`/api/members/${values.id}`, { method: 'PATCH', body: JSON.stringify(payload) }) : api('/api/members', { method: 'POST', body: JSON.stringify(payload) }), 'Mitglied gespeichert');
+  } else if (kind === 'catalog-product') {
+    const payload = { barcode: values.barcode, name: values.name, brand: values.brand, category: values.category, default_quantity: values.default_quantity, last_price: values.last_price === '' ? null : Number(values.last_price) };
+    try {
+      data = await api('/api/catalog', { method: 'POST', body: JSON.stringify(payload) });
+      closeDialog();
+      renderApp();
+      openShopping({ name: payload.name, quantity: payload.default_quantity, category: payload.category, price: payload.last_price, note: payload.brand ? `Marke: ${payload.brand}` : '' });
+      toast('Produkt im Katalog gespeichert');
+    } catch (error) { toast(error.message, 'error'); }
+  } else if (kind === 'recurring') {
+    await mutate(() => api('/api/recurring', { method: 'POST', body: JSON.stringify({ name: values.name, quantity: values.quantity, category: values.category, frequency_days: Number(values.frequency_days), next_due: values.next_due, enabled: true }) }), 'Routine gespeichert');
+  } else if (kind === 'receipt') {
+    let items = [];

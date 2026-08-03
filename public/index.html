@@ -2,19 +2,30 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#4361EE">
   <meta name="description" content="Geld, Einkauf, Vorrat, Notizen, Barcode und Kassenbon in einer modernen Haushalts-App.">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="format-detection" content="telephone=no,date=no,address=no,email=no,url=no">
   <meta name="apple-mobile-web-app-title" content="Selfmade">
   <meta name="mobile-web-app-capable" content="yes">
-  <link rel="manifest" href="/manifest.webmanifest?v=12">
+  <link rel="manifest" href="/manifest.webmanifest?v=14">
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
   <link rel="icon" href="/icon-192.png" sizes="192x192" type="image/png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-  <link rel="stylesheet" href="/styles.css?v=12">
+  <link rel="stylesheet" href="/styles.css?v=14">
   <title>Selfmade</title>
+  <script>
+    (() => {
+      const standalone = window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone === true;
+      document.documentElement.classList.toggle('is-standalone', standalone);
+      document.documentElement.classList.toggle('is-browser', !standalone);
+      const viewport = window.visualViewport;
+      const height = viewport?.height || window.innerHeight;
+      document.documentElement.style.setProperty('--app-viewport-height', `${Math.round(height)}px`);
+    })();
+  </script>
 </head>
 <body>
   <div id="app-shell" aria-live="polite">
@@ -26,6 +37,6 @@
   <div id="dialog-root"></div>
   <div id="toast-root" aria-live="assertive"></div>
   <script id="zxing-browser-library" defer src="/vendor/zxing-browser.min.js" crossorigin="anonymous" onload="this.dataset.ready='1'" onerror="this.dataset.failed='1'"></script>
-  <script type="module" src="/app.js?v=12"></script>
+  <script type="module" src="/app.js?v=14"></script>
 </body>
 </html>
