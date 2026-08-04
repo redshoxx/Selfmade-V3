@@ -1,0 +1,89 @@
+
+
+/* Version 19.3 – Rechte-, Datenschutz- und Anti-Klon-Schutz */
+const HAUSHALTKLAR_RIGHTS_V193 = Object.freeze({
+  product: 'HaushaltKlar',
+  version: '19.3.0',
+  copyright: '© 2026 redshoxx. Alle Rechte vorbehalten.',
+  license: 'Proprietär – keine Nutzung ohne vorherige schriftliche Genehmigung.',
+  aiTraining: false,
+  textDataMining: false,
+  cloning: false,
+  designReuse: false
+});
+
+const openSettingsRendererV193 = openSettings;
+openSettings = function openSettingsV193() {
+  openSettingsRendererV193();
+  const memberHeading = [...dialogRoot.querySelectorAll('.section-title-row')].find((element) => element.textContent.includes('Haushaltsmitglieder'));
+  if (!memberHeading || dialogRoot.querySelector('.rights-card-v193')) return;
+  memberHeading.insertAdjacentHTML('beforebegin', `
+    <section class="rights-card-v193">
+      <div class="rights-card-title-v193"><span class="rights-lock-v193">${icon('shield', 18)}</span><div><strong>Rechte & Datenschutz</strong><small>© 2026 redshoxx · Proprietäre Anwendung</small></div></div>
+      <p>App-Code, Funktionen, Markenauftritt und Design dürfen ohne vorherige schriftliche Genehmigung weder kopiert noch für Klone, Datensätze oder KI-Systeme verwendet werden.</p>
+      <div class="rights-actions-v193"><button type="button" class="btn btn-secondary small" data-action="show-rights-v193">Nutzungsrechte</button><button type="button" class="btn btn-secondary small" data-action="show-ai-policy-v193">KI-/TDM-Schutz</button></div>
+    </section>`);
+};
+
+Object.defineProperty(window, '__HAUSHALTKLAR_RIGHTS__', {
+  value: HAUSHALTKLAR_RIGHTS_V193,
+  writable: false,
+  configurable: false,
+  enumerable: false
+});
+
+function openRightsV193() {
+  openDialog('Nutzungsrechte', `
+    <section class="legal-copy-v193">
+      <div class="legal-badge-v193">Proprietär · Alle Rechte vorbehalten</div>
+      <p><strong>HaushaltKlar</strong>, der Quellcode, die Benutzeroberfläche, das App-Icon, die Texte, Abläufe und das Design sind urheberrechtlich beziehungsweise kennzeichenrechtlich geschützt.</p>
+      <p>Ohne vorherige ausdrückliche schriftliche Genehmigung des Rechteinhabers sind insbesondere Kopieren, Forken, Weiterverkaufen, Veröffentlichen, Dekompilieren, Nachbauen, Erstellen abgeleiteter Apps sowie die Übernahme wesentlicher Gestaltungsmerkmale untersagt.</p>
+      <p>Die normale persönliche Nutzung der bereitgestellten App bleibt davon unberührt. Gesetzlich zwingend erlaubte Handlungen bleiben ebenfalls unberührt.</p>
+      <p class="legal-owner-v193">${escapeHtml(HAUSHALTKLAR_RIGHTS_V193.copyright)}</p>
+    </section>
+    <div class="dialog-actions"><button type="button" class="btn btn-primary" data-action="close-dialog">Verstanden</button></div>
+  `, null);
+}
+
+function openAiPolicyV193() {
+  openDialog('KI- und Datennutzung', `
+    <section class="legal-copy-v193">
+      <div class="legal-badge-v193">KI-/TDM-Nutzung nicht gestattet</div>
+      <p>Es wird keine Erlaubnis erteilt, Inhalte, Quellcode, App-Daten, Screenshots, UI-Komponenten oder das Design von HaushaltKlar für KI-Training, Modellverbesserung, Embeddings, Retrieval-Datenbanken, Text- und Data-Mining oder die Erzeugung eines Klons zu verwenden.</p>
+      <p>Haushalts- und Benutzerdaten sind vertraulich. Sie dürfen ausschließlich für die vom angemeldeten Benutzer ausgelösten Funktionen verarbeitet werden. Eine Weitergabe oder Verwendung für Werbung, Profilbildung oder KI-Training ist nicht Bestandteil der App.</p>
+      <p>Maschinenlesbare Sperrsignale werden über <code>robots.txt</code>, <code>X-Robots-Tag</code> und <code>tdm-reservation: 1</code> ausgeliefert. Diese Signale verpflichten regelkonforme Crawler, ersetzen aber keine Zugangskontrolle.</p>
+    </section>
+    <div class="dialog-actions"><button type="button" class="btn btn-primary" data-action="close-dialog">Schließen</button></div>
+  `, null);
+}
+
+shell.addEventListener('click', (event) => {
+  const target = event.target.closest('[data-action]');
+  if (!target) return;
+  if (target.dataset.action === 'show-rights-v193') openRightsV193();
+  if (target.dataset.action === 'show-ai-policy-v193') openAiPolicyV193();
+});
+
+exportData = async function exportDataV193() {
+  try {
+    const payload = await api('/api/export');
+    const protectedPayload = {
+      _haushaltklar: {
+        product: 'HaushaltKlar',
+        version: '19.3.0',
+        exported_at: new Date().toISOString(),
+        copyright: HAUSHALTKLAR_RIGHTS_V193.copyright,
+        confidentiality: 'Benutzerdaten – nicht für Weitergabe, KI-Training oder Text- und Data-Mining freigegeben.'
+      },
+      ...payload
+    };
+    const blob = new Blob([JSON.stringify(protectedPayload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `haushaltklar-backup-${todayLocal()}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast('Geschütztes Backup erstellt');
+  } catch (error) { toast(error.message, 'error'); }
+};

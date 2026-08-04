@@ -3,6 +3,7 @@
     <style name="Theme.HaushaltKlar" parent="android:style/Theme.Material.Light.NoActionBar">
         <item name="android:fontFamily">sans</item>
         <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:windowDisablePreview">true</item>
         <item name="android:windowBackground">@color/haushaltklar_background</item>
         <item name="android:colorAccent">@color/haushaltklar_accent</item>
         <item name="android:navigationBarColor">@color/haushaltklar_background</item>

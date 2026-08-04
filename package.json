@@ -1,9 +1,9 @@
 {
   "name": "selfmade-haushaltsapp",
-  "version": "19.2.0",
+  "version": "19.3.0",
   "private": true,
   "type": "module",
-  "description": "HaushaltKlar V19.2 mit neuem Markenauftritt, kompakter iPhone-Navigation, Rezeptverwaltung, Wochenplaner und Kochmodus.",
+  "description": "HaushaltKlar V19.3 mit proprietärem Rechte-, Datenschutz-, Anti-Crawling- und TDM-Schutz.",
   "engines": {
     "node": "22.x"
   },

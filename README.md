@@ -1,36 +1,31 @@
-# HaushaltKlar V19.2
+# HaushaltKlar V19.3 – Schutz- und Rechte-Update
 
-HaushaltKlar ist eine für den iPhone-Homescreen optimierte Haushalts-PWA mit Supabase-Speicherung und Vercel-Deployment.
+HaushaltKlar ist eine proprietäre Haushalts-PWA mit Supabase-Speicherung, Vercel-Deployment, Rezeptverwaltung, Mahlzeitenplaner und Kochmodus.
 
-## Neues in Version 19.2
+## Schutzmaßnahmen in V19.3
 
-- neuer professioneller Markenname **HaushaltKlar**
-- neues App-Icon mit Haus- und Klarheits-/Check-Symbol
-- hochwertiger Splashscreen beim Öffnen der App
-- neu gestaltete Startseite mit Begrüßung und Haushaltsübersicht
-- kompakte schwebende Bottom Navigation für sechs Hauptbereiche
-- aktive Navigation als kleine blaue Icon-Fläche statt großer Karte
-- verbesserte Light- und Dark-Mode-Farben
-- neue Startkarten für Einkauf, Vorrat, Essensplanung, ablaufende Produkte und Notizen
-- iPhone-Safe-Areas und Bildschirmtastatur bleiben vollständig berücksichtigt
+- proprietäre `LICENSE` mit vollständigem Rechtevorbehalt
+- ausdrückliches Verbot von Klonen, Weitergabe, KI-Training, Scraping und TDM
+- maschinenlesbarer TDM-Vorbehalt über `tdm-reservation: 1`
+- `/.well-known/tdmrep.json` nach dem W3C-TDMRep-Format
+- vollständige Crawlersperre über `robots.txt`, einschließlich bekannter KI-Crawler
+- `noindex`, `nosnippet` und `noimageindex` als Meta- und HTTP-Signale
+- strikte Content Security Policy und Schutz vor Einbettung in fremde Websites
+- keine Referrer-Weitergabe und restriktive Browser-Berechtigungen
+- API-Antworten werden nicht zwischengespeichert
+- sichtbarer Rechte- und Datenschutzbereich in den App-Einstellungen
+- Backups enthalten eine Vertraulichkeits- und Rechtekennzeichnung
+- Copyright-Banner in gebauten JavaScript-, CSS- und Serverdateien
 
-## Bestehende Funktionen
+## Wichtige technische Grenze
 
-- Geld und Budgets
-- Einkaufsliste und Ladenmodus
-- Vorrat
-- Rezepte und GuteKueche-Linkimport
-- Mahlzeitenplaner
-- Vollbild-Kochmodus und Küchentimer
-- Notizen
-- Barcode-Scanner und Kassenbon-Import
-- Supabase-Cloudspeicherung
+Eine ausgelieferte Web-App kann nicht absolut gegen Screenshots, manuelles Nachprogrammieren oder das Entfernen clientseitiger Schutzprüfungen gesichert werden. Das Repository muss deshalb **privat** sein. Solange es öffentlich ist, kann jeder den Quellcode ansehen und über GitHub forken. Bereits erstellte öffentliche Forks bleiben auch nach einer späteren Umstellung auf privat bestehen.
 
-## Supabase
+## Datenzugriff
 
-V19.2 verwendet weiterhin den bestehenden JSONB-Haushaltsdatenstand. Eine zusätzliche Migration ist nicht erforderlich.
+Haushaltsdaten werden weiterhin über Supabase Auth und Row Level Security geschützt. Die App verwendet keinen Service-Role-Key im Browser. Benutzer- und Haushaltsdaten sind nicht für Werbung, Profilbildung, KI-Training oder Text- und Data-Mining freigegeben.
 
-## Vercel
+## Deployment
 
 ```bash
 npm install
@@ -44,4 +39,4 @@ Output Directory: dist
 Node.js: 22.x
 ```
 
-Nach einem Deployment die Homescreen-App vollständig schließen und erneut öffnen. Der Service Worker V19.2 entfernt ältere App-Caches automatisch.
+Nach dem Deployment die Homescreen-App vollständig schließen und neu öffnen. Der Service Worker V19.3 entfernt ältere Caches.
