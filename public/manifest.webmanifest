@@ -1,6 +1,7 @@
 {
   "name": "HaushaltKlar",
   "short_name": "HaushaltKlar",
+  "version": "21.1.0",
   "description": "Einkauf, Vorrat, Rezepte, Geld, Sparziele, Challenges und Notizen einfach organisieren.",
   "id": "haushaltklar-v21-clean-rebuild",
   "start_url": "/?source=homescreen",

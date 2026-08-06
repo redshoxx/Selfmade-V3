@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [agent/v21-clean-rebuild]
+    branches: [agent/v21-clean-rebuild, agent/v21-1-interaction-fix]
 
 jobs:
   test-and-build:
@@ -19,7 +19,7 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
-      - name: Run V21 tests
-        run: npm test
+      - name: Run current V21 release tests
+        run: npm run test:v21
       - name: Build Vercel output
         run: npm run build

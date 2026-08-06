@@ -1,10 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 
-const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
-const app = await Promise.all(Array.from({ length: 8 }, (_, index) => read(`src/v21/app/part-${String(index).padStart(3, '0')}`))).then((parts) => parts.join(''));
-const styles = await Promise.all(Array.from({ length: 4 }, (_, index) => read(`src/v21/styles/part-${String(index).padStart(3, '0')}`))).then((parts) => parts.join(''));
+const root = new URL('../', import.meta.url);
+const read = (path) => readFile(new URL(path, root), 'utf8');
+const joinParts = async (directory) => {
+  const names = (await readdir(new URL(directory, root)))
+    .filter((name) => name.startsWith('part-'))
+    .sort();
+  return Promise.all(names.map((name) => read(`${directory}${name}`))).then((parts) => parts.join(''));
+};
+
+const app = await joinParts('src/v21/app/');
+const styles = await joinParts('src/v21/styles/');
 const index = await read('public/index.html');
 const manifest = JSON.parse(await read('public/manifest.webmanifest'));
 const assembler = await read('scripts/assemble-assets.mjs');
@@ -22,10 +30,7 @@ test('V21 uses a dedicated frontend instead of legacy fragments', () => {
 
 test('V21 contains the five simple primary areas', () => {
   for (const view of requiredViews) {
-    assert.ok(
-      app.includes(`'${view}'`) || app.includes(`"${view}"`),
-      `Missing primary view ${view}`
-    );
+    assert.ok(app.includes(`'${view}'`) || app.includes(`"${view}"`), `Missing primary view ${view}`);
   }
   assert.match(app, /Heute/);
   assert.match(app, /Einkauf/);
@@ -42,6 +47,33 @@ test('all requested household functions use real API routes', () => {
   assert.match(app, /Ladenmodus/);
 });
 
+test('V21.1 repairs shopping interactions and search focus', () => {
+  assert.match(app, /shopping-quick-form/);
+  assert.match(app, /add-suggestion/);
+  assert.match(app, /v211CaptureFocus/);
+  assert.match(app, /setSelectionRange/);
+  assert.match(styles, /\.shopping-quick-card/);
+  assert.match(styles, /\.simple-shopping-list/);
+});
+
+test('V21.1 weekly planner supports navigation and full meal management', () => {
+  assert.match(app, /week-prev/);
+  assert.match(app, /week-next/);
+  assert.match(app, /copy-previous-week/);
+  assert.match(app, /edit-meal/);
+  assert.match(app, /delete-meal/);
+  assert.match(app, /\/api\/meal-plan\/copy/);
+  assert.match(app, /method: id \? 'PATCH' : 'POST'/);
+  assert.match(styles, /\.planner-days/);
+  assert.match(styles, /\.planner-slot/);
+});
+
+test('V21.1 handles expired sessions and asynchronous failures visibly', () => {
+  assert.match(app, /v211ClearSession/);
+  assert.match(app, /Sitzung ist abgelaufen/);
+  assert.match(app, /unhandledrejection/);
+});
+
 test('new design is responsive, readable and supports dark mode', () => {
   assert.match(styles, /--sidebar-width/);
   assert.match(styles, /\.bottom-nav/);
@@ -51,15 +83,16 @@ test('new design is responsive, readable and supports dark mode', () => {
   assert.doesNotMatch(styles, /living-canvas/i);
 });
 
-test('PWA identity and cache point to V21', () => {
-  assert.equal(manifest.version, '21.0.0');
+test('PWA identity is preserved while cache points to V21.1', () => {
+  assert.equal(manifest.version, '21.1.0');
   assert.equal(manifest.id, 'haushaltklar-v21-clean-rebuild');
   assert.equal(manifest.name, 'HaushaltKlar');
-  assert.match(index, /v=21\.0\.0/);
-  assert.match(serviceWorker, /haushaltklar-v21-clean-rebuild/);
+  assert.match(index, /v=21\.1\.0/);
+  assert.match(serviceWorker, /haushaltklar-v21-1-interaction-fix/);
+  assert.match(serviceWorker, /v=21\.1\.0/);
 });
 
-test('no Supabase secret is embedded in the new client', () => {
+test('no Supabase secret is embedded in the client', () => {
   assert.doesNotMatch(app, /sb_secret_/);
   assert.doesNotMatch(index, /sb_secret_/);
 });
