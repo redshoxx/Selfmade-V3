@@ -21,7 +21,12 @@ test('V21 uses a dedicated frontend instead of legacy fragments', () => {
 });
 
 test('V21 contains the five simple primary areas', () => {
-  for (const view of requiredViews) assert.match(app, new RegExp(`['\"]${view}['\"]`));
+  for (const view of requiredViews) {
+    assert.ok(
+      app.includes(`'${view}'`) || app.includes(`"${view}"`),
+      `Missing primary view ${view}`
+    );
+  }
   assert.match(app, /Heute/);
   assert.match(app, /Einkauf/);
   assert.match(app, /Küche/);
