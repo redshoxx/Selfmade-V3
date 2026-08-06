@@ -1,9 +1,9 @@
-const CACHE = 'selfmade-v1.0.2'
+const CACHE = 'selfmade-v1.0.3'
 const APP_SHELL = [
   '/',
   '/index.html',
-  '/app.bundle.js?v=1.0.2',
-  '/styles.css?v=1.0.2',
+  '/app.bundle.js?v=1.0.3',
+  '/styles.css?v=1.0.3',
   '/manifest.webmanifest',
   '/icon-192.png',
   '/icon-512.png',
@@ -15,7 +15,11 @@ self.addEventListener('install', (event) => {
 })
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key)))).then(() => self.clients.claim()))
+  event.waitUntil(
+    caches.keys()
+      .then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key))))
+      .then(() => self.clients.claim())
+  )
 })
 
 self.addEventListener('fetch', (event) => {
@@ -25,19 +29,27 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return
 
   if (request.mode === 'navigate') {
-    event.respondWith(fetch(request, { cache: 'no-store' }).then((response) => {
-      const copy = response.clone()
-      caches.open(CACHE).then((cache) => cache.put('/index.html', copy))
-      return response
-    }).catch(() => caches.match('/index.html')))
+    event.respondWith(
+      fetch(request, { cache: 'no-store' })
+        .then((response) => {
+          const copy = response.clone()
+          caches.open(CACHE).then((cache) => cache.put('/index.html', copy))
+          return response
+        })
+        .catch(() => caches.match('/index.html'))
+    )
     return
   }
 
-  event.respondWith(fetch(request).then((response) => {
-    if (response.ok) {
-      const copy = response.clone()
-      caches.open(CACHE).then((cache) => cache.put(request, copy))
-    }
-    return response
-  }).catch(() => caches.match(request)))
+  event.respondWith(
+    fetch(request, { cache: 'no-store' })
+      .then((response) => {
+        if (response.ok) {
+          const copy = response.clone()
+          caches.open(CACHE).then((cache) => cache.put(request, copy))
+        }
+        return response
+      })
+      .catch(() => caches.match(request))
+  )
 })
