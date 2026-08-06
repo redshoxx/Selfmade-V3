@@ -20,9 +20,7 @@ async function readBase64Parts(parts) {
   }
 
   const encoded = chunks.join('').replace(/\s+/g, '')
-  if (!encoded || !/^[A-Za-z0-9+/=]+$/.test(encoded)) {
-    throw new Error(`Ungültige Base64-Daten in ${parts.join(', ')}`)
-  }
+  if (!encoded) throw new Error(`Leere Base64-Daten in ${parts.join(', ')}`)
 
   const compressed = Buffer.from(encoded, 'base64')
   if (compressed.length < 3 || compressed[0] !== 0x1f || compressed[1] !== 0x8b) {
