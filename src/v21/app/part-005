@@ -1,0 +1,129 @@
+function renderSettings() {
+  const settings = data.settings || {};
+  const theme = loadJson(UI_KEY, {}).theme || settings.theme || 'system';
+  return `<section class="settings-stack">
+    <article class="settings-card"><div><span class="settings-icon">${icon('settings')}</span><div><h2>Haushalt</h2><p>Name und Bezeichnung ändern.</p></div></div><button class="secondary-button" data-action="edit-settings">Bearbeiten</button></article>
+    <article class="settings-card"><div><span class="settings-icon">${icon(theme === 'dark' ? 'moon' : 'sun')}</span><div><h2>Darstellung</h2><p>Hell, dunkel oder automatisch.</p></div></div><div class="segmented compact"><button class="${theme === 'light' ? 'is-active' : ''}" data-theme="light">Hell</button><button class="${theme === 'system' ? 'is-active' : ''}" data-theme="system">Auto</button><button class="${theme === 'dark' ? 'is-active' : ''}" data-theme="dark">Dunkel</button></div></article>
+    <article class="settings-card danger"><div><span class="settings-icon">${icon('logout')}</span><div><h2>Abmelden</h2><p>Die lokale Sitzung auf diesem Gerät beenden.</p></div></div><button class="secondary-button" data-action="logout">Abmelden</button></article>
+    <div class="version-note">HaushaltKlar V${APP_VERSION} · Clean Rebuild</div>
+  </section>`;
+}
+
+function emptyState(iconName, title, text, action = '') {
+  return `<div class="empty-state"><span>${icon(iconName, 28)}</span><h3>${esc(title)}</h3><p>${esc(text)}</p>${action}</div>`;
+}
+
+function groupBy(items, keyFn) {
+  return items.reduce((groups, item) => {
+    const key = keyFn(item);
+    (groups[key] ||= []).push(item);
+    return groups;
+  }, {});
+}
+
+function applyTheme() {
+  const selected = loadJson(UI_KEY, {}).theme || data?.settings?.theme || 'system';
+  const dark = selected === 'dark' || (selected === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#111510' : '#f4f5f2');
+}
+
+function renderModal() {
+  const modal = ui.modal;
+  if (!modal) {
+    dialogRoot.innerHTML = '';
+    document.body.classList.remove('modal-open');
+    return;
+  }
+  document.body.classList.add('modal-open');
+  const body = modalContent(modal);
+  dialogRoot.innerHTML = `<div class="modal-backdrop" data-action="close-modal"></div><section class="modal-sheet" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-handle"></div><header><div><span>${esc(body.kicker || '')}</span><h2 id="modal-title">${esc(body.title)}</h2></div><button class="icon-button" data-action="close-modal" aria-label="Schließen">${icon('close')}</button></header><div class="modal-body">${body.content}</div></section>`;
+  setTimeout(() => dialogRoot.querySelector('input, textarea, select')?.focus(), 20);
+}
+
+function modalContent(modal) {
+  const item = modal.item || {};
+  switch (modal.type) {
+    case 'quick-add':
+      return { title: 'Neu hinzufügen', kicker: 'Schnellaktion', content: `<div class="modal-action-list">${quickAction('shopping', 'Produkt', 'Zur Einkaufsliste', 'shopping')}${quickAction('pantry', 'Vorrat', 'Lebensmittel eintragen', 'pantry')}${quickAction('recipe', 'Rezept', 'Eigenes Rezept speichern', 'recipe')}${quickAction('note', 'Notiz', 'Gedanken festhalten', 'note')}${quickAction('wallet', 'Buchung', 'Einnahme oder Ausgabe', 'transaction')}</div>` };
+    case 'shopping':
+      return { title: item.id ? 'Produkt bearbeiten' : 'Produkt hinzufügen', kicker: 'Einkauf', content: form('shopping-form', `<label>Produkt<input name="name" required value="${esc(item.name || '')}" placeholder="z. B. Milch"></label><div class="form-grid"><label>Menge<input name="quantity" value="${esc(item.quantity || '1')}" placeholder="1"></label><label>Kategorie<select name="category">${options(['Obst & Gemüse','Kühlregal','Backwaren','Vorrat','Tiefkühl','Getränke','Haushalt','Sonstiges'], item.category || 'Sonstiges')}</select></label></div><div class="form-grid"><label>Preis optional<input name="price" inputmode="decimal" value="${item.price ?? ''}" placeholder="0,00"></label><label>Notiz<input name="note" value="${esc(item.note || '')}" placeholder="Marke, Größe …"></label></div><input type="hidden" name="id" value="${item.id || ''}">${submitButton(item.id ? 'Änderungen speichern' : 'Zur Liste hinzufügen')}`) };
+    case 'pantry':
+      return { title: item.id ? 'Lebensmittel bearbeiten' : 'Lebensmittel eintragen', kicker: 'Vorrat', content: form('pantry-form', `<label>Name<input name="name" required value="${esc(item.name || '')}" placeholder="z. B. Joghurt"></label><div class="form-grid"><label>Menge<input name="quantity" value="${esc(item.quantity || '1')}"></label><label>Einheit<select name="unit">${options(['','Stück','g','kg','ml','l','Packung'], item.unit || '')}</select></label></div><div class="form-grid"><label>Kategorie<select name="category">${options(['Obst & Gemüse','Kühlregal','Backwaren','Vorrat','Tiefkühl','Getränke','Sonstiges'], item.category || 'Vorrat')}</select></label><label>Ort<select name="location">${options(['Vorratsschrank','Kühlschrank','Gefrierschrank','Keller','Sonstiges'], item.location || 'Vorratsschrank')}</select></label></div><div class="form-grid"><label>Ablaufdatum<input name="expiry_date" type="date" value="${esc(item.expiry_date || '')}"></label><label>Mindestbestand<input name="min_quantity" inputmode="decimal" value="${item.min_quantity ?? 0}"></label></div><label class="switch-row"><input type="checkbox" name="buy_again" ${item.buy_again ? 'checked' : ''}><span>Zum Nachkaufen markieren</span></label><input type="hidden" name="id" value="${item.id || ''}">${submitButton(item.id ? 'Änderungen speichern' : 'Zum Vorrat hinzufügen')}`) };
+    case 'transaction':
+      return { title: 'Buchung hinzufügen', kicker: 'Geld', content: form('transaction-form', `<div class="segmented form-segment"><label><input type="radio" name="type" value="expense" checked><span>Ausgabe</span></label><label><input type="radio" name="type" value="income"><span>Einnahme</span></label></div><label>Betrag<input name="amount" required inputmode="decimal" placeholder="0,00"></label><div class="form-grid"><label>Kategorie<select name="category">${options(['Lebensmittel','Haushalt','Freizeit','Mobilität','Wohnen','Versicherung','Gehalt','Sonstiges'], 'Lebensmittel')}</select></label><label>Datum<input name="booked_on" type="date" value="${todayIso()}"></label></div><label>Beschreibung<input name="note" placeholder="Wofür war die Buchung?"></label>${submitButton('Buchung speichern')}`) };
+    case 'budget':
+      return { title: item.id ? 'Budget bearbeiten' : 'Budget anlegen', kicker: 'Geld', content: form('budget-form', `<label>Name<input name="name" required value="${esc(item.name || '')}" placeholder="z. B. Lebensmittel"></label><label>Monatliches Limit<input name="limit_amount" required inputmode="decimal" value="${item.limit_amount ?? ''}" placeholder="300,00"></label><input type="hidden" name="id" value="${item.id || ''}">${submitButton(item.id ? 'Budget speichern' : 'Budget anlegen')}`) };
+    case 'note':
+      return { title: item.id ? 'Notiz bearbeiten' : 'Neue Notiz', kicker: 'Notizen', content: form('note-form', `<label>Titel<input name="title" required value="${esc(item.title || '')}" placeholder="Worum geht es?"></label><label>Inhalt<textarea name="content" rows="7" placeholder="Schreibe deine Notiz …">${esc(item.content || '')}</textarea></label><div class="form-grid"><label>Schlagwort<input name="tag" value="${esc(item.tag || '')}" placeholder="z. B. Wichtig"></label><label>Fällig am<input name="due_date" type="date" value="${esc(item.due_date || '')}"></label></div><label class="switch-row"><input type="checkbox" name="pinned" ${item.pinned ? 'checked' : ''}><span>Oben anpinnen</span></label><input type="hidden" name="id" value="${item.id || ''}">${submitButton(item.id ? 'Notiz speichern' : 'Notiz anlegen')}`) };
+    case 'recipe':
+      return { title: item.id ? 'Rezept bearbeiten' : 'Neues Rezept', kicker: 'Küche', content: form('recipe-form', `<label>Rezeptname<input name="name" required value="${esc(item.name || '')}" placeholder="z. B. Gemüsepasta"></label><label>Beschreibung<textarea name="description" rows="3" placeholder="Kurze Beschreibung">${esc(item.description || '')}</textarea></label><div class="form-grid thirds"><label>Vorbereitung<input name="prep_minutes" inputmode="numeric" value="${item.prep_minutes ?? 0}" placeholder="Min."></label><label>Gesamtzeit<input name="total_minutes" inputmode="numeric" value="${item.total_minutes ?? 0}" placeholder="Min."></label><label>Portionen<input name="servings" inputmode="numeric" value="${item.servings ?? 2}"></label></div><div class="form-grid"><label>Kategorie<input name="category" value="${esc(item.category || '')}" placeholder="Hauptspeise"></label><label>Schwierigkeit<select name="difficulty">${options(['Einfach','Mittel','Anspruchsvoll'], item.difficulty || 'Einfach')}</select></label></div><label>Zutaten <small>eine Zeile: Menge | Einheit | Zutat</small><textarea name="ingredients" rows="6" placeholder="2 | Stück | Tomaten
+250 | g | Nudeln">${esc(formatIngredients(item.ingredients))}</textarea></label><label>Schritte <small>ein Schritt pro Zeile</small><textarea name="steps" rows="6" placeholder="Gemüse schneiden
+Alles anbraten">${esc(formatSteps(item.steps))}</textarea></label><label>Persönliche Notiz<textarea name="notes" rows="3">${esc(item.notes || '')}</textarea></label><input type="hidden" name="id" value="${item.id || ''}">${submitButton(item.id ? 'Rezept speichern' : 'Rezept anlegen')}`) };
+    case 'recipe-detail':
+      return recipeDetail(item);
+    case 'meal':
+      return { title: 'Mahlzeit planen', kicker: 'Wochenplan', content: form('meal-form', `<label>Tag<input name="plan_date" type="date" value="${esc(modal.date || todayIso())}" required></label><div class="form-grid"><label>Mahlzeit<select name="meal_type">${options(['Frühstück','Mittagessen','Abendessen','Snack'], 'Abendessen')}</select></label><label>Portionen<input name="servings" inputmode="numeric" value="2"></label></div><label>Rezept<select name="recipe_id" required><option value="">Rezept wählen</option>${(data.recipes || []).map(recipe => `<option value="${recipe.id}">${esc(recipe.name)}</option>`).join('')}</select></label>${submitButton('Mahlzeit einplanen')}`) };
+    case 'savings':
+      return { title: 'Sparbetrag ändern', kicker: 'Sparen', content: form('savings-form', `<label>Aktueller Sparbetrag<input name="savings" inputmode="decimal" value="${Number(data.summary?.savings || 0)}" required></label><p class="form-help">Der Betrag wird als Gesamtsumme für deinen Haushalt gespeichert.</p>${submitButton('Sparbetrag speichern')}`) };
+    case 'challenge': {
+      const challenge = challengeState();
+      return { title: challenge.target ? 'Challenge bearbeiten' : 'Challenge starten', kicker: 'Sparen', content: form('challenge-form', `<label>Name<input name="name" value="${esc(challenge.name || 'Meine Spar-Challenge')}" required></label><div class="form-grid"><label>Zielbetrag<input name="target" inputmode="decimal" value="${challenge.target || ''}" required placeholder="500"></label><label>Anzahl Schritte<input name="steps" inputmode="numeric" value="${challenge.steps || 30}" required></label></div><p class="form-help">Jeder abgeschlossene Schritt erhöht deinen gespeicherten Sparbetrag automatisch.</p>${submitButton('Challenge speichern')}`) };
+    }
+    case 'settings':
+      return { title: 'Haushalt bearbeiten', kicker: 'Einstellungen', content: form('settings-form', `<label>Dein Name<input name="display_name" value="${esc(data.settings?.display_name || '')}" required></label><label>Name des Haushalts<input name="household_name" value="${esc(data.settings?.household_name || '')}" required></label>${submitButton('Einstellungen speichern')}`) };
+    case 'checkout':
+      return { title: 'Einkauf abschließen', kicker: 'Ladenmodus', content: form('checkout-form', `<label>Geschäft<input name="store_name" placeholder="z. B. Billa, Spar, Hofer"></label><p class="form-help">Erledigte Produkte werden aus der Liste entfernt, in den Vorrat übernommen und als Ausgabe gebucht.</p>${submitButton('Einkauf übernehmen')}`) };
+    default:
+      return { title: 'Aktion', content: '' };
+  }
+}
+
+function recipeDetail(recipe) {
+  const ingredients = parseArray(recipe.ingredients);
+  const steps = parseArray(recipe.steps);
+  return {
+    title: recipe.name || 'Rezept',
+    kicker: recipe.category || 'Rezept',
+    content: `<div class="recipe-detail-meta"><span>${recipe.total_minutes || recipe.prep_minutes || 0} Minuten</span><span>${recipe.servings || 2} Portionen</span><span>${esc(recipe.difficulty || 'Einfach')}</span></div>${recipe.description ? `<p class="recipe-description">${esc(recipe.description)}</p>` : ''}<section class="detail-section"><h3>Zutaten</h3>${ingredients.length ? `<ul class="ingredient-list">${ingredients.map(ingredient => `<li><strong>${esc(ingredient.amount || '')} ${esc(ingredient.unit || '')}</strong><span>${esc(ingredient.name || '')}</span></li>`).join('')}</ul>` : '<p>Keine Zutaten eingetragen.</p>'}</section><section class="detail-section"><h3>Zubereitung</h3>${steps.length ? `<ol class="step-list">${steps.map(step => `<li>${esc(step.text || step)}</li>`).join('')}</ol>` : '<p>Keine Schritte eingetragen.</p>'}</section>${recipe.notes ? `<section class="detail-section"><h3>Notiz</h3><p>${esc(recipe.notes)}</p></section>` : ''}<div class="modal-footer-actions"><button class="secondary-button" data-action="recipe-to-shopping" data-id="${recipe.id}">${icon('shopping', 18)} Einkaufsliste</button><button class="primary-button" data-action="edit-recipe" data-id="${recipe.id}">${icon('edit', 18)} Bearbeiten</button></div>`,
+  };
+}
+
+function form(id, content) {
+  return `<form id="${id}" class="form-stack">${content}</form>`;
+}
+
+function submitButton(label) {
+  return `<button class="primary-button full submit-button" type="submit">${esc(label)}</button>`;
+}
+
+function options(values, selected) {
+  return values.map(value => `<option value="${esc(value)}" ${String(value) === String(selected) ? 'selected' : ''}>${esc(value || 'Keine')}</option>`).join('');
+}
+
+function parseArray(value) {
+  if (Array.isArray(value)) return value;
+  if (!value) return [];
+  try { const parsed = JSON.parse(value); return Array.isArray(parsed) ? parsed : []; } catch { return []; }
+}
+
+function formatIngredients(value) {
+  return parseArray(value).map(item => `${item.amount ?? ''} | ${item.unit ?? ''} | ${item.name ?? ''}`.trim()).join('\n');
+}
+
+function formatSteps(value) {
+  return parseArray(value).map(item => item.text || item).join('\n');
+}
+
+function parseIngredients(text) {
+  return String(text || '').split(/\r?\n/).map(line => line.trim()).filter(Boolean).map(line => {
+    const [amount = '', unit = '', ...name] = line.split('|').map(part => part.trim());
+    return { amount: Number(String(amount).replace(',', '.')) || 0, unit, name: name.join(' | ') || unit || amount };
+  });
+}
+
+function parseSteps(text) {
+  return String(text || '').split(/\r?\n/).map(line => line.trim()).filter(Boolean).map((text, index) => ({ order: index + 1, text }));
+}
+
+function openModal(type, item = null, extra = {}) {

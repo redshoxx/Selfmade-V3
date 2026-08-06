@@ -1,0 +1,127 @@
+          </div>
+        </header>
+        <main id="main-content" class="page-content">${page.content}</main>
+      </div>
+
+      <nav class="bottom-nav" aria-label="Hauptnavigation">
+        ${navItems().map(([view, label, iconName]) => navButton(view, label, iconName, 'bottom')).join('')}
+      </nav>
+    </div>
+  `;
+  renderModal();
+  applyTheme();
+}
+
+function navButton(view, label, iconName, placement) {
+  const active = ui.view === view;
+  return `<button class="nav-item ${active ? 'is-active' : ''}" data-view="${view}" aria-current="${active ? 'page' : 'false'}">${icon(iconName, placement === 'bottom' ? 22 : 20)}<span>${label}</span>${view === 'shopping' && (data?.badges?.shopping || 0) ? `<b>${data.badges.shopping}</b>` : ''}</button>`;
+}
+
+function renderLoading() {
+  appRoot.innerHTML = `<div class="loading-screen"><div class="brand-mark brand-mark-large">H</div><strong>HaushaltKlar</strong><span>Dein Haushalt wird geladen …</span><div class="loader"></div></div>`;
+}
+
+function renderAuth() {
+  const signup = ui.authMode === 'signup';
+  appRoot.innerHTML = `
+    <div class="auth-page">
+      <section class="auth-intro">
+        <div class="brand auth-brand"><div class="brand-mark">H</div><div><strong>HaushaltKlar</strong><span>Version ${APP_VERSION}</span></div></div>
+        <div class="auth-copy">
+          <span class="pill">Komplett neu aufgebaut</span>
+          <h1>Weniger suchen.<br>Mehr erledigen.</h1>
+          <p>Einkauf, Küche, Geld und Notizen in einer ruhigen, verständlichen Haushalts-App.</p>
+          <div class="auth-feature-grid">
+            <div>${icon('shopping')}<span>Einkauf & Vorrat</span></div>
+            <div>${icon('recipe')}<span>Rezepte & Planung</span></div>
+            <div>${icon('wallet')}<span>Geld & Sparen</span></div>
+            <div>${icon('note')}<span>Notizen & Aufgaben</span></div>
+          </div>
+        </div>
+      </section>
+      <section class="auth-panel">
+        <div class="auth-card">
+          <div class="segmented auth-tabs">
+            <button class="${!signup ? 'is-active' : ''}" data-auth-mode="signin">Anmelden</button>
+            <button class="${signup ? 'is-active' : ''}" data-auth-mode="signup">Registrieren</button>
+          </div>
+          <div class="auth-heading"><h2>${signup ? 'Konto erstellen' : 'Willkommen zurück'}</h2><p>${signup ? 'Starte mit einem neuen Haushalt.' : 'Melde dich bei deinem Haushalt an.'}</p></div>
+          <form id="auth-form" class="form-stack">
+            ${signup ? `<label>Name<input name="display_name" autocomplete="name" required placeholder="Dein Name"></label>` : ''}
+            <label>E-Mail<input name="email" type="email" autocomplete="email" required placeholder="name@beispiel.at"></label>
+            <label>Passwort<input name="password" type="password" autocomplete="${signup ? 'new-password' : 'current-password'}" minlength="8" required placeholder="Mindestens 8 Zeichen"></label>
+            <button class="primary-button full" type="submit">${signup ? 'Konto erstellen' : 'Anmelden'}</button>
+          </form>
+          <p class="auth-hint">Deine Daten werden mit Supabase geschützt und nur deinem Haushalt zugeordnet.</p>
+        </div>
+      </section>
+    </div>
+  `;
+  dialogRoot.innerHTML = '';
+  applyTheme();
+}
+
+function renderView() {
+  switch (ui.view) {
+    case 'shopping': return renderShopping();
+    case 'kitchen': return renderKitchen();
+    case 'money': return renderMoney();
+    case 'more': return renderMore();
+    default: return renderToday();
+  }
+}
+
+function renderToday() {
+  const shopping = data.shopping || [];
+  const openShopping = shopping.filter((item) => !item.checked);
+  const pantry = data.pantry || [];
+  const expiring = pantry.filter((item) => daysUntil(item.expiry_date) <= 3);
+  const recipes = data.recipes || [];
+  const planned = (data.meal_plan || []).find((item) => item.plan_date === todayIso());
+  const plannedRecipe = recipes.find((recipe) => Number(recipe.id) === Number(planned?.recipe_id));
+  const notes = publicNotes().slice(0, 3);
+  const challenge = challengeState();
+  const savings = Number(data.summary?.savings || 0);
+
+  let focus = {
+    icon: 'check',
+    title: 'Alles im Blick',
+    text: 'Aktuell gibt es nichts Dringendes. Du kannst direkt etwas Neues hinzufügen.',
+    action: `<button class="primary-button" data-action="quick-add">Etwas hinzufügen</button>`,
+  };
+  if (plannedRecipe) focus = { icon: 'recipe', title: `Heute: ${plannedRecipe.name}`, text: `${planned?.meal_type || 'Mahlzeit'} · ${planned.servings || plannedRecipe.servings || 2} Portionen`, action: `<button class="primary-button" data-action="open-recipe" data-id="${plannedRecipe.id}">Rezept öffnen</button>` };
+  else if (expiring.length) focus = { icon: 'pantry', title: `${expiring.length} Lebensmittel bald fällig`, text: 'Verbrauche diese Produkte zuerst oder plane ein passendes Rezept.', action: `<button class="primary-button" data-view="kitchen" data-kitchen-tab="pantry">Vorrat ansehen</button>` };
+  else if (openShopping.length) focus = { icon: 'shopping', title: `${openShopping.length} Dinge fehlen noch`, text: 'Deine Einkaufsliste ist bereit für den nächsten Einkauf.', action: `<button class="primary-button" data-view="shopping">Liste öffnen</button>` };
+
+  return {
+    eyebrow: dateLabel(todayIso(), { weekday: 'long', day: 'numeric', month: 'long' }),
+    title: `Hallo ${esc((data.settings?.display_name || '').split(' ')[0] || 'du')}`,
+    action: `<button class="secondary-button icon-label" data-action="quick-add">${icon('plus')}<span>Neu</span></button>`,
+    content: `
+      <section class="focus-card">
+        <div class="focus-icon">${icon(focus.icon, 26)}</div>
+        <div><span class="section-kicker">Heute zuerst</span><h2>${esc(focus.title)}</h2><p>${esc(focus.text)}</p></div>
+        <div class="focus-action">${focus.action}</div>
+      </section>
+
+      <section class="metric-grid">
+        ${metricCard('shopping', 'Offen im Einkauf', openShopping.length, openShopping.length === 1 ? 'Artikel' : 'Artikel', 'shopping')}
+        ${metricCard('pantry', 'Im Vorrat', pantry.length, expiring.length ? `${expiring.length} bald fällig` : 'Alles entspannt', 'kitchen', 'pantry')}
+        ${metricCard('wallet', 'Monatsstand', currency(data.summary?.remaining), `${currency(data.summary?.expense)} ausgegeben`, 'money')}
+        ${metricCard('savings', 'Gespart', currency(savings), challenge.target ? `${Math.round((challenge.saved / challenge.target) * 100 || 0)} % Challenge` : 'Noch kein Sparziel', 'money', 'savings')}
+      </section>
+
+      <section class="two-column-grid">
+        <article class="surface-card">
+          <div class="section-head"><div><span class="section-kicker">Schnell erledigt</span><h2>Direkte Aktionen</h2></div></div>
+          <div class="quick-grid">
+            ${quickAction('shopping', 'Produkt', 'Zur Einkaufsliste', 'shopping')}
+            ${quickAction('pantry', 'Vorrat', 'Lebensmittel eintragen', 'pantry')}
+            ${quickAction('note', 'Notiz', 'Gedanken festhalten', 'note')}
+            ${quickAction('wallet', 'Buchung', 'Einnahme oder Ausgabe', 'transaction')}
+          </div>
+        </article>
+
+        <article class="surface-card">
+          <div class="section-head"><div><span class="section-kicker">Zuletzt</span><h2>Notizen</h2></div><button class="text-button" data-view="more" data-more-tab="notes">Alle</button></div>
+          ${notes.length ? `<div class="mini-list">${notes.map(note => `<button class="mini-row" data-action="edit-note" data-id="${note.id}"><span class="mini-dot"></span><span><strong>${esc(note.title)}</strong><small>${esc(note.content || 'Leere Notiz')}</small></span>${icon('chevron', 17)}</button>`).join('')}</div>` : emptyState('note', 'Noch keine Notizen', 'Lege deine erste Notiz an.', `<button class="secondary-button" data-action="add-note">Notiz anlegen</button>`)}
