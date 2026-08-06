@@ -35,6 +35,11 @@ function assertGzip(buffer, label) {
 await rm('dist', { recursive: true, force: true })
 await mkdir('dist', { recursive: true })
 
+const html = await readFile('index.html', 'utf8')
+for (const requiredId of ['app', 'dialog', 'toast', 'import-file']) {
+  if (!html.includes(`id="${requiredId}"`)) throw new Error(`Erforderliches App-Element fehlt: #${requiredId}`)
+}
+
 for (const file of staticFiles) {
   const info = await stat(file)
   if (!info.isFile() || info.size === 0) throw new Error(`Ungültige Build-Datei: ${file}`)
@@ -56,14 +61,16 @@ const stylesCompressed = Buffer.concat([
 assertGzip(appCompressed, 'App-Bundle')
 assertGzip(stylesCompressed, 'Stylesheet')
 
-const appSource = gunzipSync(appCompressed)
+const appText = gunzipSync(appCompressed)
+  .toString('utf8')
+  .replace("appVersion: '1.0.0'", "appVersion: '1.0.3'")
 const stylesSource = gunzipSync(stylesCompressed)
 
-if (appSource.length === 0 || stylesSource.length === 0) {
+if (!appText || stylesSource.length === 0) {
   throw new Error('Die entpackten App-Dateien sind leer.')
 }
 
-await writeFile('dist/app.bundle.js', appSource)
+await writeFile('dist/app.bundle.js', appText)
 await writeFile('dist/styles.css', stylesSource)
 
 const syntaxCheck = spawnSync(process.execPath, ['--check', 'dist/app.bundle.js'], { encoding: 'utf8' })
@@ -71,4 +78,4 @@ if (syntaxCheck.status !== 0) {
   throw new Error(`JavaScript-Syntaxprüfung fehlgeschlagen:\n${syntaxCheck.stderr || syntaxCheck.stdout}`)
 }
 
-console.log(`Selfmade V1.0.2: ${appSource.length} Byte JavaScript und ${stylesSource.length} Byte CSS erfolgreich rekonstruiert.`)
+console.log(`Selfmade V1.0.3: ${Buffer.byteLength(appText)} Byte JavaScript und ${stylesSource.length} Byte CSS erfolgreich geprüft.`)
