@@ -1,82 +1,37 @@
-# HaushaltKlar V21 – Clean Rebuild
+# Selfmade V1
 
-V21 ist kein weiteres visuelles Update der bisherigen Oberfläche. Das Frontend wurde unabhängig von den alten App- und Style-Fragmenten vollständig neu aufgebaut.
-
-## Grundidee
-
-HaushaltKlar soll auf dem Handy und am Desktop ruhig, lesbar und sofort verständlich sein. Statt vieler gleich wichtiger Menüpunkte gibt es fünf klare Hauptbereiche:
-
-1. **Heute** – zeigt nur die aktuell wichtigste Aufgabe und wenige relevante Kennzahlen.
-2. **Einkauf** – Einkaufsliste, Kategorien, Preise und Ladenmodus.
-3. **Küche** – Rezepte, Vorrat und Wochenplanung.
-4. **Geld** – Einnahmen, Ausgaben, Budgets, Sparbetrag und Spar-Challenge.
-5. **Mehr** – Notizen, Challenges und Einstellungen.
-
-## Komplett neue Oberfläche
-
-- neue responsive App-Shell
-- Seitenleiste auf Desktop, kompakte Bottom-Navigation auf Mobilgeräten
-- neues minimalistisches Designsystem ohne die bisherigen V19/V20-Komponenten
-- deutlich größere Schrift, Touch-Ziele und Formulare
-- konsequente Hell-/Dunkel-Darstellung
-- neue Login- und Registrierungsansicht
-- neue modale Eingabeformulare
-- neues App-Icon und neuer Startbildschirm
+Kompletter Neuaufbau der Selfmade-App als schnelle, local-first Progressive Web App. Die alten V21-Projektdateien und die frühere Versionslogik sind im aktiven Projektbaum nicht mehr enthalten.
 
 ## Funktionen
 
-### Einkauf
-
-- Produkte mit Menge, Kategorie, Preis und Notiz
-- offen/alle/erledigt filtern
-- Ladenmodus mit größeren Bedienelementen
-- Einkauf abschließen und in Vorrat sowie Ausgaben übernehmen
-
-### Küche
-
-- eigene Rezepte mit Zutaten und Schritten
-- Rezeptdetail und Übergabe fehlender Zutaten an die Einkaufsliste
-- Vorrat mit Ablaufdatum, Lagerort und Mindestbestand
-- Nachkaufen-Markierung
+- Dashboard und Schnellzugriffe
+- Einkaufsliste mit Kategorien, Mengen und großen Touch-Zielen
+- Vorrat mit Mindestbestand, Ablaufdatum und Barcode-Feld
+- Rezepte mit Zutaten, Schritten, Favoriten und Kochmodus
 - Wochenplan für Frühstück, Mittagessen, Abendessen und Snacks
+- Einnahmen, Ausgaben, Monatsbilanz und Budgets
+- Sparziele und Challenges
+- Notizen und Haushaltsmitglieder
+- Offline-Betrieb, JSON-Export/Import und Supabase-Cloud-Synchronisierung
+- Installierbare PWA für iPhone, Android und Desktop
 
-### Geld und Sparen
+## Architektur
 
-- Einnahmen und Ausgaben
-- Monatsstand
-- Budgets mit Fortschrittsanzeige
-- gespeicherter Sparbetrag
-- frei definierbare Spar-Challenge mit Ziel und Anzahl der Schritte
+V1 wird als statische App direkt aus dem Repository ausgeliefert. Sie benötigt keinen Paketmanager und keinen Build-Schritt. Daten werden zunächst lokal gespeichert; nach Anmeldung können sie mit Supabase synchronisiert werden.
 
-Die Challenge wird als interner Systemeintrag in den vorhandenen Notizen gespeichert. Dadurch bleibt sie in der Supabase-Cloud synchronisiert, ohne eine zusätzliche Datenbankmigration zu benötigen.
+## Supabase einrichten
 
-### Notizen und Einstellungen
+1. Im richtigen Supabase-Projekt den SQL Editor öffnen.
+2. `supabase/schema.sql` vollständig ausführen.
+3. Unter **Authentication → URL Configuration** die veröffentlichte Domain als Site URL und Redirect URL eintragen.
+4. E-Mail/Passwort-Login aktivieren.
 
-- Notizen mit Titel, Inhalt, Schlagwort, Fälligkeit und Pin-Funktion
-- Haushaltsname und Anzeigename
-- Hell, Dunkel oder Systemdarstellung
-- sichere Abmeldung
+Die Browser-App verwendet ausschließlich den Publishable Key. Secret- oder Service-Role-Keys gehören niemals in Repository oder Browsercode.
 
-## Technischer Aufbau
+## Deployment
 
-- neues Frontend unter `src/v21/`
-- `scripts/assemble-assets.mjs` veröffentlicht ausschließlich das neue V21-Frontend
-- vorhandene Supabase-API und Datenstruktur bleiben als Backend erhalten
-- keine Service-Role- oder Secret-Schlüssel im Browser
-- PWA-Service-Worker mit eigenem V21-Cache
+Das Repository ist für ein statisches Vercel-Deployment vorkonfiguriert. `vercel.json` enthält SPA-Routing, Sicherheitsheader und die Service-Worker-Regeln.
 
-## Entwicklung
+## Datenmodell
 
-```bash
-npm install
-npm test
-npm run build
-```
-
-Vercel:
-
-```text
-Build Command: npm run build
-Output Directory: dist
-Node.js: 22.x
-```
+V1 verwendet `public.v1_records`. Jeder Datensatz gehört über `user_id` genau einem Supabase-Auth-Benutzer. Row Level Security begrenzt Lesen und Schreiben auf eigene Datensätze.
