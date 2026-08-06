@@ -11,20 +11,25 @@ const staticFiles = [
   'icon-maskable-512.png'
 ]
 
-async function readBase64Parts(parts) {
-  const chunks = []
+async function decodeBase64Parts(parts) {
+  const decodedParts = []
+
   for (const part of parts) {
     const info = await stat(part)
     if (!info.isFile() || info.size === 0) throw new Error(`Ungültige Build-Datei: ${part}`)
-    chunks.push(await readFile(part, 'utf8'))
+
+    const encoded = (await readFile(part, 'utf8')).replace(/\s+/g, '')
+    if (!encoded) throw new Error(`Leere Base64-Daten in ${part}`)
+
+    const decoded = Buffer.from(encoded, 'base64')
+    if (decoded.length === 0) throw new Error(`Base64-Dekodierung fehlgeschlagen: ${part}`)
+    decodedParts.push(decoded)
   }
 
-  const encoded = chunks.join('').replace(/\s+/g, '')
-  if (!encoded) throw new Error(`Leere Base64-Daten in ${parts.join(', ')}`)
-
-  const compressed = Buffer.from(encoded, 'base64')
+  const compressed = Buffer.concat(decodedParts)
   if (compressed.length < 3 || compressed[0] !== 0x1f || compressed[1] !== 0x8b) {
-    throw new Error(`Kein gültiger Gzip-Header in ${parts.join(', ')}`)
+    const header = compressed.subarray(0, 8).toString('hex')
+    throw new Error(`Kein gültiger Gzip-Header in ${parts.join(', ')}; Header: ${header}`)
   }
   return compressed
 }
@@ -38,14 +43,14 @@ for (const file of staticFiles) {
   await copyFile(file, `dist/${file}`)
 }
 
-const appCompressed = await readBase64Parts([
+const appCompressed = await decodeBase64Parts([
   'app.bundle-0.bin',
   'app.bundle-1.bin',
   'app.bundle-2.bin',
   'app.bundle-3.bin',
   'app.bundle-4.bin'
 ])
-const stylesCompressed = await readBase64Parts(['styles-0.bin', 'styles-1.bin'])
+const stylesCompressed = await decodeBase64Parts(['styles-0.bin', 'styles-1.bin'])
 
 const appSource = gunzipSync(appCompressed)
 const stylesSource = gunzipSync(stylesCompressed)
