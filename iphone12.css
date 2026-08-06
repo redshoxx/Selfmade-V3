@@ -1,0 +1,647 @@
+/* Selfmade V1.1.0 — iPhone 12 / kompakte Mobilansicht */
+
+@media (max-width: 430px) {
+  :root {
+    --mobile-gutter: 16px;
+    --mobile-topbar-height: 64px;
+    --mobile-nav-height: 68px;
+  }
+
+  html {
+    width: 100%;
+    min-height: 100%;
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    width: 100%;
+    min-height: 100%;
+    overflow-x: hidden;
+    overscroll-behavior-y: none;
+  }
+
+  button,
+  [role="button"],
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
+  }
+
+  button,
+  .button,
+  .icon-button,
+  .text-button,
+  .bottom-nav__item,
+  .segment button {
+    min-height: 44px;
+  }
+
+  .app-shell {
+    width: 100%;
+    min-height: 100dvh;
+    padding-bottom: calc(var(--mobile-nav-height) + 22px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .topbar {
+    min-height: var(--mobile-topbar-height);
+    padding: max(10px, env(safe-area-inset-top, 0px)) var(--mobile-gutter) 10px;
+    gap: 10px;
+    background: rgba(245, 243, 237, .96);
+  }
+
+  .brand {
+    min-width: 0;
+    gap: 9px;
+  }
+
+  .brand__mark {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    font-size: 18px;
+  }
+
+  .brand strong {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 16px;
+  }
+
+  .brand small {
+    display: none;
+  }
+
+  .topbar__actions {
+    flex: none;
+    gap: 7px;
+  }
+
+  .topbar .icon-button {
+    width: 44px;
+    height: 44px;
+  }
+
+  .status-pill {
+    max-width: 104px;
+    min-height: 34px;
+    padding-inline: 9px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .main-content {
+    width: 100%;
+    padding: 22px var(--mobile-gutter) 34px;
+  }
+
+  .page-heading {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .page-heading h1 {
+    margin-top: 3px;
+    font-size: clamp(34px, 10vw, 42px);
+    line-height: 1;
+    letter-spacing: -.05em;
+  }
+
+  .page-heading p:not(.eyebrow) {
+    max-width: none;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .page-heading > .button {
+    width: 100%;
+    min-height: 50px;
+    padding-inline: 16px;
+    font-size: 14px;
+  }
+
+  .page-heading > .button svg {
+    width: 19px;
+    height: 19px;
+  }
+
+  .hero-card {
+    min-height: 0;
+    padding: 24px 20px;
+    border-radius: 24px;
+  }
+
+  .hero-card__label {
+    margin-bottom: 14px;
+    font-size: 11px;
+  }
+
+  .hero-card h2 {
+    font-size: clamp(28px, 8vw, 35px);
+  }
+
+  .hero-card p {
+    font-size: 14px;
+  }
+
+  .hero-card .button {
+    width: 100%;
+    min-height: 50px;
+    margin-top: 22px;
+  }
+
+  .metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin: 12px 0 28px;
+  }
+
+  .metric-card {
+    min-height: 134px;
+    padding: 16px;
+    border-radius: 18px;
+  }
+
+  .metric-card__icon {
+    width: 38px;
+    height: 38px;
+  }
+
+  .metric-card strong {
+    margin-top: 15px;
+    font-size: 21px;
+  }
+
+  .metric-card span:last-child {
+    font-size: 11px;
+    line-height: 1.3;
+  }
+
+  .section-title {
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-title h2 {
+    font-size: 21px;
+  }
+
+  .quick-actions {
+    margin: 28px 0;
+  }
+
+  .quick-actions__grid,
+  .quick-actions--compact .quick-actions__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .quick-actions__grid button {
+    min-width: 0;
+    min-height: 54px;
+    padding: 0 13px;
+    border-radius: 15px;
+    font-size: 13px;
+  }
+
+  .two-column {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .panel {
+    min-height: 0;
+    padding: 18px;
+    border-radius: 19px;
+  }
+
+  .empty-state {
+    min-height: 220px;
+    padding: 30px 18px;
+  }
+
+  .panel .empty-state {
+    min-height: 160px;
+  }
+
+  /* Tabs: gut lesbar, horizontal scrollbar-frei und mit klaren Touch-Flächen. */
+  .segment {
+    position: sticky;
+    top: calc(var(--mobile-topbar-height) + env(safe-area-inset-top, 0px));
+    z-index: 32;
+    display: flex;
+    width: calc(100% + (var(--mobile-gutter) * 2));
+    max-width: none;
+    margin: 0 calc(var(--mobile-gutter) * -1) 20px;
+    padding: 8px var(--mobile-gutter);
+    gap: 5px;
+    overflow-x: auto;
+    border-radius: 0;
+    background: rgba(245, 243, 237, .96);
+    box-shadow: 0 1px 0 rgba(222, 222, 216, .9);
+    backdrop-filter: blur(18px);
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .segment::-webkit-scrollbar {
+    display: none;
+  }
+
+  .segment button {
+    flex: 1 0 auto;
+    min-width: 96px;
+    min-height: 42px;
+    padding: 0 14px;
+    border-radius: 12px;
+    font-size: 12px;
+  }
+
+  .toolbar {
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .toolbar__actions {
+    display: flex;
+    flex: none;
+    gap: 7px;
+  }
+
+  .toolbar .button,
+  .toolbar__actions .button {
+    min-width: 46px;
+    min-height: 46px;
+    padding: 0 13px;
+    font-size: 0;
+  }
+
+  .toolbar .button svg,
+  .toolbar__actions .button svg {
+    width: 21px;
+    height: 21px;
+  }
+
+  .shopping-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    padding: 14px;
+    border-radius: 17px;
+  }
+
+  .shopping-summary button {
+    grid-column: 1 / -1;
+    min-height: 44px;
+    justify-self: stretch;
+  }
+
+  .shopping-group {
+    border-radius: 18px;
+  }
+
+  .shopping-item {
+    grid-template-columns: 42px minmax(0, 1fr) 42px;
+    gap: 9px;
+    min-height: 72px;
+    padding: 9px 10px 9px 12px;
+  }
+
+  .check-button,
+  .shopping-item .icon-button {
+    width: 42px;
+    height: 42px;
+  }
+
+  .shopping-item__body strong {
+    font-size: 15px;
+  }
+
+  .shopping-item__body span {
+    line-height: 1.35;
+  }
+
+  .week-controls {
+    gap: 8px;
+  }
+
+  .week-controls .icon-button {
+    width: 44px;
+    height: 44px;
+  }
+
+  .week-grid {
+    grid-template-columns: repeat(7, minmax(82vw, 1fr));
+    gap: 10px;
+    margin-inline: calc(var(--mobile-gutter) * -1);
+    padding: 0 var(--mobile-gutter) 10px;
+    scroll-padding-inline: var(--mobile-gutter);
+  }
+
+  .day-card {
+    min-height: 260px;
+    padding: 15px;
+    border-radius: 20px;
+  }
+
+  .meal-row {
+    min-height: 52px;
+    padding: 10px 0;
+  }
+
+  .list-card {
+    min-height: 78px;
+    padding: 12px;
+    border-radius: 17px;
+  }
+
+  .list-card__main {
+    align-items: flex-start;
+  }
+
+  .list-card__meta {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  .list-card .icon-button {
+    width: 40px;
+    height: 40px;
+  }
+
+  .recipe-grid,
+  .savings-grid,
+  .notes-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .recipe-card,
+  .savings-card,
+  .note-card {
+    border-radius: 20px;
+  }
+
+  .recipe-card__cover {
+    min-height: 112px;
+  }
+
+  .finance-hero {
+    padding: 24px 20px;
+    border-radius: 24px;
+  }
+
+  .finance-hero > strong {
+    margin-bottom: 20px;
+    font-size: clamp(40px, 12vw, 52px);
+  }
+
+  .finance-hero > div {
+    gap: 9px;
+  }
+
+  .finance-hero > div span {
+    padding: 12px;
+  }
+
+  .transaction-row {
+    grid-template-columns: 42px minmax(0, 1fr) auto;
+    gap: 10px;
+    min-height: 76px;
+    padding: 10px 12px;
+  }
+
+  .transaction-row > b {
+    font-size: 13px;
+  }
+
+  .challenge-card {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .settings-card {
+    grid-template-columns: 48px minmax(0, 1fr);
+    gap: 13px;
+    padding: 16px;
+  }
+
+  .settings-card .button {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .settings-row {
+    min-height: 72px;
+    padding: 12px;
+  }
+
+  /* Formulare als iOS Bottom Sheet. */
+  .dialog,
+  .dialog--wide {
+    width: 100%;
+    max-width: none;
+    height: min(92dvh, 790px);
+    max-height: calc(100dvh - max(8px, env(safe-area-inset-top, 0px)));
+    margin: auto 0 0;
+    border-radius: 26px 26px 0 0;
+  }
+
+  .dialog form,
+  .dialog-info {
+    height: 100%;
+    max-height: none;
+  }
+
+  .dialog header {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    flex: none;
+    padding: 17px var(--mobile-gutter) 14px;
+    background: rgba(255, 255, 255, .96);
+    backdrop-filter: blur(18px);
+  }
+
+  .dialog header h2 {
+    font-size: 23px;
+    line-height: 1.1;
+  }
+
+  .dialog header .icon-button {
+    width: 44px;
+    height: 44px;
+  }
+
+  .dialog__body {
+    flex: 1 1 auto;
+    align-content: start;
+    gap: 14px;
+    padding: 18px var(--mobile-gutter) 24px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .dialog footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 3;
+    flex: none;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 12px var(--mobile-gutter) max(12px, env(safe-area-inset-bottom, 0px));
+    background: rgba(250, 250, 248, .97);
+    backdrop-filter: blur(18px);
+  }
+
+  .dialog footer > span:empty {
+    display: none;
+  }
+
+  .dialog footer > div {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    gap: 9px;
+  }
+
+  .dialog footer > .text-button,
+  .dialog footer [data-dialog-danger] {
+    width: 100%;
+    min-height: 44px;
+    order: 2;
+  }
+
+  .dialog footer .button {
+    min-height: 50px;
+    padding-inline: 12px;
+  }
+
+  .field-grid,
+  .recipe-columns {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .field {
+    gap: 7px;
+  }
+
+  .field > span {
+    font-size: 13px;
+  }
+
+  .field input,
+  .field textarea,
+  .field select {
+    min-height: 52px;
+    padding: 13px 14px;
+    border-radius: 14px;
+    font-size: 16px;
+    line-height: 1.35;
+  }
+
+  .field textarea {
+    min-height: 124px;
+  }
+
+  .field input[type="date"],
+  .field input[type="month"],
+  .field select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .check-field {
+    min-height: 52px;
+    padding: 12px 13px;
+    border-radius: 14px;
+  }
+
+  .check-field input {
+    width: 21px;
+    height: 21px;
+  }
+
+  .auth-intro,
+  .account-card {
+    align-items: flex-start;
+    padding: 14px;
+  }
+
+  .scanner,
+  .scanner video {
+    min-height: 360px;
+  }
+
+  .toast {
+    top: max(12px, env(safe-area-inset-top, 0px));
+    width: calc(100% - 24px);
+    max-width: 390px;
+    padding: 13px 15px;
+    text-align: center;
+  }
+
+  .bottom-nav {
+    bottom: max(8px, env(safe-area-inset-bottom, 0px));
+    width: calc(100% - 20px);
+    min-height: var(--mobile-nav-height);
+    padding: 6px;
+    border-radius: 22px;
+  }
+
+  .bottom-nav__item {
+    min-height: 54px;
+    padding: 5px 2px;
+    border-radius: 15px;
+  }
+
+  .bottom-nav__item span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 10px;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 430px) and (max-height: 700px) {
+  .dialog,
+  .dialog--wide {
+    height: 96dvh;
+  }
+
+  .hero-card {
+    padding-block: 20px;
+  }
+
+  .bottom-nav {
+    min-height: 62px;
+  }
+}
+
+@media (max-width: 430px) and (orientation: landscape) {
+  .app-shell {
+    padding-bottom: 86px;
+  }
+
+  .main-content {
+    padding-top: 16px;
+  }
+
+  .dialog,
+  .dialog--wide {
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+  }
+}
