@@ -5,6 +5,8 @@ import { gunzipSync } from 'node:zlib'
 const staticFiles = [
   'index.html',
   'iphone12.css',
+  'professional.css',
+  'professional-ui.js',
   'manifest.webmanifest',
   'sw.js',
   'icon-192.png',
@@ -33,6 +35,13 @@ function assertGzip(buffer, label) {
   }
 }
 
+function checkJavaScript(path, label) {
+  const syntaxCheck = spawnSync(process.execPath, ['--check', path], { encoding: 'utf8' })
+  if (syntaxCheck.status !== 0) {
+    throw new Error(`${label}-Syntaxprüfung fehlgeschlagen:\n${syntaxCheck.stderr || syntaxCheck.stdout}`)
+  }
+}
+
 await rm('dist', { recursive: true, force: true })
 await mkdir('dist', { recursive: true })
 
@@ -40,13 +49,23 @@ const html = await readFile('index.html', 'utf8')
 for (const requiredId of ['app', 'dialog', 'toast', 'import-file']) {
   if (!html.includes(`id="${requiredId}"`)) throw new Error(`Erforderliches App-Element fehlt: #${requiredId}`)
 }
-if (!html.includes('/iphone12.css?v=1.1.0')) {
-  throw new Error('Das iPhone-12-Stylesheet ist nicht in index.html eingebunden.')
+for (const requiredAsset of ['/iphone12.css?v=1.2.0', '/professional.css?v=1.2.0', '/professional-ui.js?v=1.2.0']) {
+  if (!html.includes(requiredAsset)) throw new Error(`Professionelles UI-Asset fehlt in index.html: ${requiredAsset}`)
 }
 
 const mobileCss = await readFile('iphone12.css', 'utf8')
 for (const requiredRule of ['max-width: 430px', 'font-size: 16px', 'env(safe-area-inset-bottom', '.segment', '.dialog']) {
   if (!mobileCss.includes(requiredRule)) throw new Error(`Mobile UI-Prüfung fehlgeschlagen: ${requiredRule}`)
+}
+
+const professionalCss = await readFile('professional.css', 'utf8')
+for (const requiredRule of ['.pro-shopping-command', '.shopping-view-grid', '--pro-accent', 'data-theme="dark"', '.bottom-nav']) {
+  if (!professionalCss.includes(requiredRule)) throw new Error(`Professional-UI-Prüfung fehlgeschlagen: ${requiredRule}`)
+}
+
+const professionalUi = await readFile('professional-ui.js', 'utf8')
+for (const requiredFeature of ['MutationObserver', 'data-pro-view', 'shoppingQuery', 'setTheme', 'pro-product-glyph']) {
+  if (!professionalUi.includes(requiredFeature)) throw new Error(`Professional-UI-Funktion fehlt: ${requiredFeature}`)
 }
 
 for (const file of staticFiles) {
@@ -72,7 +91,7 @@ assertGzip(stylesCompressed, 'Stylesheet')
 
 const appText = gunzipSync(appCompressed)
   .toString('utf8')
-  .replace("appVersion: '1.0.0'", "appVersion: '1.1.0'")
+  .replace("appVersion: '1.0.0'", "appVersion: '1.2.0'")
 const stylesSource = gunzipSync(stylesCompressed)
 
 if (!appText || stylesSource.length === 0) {
@@ -82,9 +101,7 @@ if (!appText || stylesSource.length === 0) {
 await writeFile('dist/app.bundle.js', appText)
 await writeFile('dist/styles.css', stylesSource)
 
-const syntaxCheck = spawnSync(process.execPath, ['--check', 'dist/app.bundle.js'], { encoding: 'utf8' })
-if (syntaxCheck.status !== 0) {
-  throw new Error(`JavaScript-Syntaxprüfung fehlgeschlagen:\n${syntaxCheck.stderr || syntaxCheck.stdout}`)
-}
+checkJavaScript('dist/app.bundle.js', 'App')
+checkJavaScript('dist/professional-ui.js', 'Professional UI')
 
-console.log(`Selfmade V1.1.0: ${Buffer.byteLength(appText)} Byte JavaScript, ${stylesSource.length} Byte Basis-CSS und ${Buffer.byteLength(mobileCss)} Byte iPhone-CSS geprüft.`)
+console.log(`Selfmade V1.2.0: ${Buffer.byteLength(appText)} Byte JavaScript, ${stylesSource.length} Byte Basis-CSS, ${Buffer.byteLength(mobileCss)} Byte iPhone-CSS und ${Buffer.byteLength(professionalCss)} Byte Professional-CSS geprüft.`)
