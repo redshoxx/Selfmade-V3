@@ -1,20 +1,43 @@
-const CACHE = 'selfmade-v1-20260806'
-const CORE = [
-  '/', '/index.html', '/loader.js', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png',
-  '/app.bundle-0.bin', '/app.bundle-1.bin', '/app.bundle-2.bin', '/app.bundle-3.bin', '/app.bundle-4.bin',
-  '/styles-0.bin', '/styles-1.bin'
+const CACHE = 'selfmade-v1.0.1'
+const APP_SHELL = [
+  '/',
+  '/index.html',
+  '/app.bundle.js?v=1.0.1',
+  '/styles.css?v=1.0.1',
+  '/manifest.webmanifest',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/icon-maskable-512.png'
 ]
+
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(CORE)).then(() => self.skipWaiting()))
+  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(APP_SHELL)).then(() => self.skipWaiting()))
 })
+
 self.addEventListener('activate', (event) => {
   event.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key)))).then(() => self.clients.claim()))
 })
+
 self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return
-  event.respondWith(caches.match(event.request).then((cached) => cached || fetch(event.request).then((response) => {
-    const copy = response.clone()
-    caches.open(CACHE).then((cache) => cache.put(event.request, copy))
+  const request = event.request
+  if (request.method !== 'GET') return
+  const url = new URL(request.url)
+  if (url.origin !== self.location.origin) return
+
+  if (request.mode === 'navigate') {
+    event.respondWith(fetch(request).then((response) => {
+      const copy = response.clone()
+      caches.open(CACHE).then((cache) => cache.put('/index.html', copy))
+      return response
+    }).catch(() => caches.match('/index.html')))
+    return
+  }
+
+  event.respondWith(caches.match(request).then((cached) => cached || fetch(request).then((response) => {
+    if (response.ok) {
+      const copy = response.clone()
+      caches.open(CACHE).then((cache) => cache.put(request, copy))
+    }
     return response
-  }).catch(() => event.request.mode === 'navigate' ? caches.match('/index.html') : cached)))
+  })))
 })
