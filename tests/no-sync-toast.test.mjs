@@ -12,15 +12,15 @@ test('cloud refresh does not emit a visible sync toast', () => {
   assert.match(app, /if \(silentCloudMessages\.some\(\(text\) => normalizedMessage\.includes\(text\)\)\) return/);
 });
 
-test('service worker uses fast cached assets and a fresh cache version', () => {
-  assert.match(sw, /haushaltklar-v19-3-protection/);
+test('service worker uses fast cached assets and a fresh V20 cache version', () => {
+  assert.match(sw, /haushaltklar-v20-living-canvas/);
   assert.match(sw, /cacheFirstWithRefresh/);
   assert.match(sw, /navigationNetworkFirst/);
   assert.match(sw, /caches\.delete/);
 });
 
-test('core frontend assets are cache-busted', () => {
-  assert.match(index, /styles\.css\?v=19\.3/);
-  assert.match(index, /app\.js\?v=19\.3/);
+test('core frontend assets are cache-busted for V20', () => {
+  assert.match(index, /styles\.css\?v=20/);
+  assert.match(index, /app\.js\?v=20/);
   assert.match(app, /navigator\.serviceWorker\.register\('\/sw\.js'/);
 });
