@@ -1,0 +1,314 @@
+
+/* Version 20 – adaptive Oberfläche, neue Heute-Ansicht und universelle Schnellaktionen */
+const HAUSHALTKLAR_V20 = Object.freeze({
+  version: '20.0.0',
+  name: 'HaushaltKlar',
+  experience: 'Living Canvas'
+});
+
+Object.assign(icons, {
+  sparkles: '<path d="m12 3 1.1 3.1L16 7.2l-2.9 1.1L12 11.5l-1.1-3.2L8 7.2l2.9-1.1Z"/><path d="m18.5 12 .7 2 1.8.7-1.8.7-.7 2-.7-2-1.8-.7 1.8-.7Z"/><path d="m6 13 1 2.8 2.5 1L7 17.7 6 20.5l-1-2.8-2.5-.9 2.5-1Z"/>',
+  accessibility: '<circle cx="12" cy="4" r="2"/><path d="M5 8h14M12 6v14M8 21l4-7 4 7"/>',
+  target: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M15 9l5-5"/>',
+  leaf: '<path d="M20 4C11 4 5 8 5 15c0 3 2 5 5 5 7 0 10-7 10-16Z"/><path d="M5 20c2-5 6-8 11-11"/>',
+  bolt: '<path d="m13 2-8 12h7l-1 8 8-12h-7Z"/>',
+  pen: '<path d="m4 20 4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10Z"/><path d="m14 7 3 3"/>'
+});
+
+const v20Profiles = Object.freeze({
+  comfort: { label: 'Komfort', description: 'Größere Schrift und besonders klare Bedienflächen' },
+  balanced: { label: 'Standard', description: 'Ausgewogene Darstellung für den Alltag' },
+  compact: { label: 'Kompakt', description: 'Mehr Inhalt auf einmal, ohne Funktionen zu verstecken' }
+});
+
+let v20Profile = localStorage.getItem('haushaltklar-v20-profile');
+if (!v20Profiles[v20Profile]) v20Profile = 'balanced';
+
+function applyV20Experience() {
+  document.documentElement.classList.add('haushaltklar-v20');
+  document.documentElement.dataset.v20Profile = v20Profile;
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', document.documentElement.dataset.theme === 'dark' ? '#11151a' : '#edf3f1');
+}
+
+applyV20Experience();
+
+const applyThemeBeforeV20 = applyTheme;
+applyTheme = function applyThemeV20() {
+  applyThemeBeforeV20();
+  applyV20Experience();
+};
+
+function v20ShoppingOpen() {
+  return (data?.shopping || []).filter((item) => !item.checked);
+}
+
+function v20UrgentPantry() {
+  return (data?.pantry || [])
+    .filter((item) => !item.inbox && item.expiry_date && expiryInfo(item.expiry_date).days <= 3)
+    .sort((a, b) => String(a.expiry_date).localeCompare(String(b.expiry_date)));
+}
+
+function v20LatestNotes() {
+  return [...(data?.notes || [])]
+    .sort((a, b) => String(b.updated_at || b.created_at || '').localeCompare(String(a.updated_at || a.created_at || '')))
+    .slice(0, 2);
+}
+
+function v20TodayMeal() {
+  const today = todayLocal();
+  return (data?.meal_plan || []).find((entry) => entry.plan_date === today && mealRecipeV19(entry));
+}
+
+function v20FocusCard() {
+  const urgent = v20UrgentPantry();
+  const shopping = v20ShoppingOpen();
+  const meal = v20TodayMeal();
+
+  if (meal) {
+    const recipe = mealRecipeV19(meal);
+    return {
+      eyebrow: 'Dein Plan für heute',
+      title: recipe.name,
+      text: `${meal.meal_type} · ${meal.servings || recipe.servings || 1} Portionen`,
+      icon: 'chef',
+      action: 'start-cooking-v19',
+      id: recipe.id,
+      cta: 'Kochmodus starten'
+    };
+  }
+  if (urgent.length) {
+    return {
+      eyebrow: 'Lebensmittel retten',
+      title: `${urgent[0].name} zuerst verwenden`,
+      text: urgent.length > 1 ? `${urgent.length} Produkte sollten bald verbraucht werden.` : expiryInfo(urgent[0].expiry_date).label,
+      icon: 'leaf',
+      action: 'tab',
+      tab: 'recipes',
+      cta: 'Passende Rezepte'
+    };
+  }
+  if (shopping.length) {
+    return {
+      eyebrow: 'Einkauf vorbereiten',
+      title: `${shopping.length} ${shopping.length === 1 ? 'Produkt ist' : 'Produkte sind'} offen`,
+      text: 'Liste prüfen und anschließend direkt in den Ladenmodus wechseln.',
+      icon: 'cart',
+      action: 'tab',
+      tab: 'shopping',
+      cta: 'Liste öffnen'
+    };
+  }
+  return {
+    eyebrow: 'Alles im grünen Bereich',
+    title: 'Dein Haushalt ist organisiert',
+    text: 'Nutze die Schnellaktion für Einkauf, Notiz, Ausgabe oder Rezept.',
+    icon: 'sparkles',
+    action: 'open-v20-quick',
+    cta: 'Etwas hinzufügen'
+  };
+}
+
+function v20FocusCardHtml() {
+  const focus = v20FocusCard();
+  const attributes = [
+    `data-action="${focus.action}"`,
+    focus.tab ? `data-tab="${focus.tab}"` : '',
+    focus.id ? `data-id="${focus.id}"` : ''
+  ].filter(Boolean).join(' ');
+  return `<button class="v20-focus-card" ${attributes}>
+    <span class="v20-focus-icon">${icon(focus.icon, 25)}</span>
+    <span class="v20-focus-copy"><small>${escapeHtml(focus.eyebrow)}</small><strong>${escapeHtml(focus.title)}</strong><span>${escapeHtml(focus.text)}</span></span>
+    <b>${escapeHtml(focus.cta)} ${icon('chevronRight', 15)}</b>
+  </button>`;
+}
+
+function v20MoneyCard() {
+  const income = Number(data?.summary?.income || 0);
+  const expense = Number(data?.summary?.expense || 0);
+  const remaining = Number(data?.summary?.remaining || 0);
+  const ratio = income > 0 ? clamp(expense / income, 0, 1) : 0;
+  const status = remaining >= 0 ? 'Noch verfügbar' : 'Über dem Monatsrahmen';
+  return `<button class="v20-money-card" data-action="tab" data-tab="money">
+    <span class="v20-card-kicker">${icon('wallet', 16)} Finanzen</span>
+    <strong>${signedMoney(remaining)}</strong>
+    <small>${status}</small>
+    <span class="v20-progress"><i style="width:${Math.round(ratio * 100)}%"></i></span>
+    <span class="v20-money-meta"><b>${money(expense)} ausgegeben</b><b>${money(data?.summary?.savings || 0)} gespart</b></span>
+  </button>`;
+}
+
+function v20KitchenCard() {
+  const recipes = data?.recipes || [];
+  const urgent = v20UrgentPantry();
+  const meal = v20TodayMeal();
+  const recipe = meal ? mealRecipeV19(meal) : recipes.find((item) => item.favorite) || recipes[0];
+  return `<button class="v20-kitchen-card" data-action="${recipe ? 'open-recipe-v19' : 'add-recipe-v19'}" ${recipe ? `data-id="${recipe.id}"` : ''}>
+    <span class="v20-card-kicker">${icon('chef', 16)} Küche</span>
+    <span class="v20-kitchen-visual">${recipe?.image_data_url ? `<img src="${escapeHtml(recipe.image_data_url)}" alt="">` : icon('utensils', 27)}</span>
+    <span class="v20-kitchen-copy"><strong>${recipe ? escapeHtml(recipe.name) : 'Erstes Rezept anlegen'}</strong><small>${urgent.length ? `${urgent.length} bald fällige Zutaten berücksichtigen` : `${recipes.length} Rezepte gespeichert`}</small></span>
+  </button>`;
+}
+
+function v20ActivityStrip() {
+  const shopping = v20ShoppingOpen().length;
+  const pantry = (data?.pantry || []).filter((item) => !item.inbox).length;
+  const recipes = (data?.recipes || []).length;
+  const notes = (data?.notes || []).length;
+  return `<section class="v20-activity-strip" aria-label="Haushaltsstatus">
+    <button data-action="tab" data-tab="shopping"><strong>${shopping}</strong><span>offen</span></button>
+    <button data-action="tab" data-tab="pantry"><strong>${pantry}</strong><span>im Vorrat</span></button>
+    <button data-action="tab" data-tab="recipes"><strong>${recipes}</strong><span>Rezepte</span></button>
+    <button data-action="tab" data-tab="notes"><strong>${notes}</strong><span>Notizen</span></button>
+  </section>`;
+}
+
+function v20NotesSection() {
+  const notes = v20LatestNotes();
+  return `<section class="v20-section">
+    <div class="v20-section-head"><div><small>Festhalten</small><h2>Notizen & Ideen</h2></div><button data-action="add-note">${icon('plus', 16)} Neu</button></div>
+    <div class="v20-note-grid">
+      ${notes.length ? notes.map((note) => `<button class="v20-note-card" data-action="edit-note" data-id="${note.id}"><span>${icon('notes', 17)}</span><strong>${escapeHtml(note.title || 'Notiz')}</strong><small>${escapeHtml(String(note.content || note.text || '').slice(0, 90) || 'Antippen zum Bearbeiten')}</small></button>`).join('') : `<button class="v20-note-empty" data-action="add-note"><span>${icon('pen', 20)}</span><strong>Gedanken sofort notieren</strong><small>Listen, Ideen und Erinnerungen bleiben an einem Ort.</small></button>`}
+    </div>
+  </section>`;
+}
+
+header = function headerV20() {
+  const titles = {
+    money: ['Finanzen', 'Budgets, Sparziele und Buchungen'],
+    shopping: ['Einkauf', `${v20ShoppingOpen().length} offene Einträge`],
+    pantry: ['Vorrat', `${(data?.pantry || []).filter((item) => !item.inbox).length} Produkte im Haushalt`],
+    recipes: ['Küche', 'Rezepte, Wochenplan und Kochmodus'],
+    notes: ['Notizen', `${(data?.notes || []).length} gespeicherte Einträge`]
+  };
+  if (activeTab === 'start') {
+    const name = displayNameV192();
+    return `<header class="v20-header v20-home-header">
+      <div class="v20-brand"><img src="/icon-192.png" alt=""><div><strong>HaushaltKlar</strong><span>${escapeHtml(data?.settings?.household_name || 'Mein Haushalt')}</span></div></div>
+      <div class="v20-header-actions"><button data-action="global-search" aria-label="Suchen">${icon('search', 19)}</button><button data-action="open-v20-experience" aria-label="Darstellung anpassen">${icon('accessibility', 19)}</button><button data-action="settings" aria-label="Einstellungen">${icon('settings', 19)}</button></div>
+      <div class="v20-greeting"><small>${escapeHtml(dateLabel())}</small><h1>${greetingV192()}${name ? `, ${escapeHtml(name)}` : ''}</h1><p>Was möchtest du heute erledigen?</p></div>
+    </header>`;
+  }
+  const [title, subtitle] = titles[activeTab] || ['HaushaltKlar', 'Alles an einem Ort'];
+  return `<header class="v20-header v20-page-header">
+    <div><small>${escapeHtml(subtitle)}</small><h1>${escapeHtml(title)}</h1></div>
+    <div class="v20-header-actions"><button data-action="global-search" aria-label="Suchen">${icon('search', 19)}</button><button data-action="open-v20-quick" aria-label="Schnell hinzufügen">${icon('plus', 20)}</button></div>
+  </header>`;
+};
+
+renderDashboard = function renderDashboardV20() {
+  return `<main class="v20-dashboard">
+    ${v20FocusCardHtml()}
+    ${v20ActivityStrip()}
+    <section class="v20-section">
+      <div class="v20-section-head"><div><small>Dein Überblick</small><h2>Heute wichtig</h2></div><button data-action="open-v20-quick">${icon('bolt', 15)} Schnellaktion</button></div>
+      <div class="v20-feature-grid">${v20MoneyCard()}${v20KitchenCard()}</div>
+    </section>
+    <section class="v20-section">
+      <div class="v20-section-head"><div><small>Direkt erledigen</small><h2>Alltag</h2></div></div>
+      <div class="v20-action-grid">
+        <button data-action="open-shopping-add-v17"><span>${icon('cart', 20)}</span><strong>Einkauf</strong><small>Produkt hinzufügen</small></button>
+        <button data-action="scan-barcode"><span>${icon('scan', 20)}</span><strong>Scannen</strong><small>Barcode erfassen</small></button>
+        <button data-action="tab" data-tab="money"><span>${icon('target', 20)}</span><strong>Sparen</strong><small>Fortschritt ansehen</small></button>
+        <button data-action="add-recipe-v19"><span>${icon('chef', 20)}</span><strong>Rezept</strong><small>Idee speichern</small></button>
+      </div>
+    </section>
+    ${v20NotesSection()}
+  </main>`;
+};
+
+tabBar = function tabBarV20() {
+  const tabData = [
+    ['start', 'home', 'Heute', 0],
+    ['money', 'wallet', 'Finanzen', 0],
+    ['shopping', 'cart', 'Einkauf', data?.badges?.shopping || 0],
+    ['pantry', 'pantry', 'Vorrat', data?.badges?.pantry || 0],
+    ['recipes', 'recipes', 'Küche', 0],
+    ['notes', 'notes', 'Notizen', 0]
+  ];
+  return `<nav class="v20-tab-bar" aria-label="Hauptnavigation">
+    ${tabData.map(([id, iconName, label, badge]) => `<button class="v20-tab ${activeTab === id ? 'active' : ''}" data-action="tab" data-tab="${id}"><span>${icon(iconName, 20)}${badge ? `<b>${badge}</b>` : ''}</span><small>${label}</small></button>`).join('')}
+    <button class="v20-floating-add" data-action="open-v20-quick" aria-label="Schnell hinzufügen">${icon('plus', 23)}</button>
+  </nav>`;
+};
+
+function openV20QuickActions() {
+  openDialog('Schnell hinzufügen', `<div class="v20-quick-sheet">
+    <p>Wähle aus, was du direkt erledigen möchtest.</p>
+    <div class="v20-quick-grid">
+      <button type="button" data-action="v20-launch" data-target="shopping"><span>${icon('cart', 22)}</span><strong>Einkauf</strong><small>Produkt auf die Liste</small></button>
+      <button type="button" data-action="v20-launch" data-target="note"><span>${icon('notes', 22)}</span><strong>Notiz</strong><small>Gedanke oder Liste</small></button>
+      <button type="button" data-action="v20-launch" data-target="money"><span>${icon('wallet', 22)}</span><strong>Buchung</strong><small>Einnahme oder Ausgabe</small></button>
+      <button type="button" data-action="v20-launch" data-target="recipe"><span>${icon('chef', 22)}</span><strong>Rezept</strong><small>Eigene Kochidee</small></button>
+      <button type="button" data-action="v20-launch" data-target="scan"><span>${icon('scan', 22)}</span><strong>Barcode</strong><small>Produkt scannen</small></button>
+      <button type="button" data-action="v20-launch" data-target="receipt"><span>${icon('receipt', 22)}</span><strong>Kassenbon</strong><small>Ausgaben importieren</small></button>
+    </div>
+  </div>`, null);
+}
+
+function v20ProfileOptions() {
+  return Object.entries(v20Profiles).map(([id, profile]) => `<button type="button" class="v20-profile-option ${v20Profile === id ? 'active' : ''}" data-action="v20-profile" data-profile="${id}"><span>${icon(id === 'comfort' ? 'accessibility' : id === 'compact' ? 'bolt' : 'sparkles', 19)}</span><div><strong>${profile.label}</strong><small>${profile.description}</small></div>${v20Profile === id ? icon('check', 18) : ''}</button>`).join('');
+}
+
+function openV20Experience() {
+  openDialog('Darstellung', `<div class="v20-experience-dialog"><p>Die Darstellung wird nur auf diesem Gerät gespeichert.</p>${v20ProfileOptions()}</div>`, null);
+}
+
+function setV20Profile(profile) {
+  if (!v20Profiles[profile]) return;
+  v20Profile = profile;
+  localStorage.setItem('haushaltklar-v20-profile', profile);
+  applyV20Experience();
+  closeDialog();
+  renderApp(true);
+  toast(`Darstellung: ${v20Profiles[profile].label}`);
+}
+
+function v20SwitchTab(tab, followUpAction = '') {
+  if (tabs.includes(tab)) {
+    activeTab = tab;
+    localStorage.setItem('selfmade-tab', activeTab);
+  }
+  closeDialog();
+  renderApp(true);
+  if (followUpAction) queueMicrotask(() => shell.querySelector(`[data-action="${followUpAction}"]`)?.click());
+}
+
+function launchV20Target(target) {
+  if (target === 'shopping') return v20SwitchTab('shopping', 'open-shopping-add-v17');
+  if (target === 'note') return v20SwitchTab('notes', 'add-note');
+  if (target === 'money') return v20SwitchTab('money', 'add-transaction');
+  if (target === 'recipe') return v20SwitchTab('recipes', 'add-recipe-v19');
+  if (target === 'scan') { closeDialog(); openBarcodeScanner(); return; }
+  if (target === 'receipt') return v20SwitchTab('money', 'import-receipt');
+}
+
+const openSettingsBeforeV20 = openSettings;
+openSettings = function openSettingsV20() {
+  openSettingsBeforeV20();
+  if (dialogRoot.querySelector('.v20-settings-card')) return;
+  const anchor = dialogRoot.querySelector('.rights-card-v193') || dialogRoot.querySelector('.section-title-row');
+  const html = `<section class="v20-settings-card"><div><span>${icon('accessibility', 19)}</span><div><strong>Bedienung & Darstellung</strong><small>Aktuell: ${v20Profiles[v20Profile].label}</small></div></div><button type="button" data-action="open-v20-experience">Anpassen</button></section>`;
+  if (anchor) anchor.insertAdjacentHTML('beforebegin', html);
+};
+
+shell.addEventListener('click', (event) => {
+  const target = event.target.closest('[data-action]');
+  if (!target) return;
+  if (target.dataset.action === 'open-v20-quick') openV20QuickActions();
+  else if (target.dataset.action === 'open-v20-experience') openV20Experience();
+});
+
+dialogRoot.addEventListener('click', (event) => {
+  const target = event.target.closest('[data-action]');
+  if (!target) return;
+  if (target.dataset.action === 'v20-profile') setV20Profile(target.dataset.profile);
+  else if (target.dataset.action === 'v20-launch') launchV20Target(target.dataset.target);
+  else if (target.dataset.action === 'open-v20-experience') openV20Experience();
+});
+
+window.addEventListener('storage', (event) => {
+  if (event.key !== 'haushaltklar-v20-profile') return;
+  if (v20Profiles[event.newValue]) v20Profile = event.newValue;
+  applyV20Experience();
+  renderApp(true);
+});
