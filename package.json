@@ -1,9 +1,9 @@
 {
   "name": "selfmade-haushaltsapp",
-  "version": "19.3.0",
+  "version": "20.0.0",
   "private": true,
   "type": "module",
-  "description": "HaushaltKlar V19.3 mit proprietärem Rechte-, Datenschutz-, Anti-Crawling- und TDM-Schutz.",
+  "description": "HaushaltKlar V20 mit adaptiver Oberfläche, neuer Heute-Ansicht, universellen Schnellaktionen und Living-Canvas-Designsystem.",
   "engines": {
     "node": "22.x"
   },
