@@ -70,6 +70,22 @@ Zusätzlich zeigt die Seite:
 - Offline-Cache und vorgemerkte Änderungen
 - JSON-, CSV- und Druckexporte
 
+## Supabase-Verbindung
+
+V20 verwendet das Supabase-Projekt `dpqhoesiniberglymdtb`.
+
+Erforderliche Vercel-Variablen:
+
+```env
+SUPABASE_URL=https://dpqhoesiniberglymdtb.supabase.co
+SUPABASE_PUBLISHABLE_KEY=<publishable-key>
+SUPABASE_JWKS_URL=https://dpqhoesiniberglymdtb.supabase.co/auth/v1/.well-known/jwks.json
+```
+
+Der Publishable Key ist für Browser- und App-Zugriffe vorgesehen. Der Secret Key darf ausschließlich als geschützte serverseitige Umgebungsvariable verwendet werden und wird nicht in das Repository, den Browser-Bundle oder die Android-App geschrieben. Für normale HaushaltKlar-Benutzerzugriffe ist kein Secret Key erforderlich: Die App authentifiziert Benutzer über Supabase Auth und beschränkt Datenzugriffe über Row Level Security.
+
+Beim Wechsel auf ein neues Supabase-Projekt müssen die Dateien unter `supabase/migrations` einmal im SQL Editor des neuen Projekts ausgeführt werden. Ohne diese Tabellen, Funktionen und RLS-Regeln kann sich die App zwar mit dem Projekt verbinden, aber keine Haushaltsdaten anlegen oder synchronisieren.
+
 ## Datenschutz und Rechte
 
 Die Schutzmaßnahmen aus V19.3 bleiben vollständig aktiv und wurden auf V20 aktualisiert:
@@ -78,7 +94,7 @@ Die Schutzmaßnahmen aus V19.3 bleiben vollständig aktiv und wurden auf V20 akt
 - Verbot von Klonen, Scraping, KI-Training und Text-/Data-Mining ohne Genehmigung
 - restriktive Sicherheitsheader und Schutz vor Einbettung
 - `robots.txt`, `tdm-reservation: 1` und TDMRep-Datei
-- keine Service-Role-Schlüssel im Browser
+- keine Service-Role- oder Secret-Schlüssel im Browser
 - vertraulich gekennzeichnete Backups
 
 Eine ausgelieferte Web-App kann technisch nicht absolut gegen Screenshots oder manuelles Nachprogrammieren geschützt werden. Das Repository ist weiterhin öffentlich und kann deshalb eingesehen werden; für maximalen Quellcodeschutz muss es privat gestellt werden.
