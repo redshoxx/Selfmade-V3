@@ -1,5 +1,5 @@
-const CACHE = 'haushaltklar-v21-clean-rebuild';
-const STATIC = ['/', '/index.html', '/styles.css?v=21.0.0', '/app.js?v=21.0.0', '/manifest.webmanifest?v=21.0.0', '/icon.svg?v=21.0.0', '/icon-192.png?v=21.0.0', '/icon-512.png?v=21.0.0', '/apple-touch-icon.png?v=21.0.0'];
+const CACHE = 'haushaltklar-v21-1-interaction-fix';
+const STATIC = ['/', '/index.html', '/styles.css?v=21.1.0', '/app.js?v=21.1.0', '/manifest.webmanifest?v=21.1.0', '/icon.svg?v=21.1.0', '/icon-192.png?v=21.1.0', '/icon-512.png?v=21.1.0', '/apple-touch-icon.png?v=21.1.0'];
 self.addEventListener('install', (event) => event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(STATIC)).then(() => self.skipWaiting())));
 self.addEventListener('activate', (event) => event.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key)))).then(() => self.clients.claim())));
 self.addEventListener('fetch', (event) => {
