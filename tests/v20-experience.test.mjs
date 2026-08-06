@@ -53,6 +53,18 @@ test('V20 navigation keeps all six major areas accessible', () => {
   assert.match(css, /grid-template-columns:repeat\(6/);
 });
 
+test('V20 keeps contextual actions visible in the relevant areas', () => {
+  assert.match(app, /headerV20Context/);
+  assert.match(app, /data-action="month-prev"/);
+  assert.match(app, /data-action="month-next"/);
+  assert.match(app, /data-action="start-store"/);
+  assert.match(app, /data-action="add-pantry"/);
+  assert.match(app, /data-action="add-recipe-v19"/);
+  assert.match(app, /data-action="add-note"/);
+  assert.match(css, /\.v20-context-actions/);
+  assert.match(css, /\.v20-month-switcher/);
+});
+
 test('V20 ships a new launch screen and PWA identity', () => {
   assert.match(index, /boot-screen-v20/);
   assert.match(index, /Neue V20 Erfahrung/);
