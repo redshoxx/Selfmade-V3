@@ -1,5 +1,0 @@
-HaushaltKlar – AI, TDM AND DATA USE POLICY
-
-© 2026 redshoxx. All rights reserved.
-
-No permission is granted to scrape, crawl, index, copy, reproduce, train on, fine-tune on, embed, summarize into a dataset, imitate, clone, or derive an application or design from HaushaltKlar, its code, interface, assets, screenshots, documentation, or user data. Prior written authorization from the rights holder is required. User household data is confidential and is not licensed for advertising, profiling, AI training, model improvement, or text and data mining.

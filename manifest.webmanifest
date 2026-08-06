@@ -1,0 +1,23 @@
+{
+  "name": "Selfmade – Alles im Griff",
+  "short_name": "Selfmade",
+  "description": "Einkauf, Vorrat, Rezepte, Wochenplanung, Geld und Notizen in einer App.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f5f3ed",
+  "theme_color": "#f5f3ed",
+  "lang": "de-AT",
+  "categories": ["productivity", "finance", "lifestyle"],
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Einkauf", "short_name": "Einkauf", "url": "/?view=shopping", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Neue Notiz", "short_name": "Notiz", "url": "/?view=more", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] }
+  ]
+}
