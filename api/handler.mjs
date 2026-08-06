@@ -6,10 +6,39 @@ export const config = {
   maxDuration: 30
 };
 
-const handle = createPureVercelHandler();
+const REQUIRED_SUPABASE_PROJECT_REF = 'dpqhoesiniberglymdtb';
+
+function projectRefFromUrl(value) {
+  try {
+    const hostname = new URL(String(value || '').trim()).hostname;
+    return hostname.endsWith('.supabase.co') ? hostname.slice(0, -'.supabase.co'.length) : '';
+  } catch {
+    return '';
+  }
+}
+
+const environmentUrl = String(process.env.SUPABASE_URL || '').trim();
+const environmentPublishableKey = String(process.env.SUPABASE_PUBLISHABLE_KEY || '').trim();
+const validEnvironmentOverride = projectRefFromUrl(environmentUrl) === REQUIRED_SUPABASE_PROJECT_REF
+  && environmentPublishableKey.startsWith('sb_publishable_');
+
+const supabaseUrl = validEnvironmentOverride ? environmentUrl : DEFAULT_SUPABASE_URL;
+const supabasePublishableKey = validEnvironmentOverride
+  ? environmentPublishableKey
+  : DEFAULT_SUPABASE_PUBLISHABLE_KEY;
+const supabaseConfigSource = validEnvironmentOverride
+  ? 'vercel-environment'
+  : environmentUrl
+    ? 'repository-default-stale-environment-ignored'
+    : 'repository-default';
+
+const handle = createPureVercelHandler({
+  supabaseUrl,
+  supabasePublishableKey
+});
 const cloud = createSupabaseCloud({
-  url: process.env.SUPABASE_URL ?? DEFAULT_SUPABASE_URL,
-  publishableKey: process.env.SUPABASE_PUBLISHABLE_KEY ?? DEFAULT_SUPABASE_PUBLISHABLE_KEY
+  url: supabaseUrl,
+  publishableKey: supabasePublishableKey
 });
 
 function sendJson(res, status, payload) {
@@ -68,7 +97,17 @@ export default async function handler(req, res) {
   }
 
   req.url = `/api/${apiPath || 'health'}${query.size ? `?${query.toString()}` : ''}`;
-  if (req.method === 'GET' && req.url.split('?')[0] === '/api/state/version') {
+  const pathname = req.url.split('?')[0];
+
+  if (req.method === 'GET' && pathname === '/api/cloud/config') {
+    return sendJson(res, 200, {
+      enabled: cloud.enabled,
+      storage: cloud.enabled ? 'supabase' : 'unconfigured',
+      project_ref: projectRefFromUrl(supabaseUrl) || null,
+      config_source: supabaseConfigSource
+    });
+  }
+  if (req.method === 'GET' && pathname === '/api/state/version') {
     return handleStateVersion(req, res);
   }
   return handle(req, res);
