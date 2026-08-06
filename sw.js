@@ -1,9 +1,9 @@
-const CACHE = 'selfmade-v1.0.1'
+const CACHE = 'selfmade-v1.0.2'
 const APP_SHELL = [
   '/',
   '/index.html',
-  '/app.bundle.js?v=1.0.1',
-  '/styles.css?v=1.0.1',
+  '/app.bundle.js?v=1.0.2',
+  '/styles.css?v=1.0.2',
   '/manifest.webmanifest',
   '/icon-192.png',
   '/icon-512.png',
@@ -25,7 +25,7 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return
 
   if (request.mode === 'navigate') {
-    event.respondWith(fetch(request).then((response) => {
+    event.respondWith(fetch(request, { cache: 'no-store' }).then((response) => {
       const copy = response.clone()
       caches.open(CACHE).then((cache) => cache.put('/index.html', copy))
       return response
@@ -33,11 +33,11 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  event.respondWith(caches.match(request).then((cached) => cached || fetch(request).then((response) => {
+  event.respondWith(fetch(request).then((response) => {
     if (response.ok) {
       const copy = response.clone()
       caches.open(CACHE).then((cache) => cache.put(request, copy))
     }
     return response
-  })))
+  }).catch(() => caches.match(request)))
 })
