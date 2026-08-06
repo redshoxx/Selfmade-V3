@@ -23,9 +23,9 @@ test('iPhone gestures and focus zoom are blocked', () => {
   assert.match(app, /event\.ctrlKey \|\| event\.metaKey/);
 });
 
-test('version 19 core assets force a fresh PWA cache', () => {
-  assert.match(index, /styles\.css\?v=19\.3/);
-  assert.match(index, /app\.js\?v=19\.3/);
-  assert.match(sw, /haushaltklar-v19-3-protection/);
-  assert.match(sw, /version:\s*19\.3/);
+test('V20 core assets force a fresh PWA cache', () => {
+  assert.match(index, /styles\.css\?v=20/);
+  assert.match(index, /app\.js\?v=20/);
+  assert.match(sw, /haushaltklar-v20-living-canvas/);
+  assert.match(sw, /version:\s*20/);
 });
