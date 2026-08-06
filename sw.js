@@ -1,9 +1,9 @@
-const CACHE = 'selfmade-v1.0.2'
+const CACHE = 'selfmade-v1.0.3'
 const APP_SHELL = [
   '/',
   '/index.html',
-  '/app.bundle.js?v=1.0.2',
-  '/styles.css?v=1.0.2',
+  '/app.bundle.js?v=1.0.3',
+  '/styles.css?v=1.0.3',
   '/manifest.webmanifest',
   '/icon-192.png',
   '/icon-512.png',
