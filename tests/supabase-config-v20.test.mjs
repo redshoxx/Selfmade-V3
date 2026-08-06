@@ -23,7 +23,15 @@ test('secret Supabase credentials are never embedded in repository configuration
   assert.doesNotMatch(handler, /sb_secret_/);
 });
 
-test('Vercel handler still prefers environment overrides', () => {
-  assert.match(handler, /process\.env\.SUPABASE_URL \?\? DEFAULT_SUPABASE_URL/);
-  assert.match(handler, /process\.env\.SUPABASE_PUBLISHABLE_KEY \?\? DEFAULT_SUPABASE_PUBLISHABLE_KEY/);
+test('Vercel handler accepts only environment overrides for the new project', () => {
+  assert.match(handler, /REQUIRED_SUPABASE_PROJECT_REF = 'dpqhoesiniberglymdtb'/);
+  assert.match(handler, /projectRefFromUrl\(environmentUrl\) === REQUIRED_SUPABASE_PROJECT_REF/);
+  assert.match(handler, /repository-default-stale-environment-ignored/);
+  assert.match(handler, /createPureVercelHandler\(\{[\s\S]*supabaseUrl,[\s\S]*supabasePublishableKey/);
+});
+
+test('cloud config endpoint reveals only safe project diagnostics', () => {
+  assert.match(handler, /project_ref: projectRefFromUrl\(supabaseUrl\) \|\| null/);
+  assert.match(handler, /config_source: supabaseConfigSource/);
+  assert.doesNotMatch(handler, /secret_key:/i);
 });
