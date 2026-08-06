@@ -1,13 +1,13 @@
 {
-  "name": "HaushaltKlar",
+  "name": "HaushaltKlar V20",
   "short_name": "HaushaltKlar",
-  "description": "HaushaltKlar organisiert Finanzen, Einkauf, Vorrat, Rezepte, Mahlzeitenplanung, Kochmodus und Notizen.",
-  "start_url": "/?source=homescreen",
+  "description": "Adaptive Haushalts-App für Finanzen, Einkauf, Vorrat, Rezepte, Kochen und Notizen.",
+  "start_url": "/?source=homescreen&v=20",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#F5F7FB",
-  "theme_color": "#2F6BFF",
+  "background_color": "#EDF3F1",
+  "theme_color": "#166D63",
   "lang": "de-AT",
   "icons": [
     {"src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
@@ -15,13 +15,13 @@
     {"src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable"}
   ],
   "shortcuts": [
+    {"name": "Heute öffnen", "short_name": "Heute", "url": "/#start"},
     {"name": "Einkauf öffnen", "short_name": "Einkauf", "url": "/#shopping"},
-    {"name": "Rezepte öffnen", "short_name": "Rezepte", "url": "/#recipes"},
-    {"name": "Geld öffnen", "short_name": "Geld", "url": "/#money"},
-    {"name": "Notizen öffnen", "short_name": "Notizen", "url": "/#notes"}
+    {"name": "Küche öffnen", "short_name": "Küche", "url": "/#recipes"},
+    {"name": "Finanzen öffnen", "short_name": "Finanzen", "url": "/#money"}
   ],
   "id": "haushaltklar-household-app",
   "display_override": ["standalone", "fullscreen"],
-  "categories": ["utilities", "finance", "lifestyle"],
+  "categories": ["utilities", "finance", "lifestyle", "food"],
   "prefer_related_applications": false
 }
