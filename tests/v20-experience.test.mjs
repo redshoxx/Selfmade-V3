@@ -72,7 +72,7 @@ test('V20 ships a new launch screen and PWA identity', () => {
   assert.match(index, /styles\.css\?v=20/);
   assert.match(css, /\.boot-screen-v20/);
   assert.match(sw, /haushaltklar-v20-living-canvas/);
-  assert.equal(manifest.name, 'HaushaltKlar V20');
+  assert.equal(manifest.name, 'HaushaltKlar');
   assert.equal(manifest.theme_color, '#166D63');
   assert.ok(manifest.shortcuts.some((shortcut) => shortcut.short_name === 'Heute'));
 });
