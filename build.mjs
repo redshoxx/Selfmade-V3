@@ -1,107 +1,36 @@
-import { copyFile, mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises'
-import { spawnSync } from 'node:child_process'
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { gunzipSync } from 'node:zlib'
+import { spawnSync } from 'node:child_process'
 
-const staticFiles = [
-  'index.html',
-  'iphone12.css',
-  'professional.css',
-  'professional-ui.js',
-  'manifest.webmanifest',
-  'sw.js',
-  'icon-192.png',
-  'icon-512.png',
-  'icon-maskable-512.png'
-]
-
-async function readBinary(file) {
-  const info = await stat(file)
-  if (!info.isFile() || info.size === 0) throw new Error(`Ungültige Build-Datei: ${file}`)
-  return readFile(file)
-}
-
-async function readBase64(file) {
-  const info = await stat(file)
-  if (!info.isFile() || info.size === 0) throw new Error(`Ungültige Build-Datei: ${file}`)
-  const encoded = (await readFile(file, 'utf8')).replace(/\s+/g, '')
-  const decoded = Buffer.from(encoded, 'base64')
-  if (decoded.length === 0) throw new Error(`Base64-Dekodierung fehlgeschlagen: ${file}`)
-  return decoded
-}
-
-function assertGzip(buffer, label) {
-  if (buffer.length < 3 || buffer[0] !== 0x1f || buffer[1] !== 0x8b) {
-    throw new Error(`${label} besitzt keinen gültigen Gzip-Header.`)
-  }
-}
-
-function checkJavaScript(path, label) {
-  const syntaxCheck = spawnSync(process.execPath, ['--check', path], { encoding: 'utf8' })
-  if (syntaxCheck.status !== 0) {
-    throw new Error(`${label}-Syntaxprüfung fehlgeschlagen:\n${syntaxCheck.stderr || syntaxCheck.stdout}`)
-  }
-}
+const segmentFiles = ["bundle-0.b64", "bundle-1.b64", "bundle-2.b64"]
+const encoded = (await Promise.all(segmentFiles.map((file) => readFile(file, 'utf8')))).join('').replace(/\s+/g, '')
+const archive = JSON.parse(gunzipSync(Buffer.from(encoded, 'base64')).toString('utf8'))
 
 await rm('dist', { recursive: true, force: true })
 await mkdir('dist', { recursive: true })
 
-const html = await readFile('index.html', 'utf8')
-for (const requiredId of ['app', 'dialog', 'toast', 'import-file']) {
-  if (!html.includes(`id="${requiredId}"`)) throw new Error(`Erforderliches App-Element fehlt: #${requiredId}`)
-}
-for (const requiredAsset of ['/iphone12.css?v=1.2.0', '/professional.css?v=1.2.0', '/professional-ui.js?v=1.2.0']) {
-  if (!html.includes(requiredAsset)) throw new Error(`Professionelles UI-Asset fehlt in index.html: ${requiredAsset}`)
+for (const [name, entry] of Object.entries(archive)) {
+  const content = entry.encoding === 'base64' ? Buffer.from(entry.content, 'base64') : entry.content
+  await writeFile(`dist/${name}`, content)
 }
 
-const mobileCss = await readFile('iphone12.css', 'utf8')
-for (const requiredRule of ['max-width: 430px', 'font-size: 16px', 'env(safe-area-inset-bottom', '.segment', '.dialog']) {
-  if (!mobileCss.includes(requiredRule)) throw new Error(`Mobile UI-Prüfung fehlgeschlagen: ${requiredRule}`)
+const required = ['index.html', 'styles.css', 'core.js', 'app.js', 'sw.js', 'manifest.webmanifest', 'icon.svg']
+for (const file of required) {
+  if (!archive[file]?.content) throw new Error(`Build-Datei fehlt: ${file}`)
 }
 
-const professionalCss = await readFile('professional.css', 'utf8')
-for (const requiredRule of ['.pro-shopping-command', '.shopping-view-grid', '--pro-accent', 'data-theme="dark"', '.bottom-nav']) {
-  if (!professionalCss.includes(requiredRule)) throw new Error(`Professional-UI-Prüfung fehlgeschlagen: ${requiredRule}`)
+for (const file of ['core.js', 'app.js', 'sw.js']) {
+  const result = spawnSync(process.execPath, ['--check', `dist/${file}`], { encoding: 'utf8' })
+  if (result.status !== 0) throw new Error(`${file} enthält einen Syntaxfehler:\n${result.stderr || result.stdout}`)
 }
 
-const professionalUi = await readFile('professional-ui.js', 'utf8')
-for (const requiredFeature of ['MutationObserver', 'data-pro-view', 'shoppingQuery', 'setTheme', 'pro-product-glyph']) {
-  if (!professionalUi.includes(requiredFeature)) throw new Error(`Professional-UI-Funktion fehlt: ${requiredFeature}`)
+const html = archive['index.html'].content
+const css = archive['styles.css'].content
+for (const marker of ['selfmade-version" content="1.0.0"', 'id="sheet"', '/app.js?v=1.0.0']) {
+  if (!html.includes(marker)) throw new Error(`HTML-Prüfung fehlgeschlagen: ${marker}`)
+}
+for (const marker of ['safe-area-inset-bottom', '.bottom-nav', '.quick-add', '.sheet']) {
+  if (!css.includes(marker)) throw new Error(`CSS-Prüfung fehlgeschlagen: ${marker}`)
 }
 
-for (const file of staticFiles) {
-  const info = await stat(file)
-  if (!info.isFile() || info.size === 0) throw new Error(`Ungültige Build-Datei: ${file}`)
-  await copyFile(file, `dist/${file}`)
-}
-
-const appCompressed = Buffer.concat([
-  await readBinary('app.bundle-0.bin'),
-  await readBase64('app.bundle-1.correct.b64'),
-  await readBinary('app.bundle-2.bin'),
-  await readBinary('app.bundle-3.bin'),
-  await readBinary('app.bundle-4.bin')
-])
-const stylesCompressed = Buffer.concat([
-  await readBinary('styles-0.bin'),
-  await readBinary('styles-1.bin')
-])
-
-assertGzip(appCompressed, 'App-Bundle')
-assertGzip(stylesCompressed, 'Stylesheet')
-
-const appText = gunzipSync(appCompressed)
-  .toString('utf8')
-  .replace("appVersion: '1.0.0'", "appVersion: '1.2.0'")
-const stylesSource = gunzipSync(stylesCompressed)
-
-if (!appText || stylesSource.length === 0) {
-  throw new Error('Die entpackten App-Dateien sind leer.')
-}
-
-await writeFile('dist/app.bundle.js', appText)
-await writeFile('dist/styles.css', stylesSource)
-
-checkJavaScript('dist/app.bundle.js', 'App')
-checkJavaScript('dist/professional-ui.js', 'Professional UI')
-
-console.log(`Selfmade V1.2.0: ${Buffer.byteLength(appText)} Byte JavaScript, ${stylesSource.length} Byte Basis-CSS, ${Buffer.byteLength(mobileCss)} Byte iPhone-CSS und ${Buffer.byteLength(professionalCss)} Byte Professional-CSS geprüft.`)
+console.log('Selfmade Einkauf V1.0.0: neue reine Einkaufs-App erfolgreich gebaut.')
