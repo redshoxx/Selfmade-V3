@@ -19,7 +19,7 @@ test('V16 shopping renderer only displays real data suggestions', () => {
   assert.match(app, /aus deinen Daten/);
 });
 
-test('shopping layout is compact and usable on iPhone 12', () => {
+test('shopping layout remains usable on iPhone 12', () => {
   assert.match(styles, /\.shopping-quick-form-v16/);
   assert.match(styles, /grid-template-columns:\s*minmax\(0, 1fr\) auto/);
   assert.match(styles, /\.shopping-item-v16/);
@@ -27,7 +27,8 @@ test('shopping layout is compact and usable on iPhone 12', () => {
   assert.match(styles, /\.shopping-add-actions-v16/);
 });
 
-test('legacy V16 shopping code coexists with the current cache version', () => {
-  assert.match(index, /app\.js\?v=19\.3/);
-  assert.match(index, /styles\.css\?v=19\.3/);
+test('legacy shopping code coexists with the V20 experience', () => {
+  assert.match(index, /app\.js\?v=20/);
+  assert.match(index, /styles\.css\?v=20/);
+  assert.match(app, /open-shopping-add-v17/);
 });

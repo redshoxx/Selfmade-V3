@@ -1,0 +1,30 @@
+
+/* Version 20 – kontextbezogene Kopfaktionen */
+const headerBeforeV20Context = header;
+
+function v20ContextHeaderData() {
+  const shoppingCount = v20ShoppingOpen().length;
+  const pantryCount = (data?.pantry || []).filter((item) => !item.inbox).length;
+  return ({
+    money: ['Finanzen', 'Budgets, Sparziele und Buchungen'],
+    shopping: ['Einkauf', `${shoppingCount} ${shoppingCount === 1 ? 'offener Eintrag' : 'offene Einträge'}`],
+    pantry: ['Vorrat', `${pantryCount} ${pantryCount === 1 ? 'Produkt' : 'Produkte'} im Haushalt`],
+    recipes: ['Küche', 'Rezepte, Wochenplan und Kochmodus'],
+    notes: ['Notizen', `${(data?.notes || []).length} gespeicherte Einträge`]
+  })[activeTab] || ['HaushaltKlar', 'Alles an einem Ort'];
+}
+
+function v20ContextHeaderActions() {
+  if (activeTab === 'money') return `<div class="v20-context-actions"><button class="v20-context-icon" data-action="import-receipt" aria-label="Kassenbon importieren">${icon('receipt',18)}</button><div class="v20-month-switcher"><button data-action="month-prev" aria-label="Vorheriger Monat">${icon('chevronLeft',15)}</button><strong>${escapeHtml(monthLabel(data.month))}</strong><button data-action="month-next" aria-label="Nächster Monat">${icon('chevronRight',15)}</button></div><button class="v20-context-icon" data-action="open-v20-quick" aria-label="Schnell hinzufügen">${icon('plus',19)}</button></div>`;
+  if (activeTab === 'shopping') return `<div class="v20-context-actions"><button class="v20-context-icon" data-action="scan-barcode" aria-label="Barcode scannen">${icon('scan',18)}</button><button class="v20-context-primary" data-action="start-store">${icon('store',16)} Im Laden</button><button class="v20-context-icon" data-action="open-shopping-add-v17" aria-label="Produkt hinzufügen">${icon('plus',19)}</button></div>`;
+  if (activeTab === 'pantry') return `<div class="v20-context-actions"><button class="v20-context-icon" data-action="scan-barcode" aria-label="Barcode scannen">${icon('scan',18)}</button><button class="v20-context-primary" data-action="add-pantry">${icon('plus',16)} Produkt</button></div>`;
+  if (activeTab === 'recipes') return `<div class="v20-context-actions"><button class="v20-context-icon" data-action="recipe-search-focus-v19" aria-label="Rezepte durchsuchen">${icon('search',18)}</button><button class="v20-context-primary" data-action="add-recipe-v19">${icon('plus',16)} Rezept</button></div>`;
+  if (activeTab === 'notes') return `<div class="v20-context-actions"><button class="v20-context-icon" data-action="global-search" aria-label="Notizen durchsuchen">${icon('search',18)}</button><button class="v20-context-primary" data-action="add-note">${icon('plus',16)} Notiz</button></div>`;
+  return '';
+}
+
+header = function headerV20Context() {
+  if (activeTab === 'start') return headerBeforeV20Context();
+  const [title, subtitle] = v20ContextHeaderData();
+  return `<header class="v20-header v20-page-header v20-page-header-context"><div class="v20-page-copy"><small>${escapeHtml(subtitle)}</small><h1>${escapeHtml(title)}</h1></div>${v20ContextHeaderActions()}</header>`;
+};

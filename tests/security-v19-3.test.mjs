@@ -11,7 +11,7 @@ const license = await read('LICENSE');
 const app = await read('public/app.js');
 const sw = await read('public/sw.js');
 
-test('V19.3 reserves copyright, cloning, AI and TDM rights', () => {
+test('V20 retains copyright, cloning, AI and TDM reservations', () => {
   assert.match(license, /PROPRIETARY LICENSE/);
   assert.match(license, /create a clone/i);
   assert.match(license, /machine learning/i);
@@ -40,9 +40,10 @@ test('Vercel emits restrictive security, anti-framing and no-AI headers', () => 
   assert.equal(headers['x-ai-training'], 'prohibited');
 });
 
-test('rights information is visible inside settings and backups are marked confidential', () => {
+test('rights information is visible inside settings and V20 backups are marked confidential', () => {
   assert.match(app, /Rechte & Datenschutz/);
   assert.match(app, /KI-\/TDM-Schutz/);
+  assert.match(app, /version: '20\.0\.0'/);
   assert.match(app, /nicht für Weitergabe, KI-Training oder Text- und Data-Mining/);
-  assert.match(sw, /haushaltklar-v19-3-protection/);
+  assert.match(sw, /haushaltklar-v20-living-canvas/);
 });

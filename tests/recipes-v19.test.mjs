@@ -8,10 +8,11 @@ const api = await readFile(new URL('../vercel-api.mjs', import.meta.url), 'utf8'
 const index = await readFile(new URL('../public/index.html', import.meta.url), 'utf8');
 const sw = await readFile(new URL('../public/sw.js', import.meta.url), 'utf8');
 
-test('V19 adds a dedicated recipes area and six-tab navigation', () => {
+test('recipes remain a dedicated area in the V20 navigation', () => {
   assert.match(app, /tabs\.push\('recipes'\)/);
   assert.match(app, /renderRecipesAreaV19/);
-  assert.match(app, /tab-bar-six-v19/);
+  assert.match(app, /tabBarV20/);
+  assert.match(css, /\.v20-tab-bar/);
   assert.match(css, /grid-template-columns:\s*repeat\(6/);
 });
 
@@ -47,9 +48,9 @@ test('cooking mode includes wake lock, voice, swipe, timers and completion', () 
   assert.match(app, /reduce_pantry/);
 });
 
-test('V19 assets force a fresh PWA cache', () => {
-  assert.match(index, /app\.js\?v=19\.3/);
-  assert.match(index, /styles\.css\?v=19\.3/);
-  assert.match(sw, /haushaltklar-v19-3-protection/);
-  assert.match(sw, /version:\s*19\.3/);
+test('V20 assets force a fresh PWA cache', () => {
+  assert.match(index, /app\.js\?v=20/);
+  assert.match(index, /styles\.css\?v=20/);
+  assert.match(sw, /haushaltklar-v20-living-canvas/);
+  assert.match(sw, /version:\s*20/);
 });

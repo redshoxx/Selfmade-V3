@@ -33,9 +33,9 @@ test('store mode uses compact cards and price bottom sheet', () => {
   assert.match(styles, /\.store-price-sheet-v17/);
 });
 
-test('version 19 preserves the V17 shopping UI with a fresh performance cache', () => {
-  assert.match(index, /app\.js\?v=19\.3/);
-  assert.match(index, /styles\.css\?v=19\.3/);
-  assert.match(sw, /haushaltklar-v19-3-protection/);
-  assert.match(sw, /version:\s*19\.3/);
+test('V20 preserves the V17 shopping UI with a fresh cache', () => {
+  assert.match(index, /app\.js\?v=20/);
+  assert.match(index, /styles\.css\?v=20/);
+  assert.match(sw, /haushaltklar-v20-living-canvas/);
+  assert.match(sw, /version:\s*20/);
 });

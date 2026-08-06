@@ -1,0 +1,41 @@
+
+/* Version 20 – neuer Start- und Ladebildschirm */
+.boot-screen-v20 {
+  position:relative;
+  overflow:hidden;
+  min-height:100%;
+  padding:calc(var(--safe-top) + 42px) 28px calc(var(--safe-bottom) + 28px);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  color:#143d38;
+  background:
+    radial-gradient(circle at 84% 12%,rgba(104,92,214,.18),transparent 29%),
+    radial-gradient(circle at 8% 88%,rgba(32,139,124,.2),transparent 32%),
+    linear-gradient(155deg,#f8fbfa 0%,#eaf3f0 58%,#e4efec 100%);
+}
+.boot-orbit-v20 { position:absolute; inset:0; pointer-events:none; }
+.boot-orbit-v20::before,.boot-orbit-v20::after { content:""; position:absolute; border:1px solid rgba(22,109,99,.13); border-radius:50%; }
+.boot-orbit-v20::before { width:360px; height:360px; top:-155px; right:-180px; }
+.boot-orbit-v20::after { width:300px; height:300px; left:-180px; bottom:-110px; }
+.boot-mark-v20 { position:relative; width:108px; height:108px; padding:9px; border-radius:31px; background:rgba(255,255,255,.78); box-shadow:0 26px 64px rgba(28,76,69,.18),inset 0 0 0 1px rgba(255,255,255,.88); animation:v20-mark-in .52s cubic-bezier(.2,.8,.2,1) both; }
+.boot-mark-v20::after { content:""; position:absolute; inset:-10px; border:1px solid rgba(22,109,99,.12); border-radius:39px; }
+.boot-mark-v20 img { width:100%; height:100%; border-radius:24px; display:block; }
+.boot-brand-v20 { margin-top:25px; font-size:31px; line-height:1; font-weight:880; letter-spacing:-.055em; }
+.boot-tagline-v20 { margin-top:9px; color:#64736f; font-size:12px; font-weight:680; }
+.boot-pill-v20 { margin-top:22px; min-height:30px; padding:0 12px; border:1px solid rgba(22,109,99,.14); border-radius:999px; display:flex; align-items:center; gap:7px; color:#166d63; background:rgba(255,255,255,.58); font-size:9px; font-weight:810; letter-spacing:.04em; text-transform:uppercase; }
+.boot-pill-v20 i { width:7px; height:7px; border-radius:50%; background:#35a491; box-shadow:0 0 0 6px rgba(53,164,145,.1); animation:v20-pulse 1.3s ease-in-out infinite; }
+.boot-loader-v20 { width:106px; height:5px; margin-top:28px; overflow:hidden; border-radius:999px; background:rgba(22,109,99,.1); }
+.boot-loader-v20 i { display:block; width:43%; height:100%; border-radius:inherit; background:linear-gradient(90deg,#166d63,#766bd7); animation:v20-loader 1.05s ease-in-out infinite alternate; }
+.boot-meta-v20 { position:absolute; bottom:calc(var(--safe-bottom) + 13px); display:grid; justify-items:center; gap:4px; color:rgba(39,61,57,.48); font-size:8px; font-weight:720; letter-spacing:.08em; text-transform:uppercase; }
+.boot-meta-v20 small { font-size:7px; letter-spacing:.02em; text-transform:none; }
+[data-theme="dark"] .boot-screen-v20 { color:#eef8f5; background:radial-gradient(circle at 84% 12%,rgba(120,109,232,.18),transparent 29%),radial-gradient(circle at 8% 88%,rgba(61,180,162,.14),transparent 32%),linear-gradient(155deg,#141c1a,#101715 58%,#0d1312); }
+[data-theme="dark"] .boot-mark-v20 { background:rgba(29,39,36,.78); box-shadow:0 28px 68px rgba(0,0,0,.38),inset 0 0 0 1px rgba(255,255,255,.06); }
+[data-theme="dark"] .boot-tagline-v20 { color:#a5b3af; }
+[data-theme="dark"] .boot-pill-v20 { color:#76d4c6; background:rgba(255,255,255,.04); border-color:rgba(118,212,198,.14); }
+[data-theme="dark"] .boot-meta-v20 { color:rgba(255,255,255,.4); }
+@keyframes v20-mark-in { from { opacity:0; transform:scale(.86) translateY(12px); } to { opacity:1; transform:none; } }
+@keyframes v20-loader { from { transform:translateX(-80%); } to { transform:translateX(145%); } }
+@keyframes v20-pulse { 0%,100% { opacity:.45; transform:scale(.9); } 50% { opacity:1; transform:scale(1.08); } }
+@media(prefers-reduced-motion:reduce){.boot-mark-v20,.boot-loader-v20 i,.boot-pill-v20 i{animation:none}}
