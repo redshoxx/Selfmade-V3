@@ -52,6 +52,7 @@ test('new design is responsive, readable and supports dark mode', () => {
 });
 
 test('PWA identity and cache point to V21', () => {
+  assert.equal(manifest.version, '21.0.0');
   assert.equal(manifest.id, 'haushaltklar-v21-clean-rebuild');
   assert.equal(manifest.name, 'HaushaltKlar');
   assert.match(index, /v=21\.0\.0/);
