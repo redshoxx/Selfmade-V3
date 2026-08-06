@@ -17,9 +17,9 @@ async function assemble(sourceDirectory, outputFile, banner = '') {
   await writeFile(path.join(root, outputFile), Buffer.concat([Buffer.from(banner), ...buffers]));
 }
 
-await assemble('src/app', 'public/app.js', '/*! HaushaltKlar V19.3 | © 2026 redshoxx | Proprietary – All Rights Reserved | No cloning, scraping, AI training or TDM without written permission. */\n');
-await assemble('src/styles', 'public/styles.css', '/*! HaushaltKlar Design System V19.3 | © 2026 redshoxx | Proprietary – All Rights Reserved. */\n');
-await assemble('src/vercel-api', 'vercel-api.mjs', '/*! HaushaltKlar Server V19.3 | © 2026 redshoxx | Proprietary. */\n');
+await assemble('src/app', 'public/app.js', '/*! HaushaltKlar V20.0 | © 2026 redshoxx | Proprietary – All Rights Reserved | No cloning, scraping, AI training or TDM without written permission. */\n');
+await assemble('src/styles', 'public/styles.css', '/*! HaushaltKlar Living Canvas Design System V20.0 | © 2026 redshoxx | Proprietary – All Rights Reserved. */\n');
+await assemble('src/vercel-api', 'vercel-api.mjs', '/*! HaushaltKlar Server V20.0 | © 2026 redshoxx | Proprietary. */\n');
 await Promise.all([
   materializeBase64Asset('src/branding/icon-192.png.b64', 'public/icon-192.png'),
   materializeBase64Asset('src/branding/icon-512.png.b64', 'public/icon-512.png'),
