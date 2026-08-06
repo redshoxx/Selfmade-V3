@@ -35,6 +35,13 @@ function assertGzip(buffer, label) {
 await rm('dist', { recursive: true, force: true })
 await mkdir('dist', { recursive: true })
 
+const indexSource = await readFile('index.html', 'utf8')
+for (const requiredId of ['app', 'dialog', 'toast', 'import-file']) {
+  if (!indexSource.includes(`id="${requiredId}"`)) {
+    throw new Error(`index.html enthält den erforderlichen UI-Knoten #${requiredId} nicht.`)
+  }
+}
+
 for (const file of staticFiles) {
   const info = await stat(file)
   if (!info.isFile() || info.size === 0) throw new Error(`Ungültige Build-Datei: ${file}`)
@@ -63,6 +70,18 @@ if (appSource.length === 0 || stylesSource.length === 0) {
   throw new Error('Die entpackten App-Dateien sind leer.')
 }
 
+const appText = appSource.toString('utf8')
+for (const requiredCode of [
+  "document.querySelector('#dialog')",
+  "document.querySelector('#toast')",
+  "document.querySelector('#import-file')",
+  "document.addEventListener('click'"
+]) {
+  if (!appText.includes(requiredCode)) {
+    throw new Error(`Erforderliche Interaktionslogik fehlt: ${requiredCode}`)
+  }
+}
+
 await writeFile('dist/app.bundle.js', appSource)
 await writeFile('dist/styles.css', stylesSource)
 
@@ -71,4 +90,4 @@ if (syntaxCheck.status !== 0) {
   throw new Error(`JavaScript-Syntaxprüfung fehlgeschlagen:\n${syntaxCheck.stderr || syntaxCheck.stdout}`)
 }
 
-console.log(`Selfmade V1.0.2: ${appSource.length} Byte JavaScript und ${stylesSource.length} Byte CSS erfolgreich rekonstruiert.`)
+console.log(`Selfmade V1.0.3: UI-Knoten, Klick-Handler, ${appSource.length} Byte JavaScript und ${stylesSource.length} Byte CSS erfolgreich geprüft.`)
