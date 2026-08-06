@@ -4,6 +4,7 @@ import { gunzipSync } from 'node:zlib'
 
 const staticFiles = [
   'index.html',
+  'iphone12.css',
   'manifest.webmanifest',
   'sw.js',
   'icon-192.png',
@@ -39,6 +40,14 @@ const html = await readFile('index.html', 'utf8')
 for (const requiredId of ['app', 'dialog', 'toast', 'import-file']) {
   if (!html.includes(`id="${requiredId}"`)) throw new Error(`Erforderliches App-Element fehlt: #${requiredId}`)
 }
+if (!html.includes('/iphone12.css?v=1.1.0')) {
+  throw new Error('Das iPhone-12-Stylesheet ist nicht in index.html eingebunden.')
+}
+
+const mobileCss = await readFile('iphone12.css', 'utf8')
+for (const requiredRule of ['max-width: 430px', 'font-size: 16px', 'env(safe-area-inset-bottom', '.segment', '.dialog']) {
+  if (!mobileCss.includes(requiredRule)) throw new Error(`Mobile UI-Prüfung fehlgeschlagen: ${requiredRule}`)
+}
 
 for (const file of staticFiles) {
   const info = await stat(file)
@@ -63,7 +72,7 @@ assertGzip(stylesCompressed, 'Stylesheet')
 
 const appText = gunzipSync(appCompressed)
   .toString('utf8')
-  .replace("appVersion: '1.0.0'", "appVersion: '1.0.3'")
+  .replace("appVersion: '1.0.0'", "appVersion: '1.1.0'")
 const stylesSource = gunzipSync(stylesCompressed)
 
 if (!appText || stylesSource.length === 0) {
@@ -78,4 +87,4 @@ if (syntaxCheck.status !== 0) {
   throw new Error(`JavaScript-Syntaxprüfung fehlgeschlagen:\n${syntaxCheck.stderr || syntaxCheck.stdout}`)
 }
 
-console.log(`Selfmade V1.0.3: ${Buffer.byteLength(appText)} Byte JavaScript und ${stylesSource.length} Byte CSS erfolgreich geprüft.`)
+console.log(`Selfmade V1.1.0: ${Buffer.byteLength(appText)} Byte JavaScript, ${stylesSource.length} Byte Basis-CSS und ${Buffer.byteLength(mobileCss)} Byte iPhone-CSS geprüft.`)
