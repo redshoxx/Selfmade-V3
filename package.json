@@ -1,9 +1,9 @@
 {
   "name": "selfmade-haushaltsapp",
-  "version": "19.3.0",
+  "version": "21.0.0",
   "private": true,
   "type": "module",
-  "description": "HaushaltKlar V19.3 mit proprietärem Rechte-, Datenschutz-, Anti-Crawling- und TDM-Schutz.",
+  "description": "HaushaltKlar V21 – vollständig neu aufgebaute, minimalistische Haushalts-App für Einkauf, Küche, Geld, Sparen, Challenges, Vorrat und Notizen.",
   "engines": {
     "node": "22.x"
   },

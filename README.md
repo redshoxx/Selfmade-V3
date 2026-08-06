@@ -1,31 +1,71 @@
-# HaushaltKlar V19.3 – Schutz- und Rechte-Update
+# HaushaltKlar V21 – Clean Rebuild
 
-HaushaltKlar ist eine proprietäre Haushalts-PWA mit Supabase-Speicherung, Vercel-Deployment, Rezeptverwaltung, Mahlzeitenplaner und Kochmodus.
+V21 ist kein weiteres visuelles Update der bisherigen Oberfläche. Das Frontend wurde unabhängig von den alten App- und Style-Fragmenten vollständig neu aufgebaut.
 
-## Schutzmaßnahmen in V19.3
+## Grundidee
 
-- proprietäre `LICENSE` mit vollständigem Rechtevorbehalt
-- ausdrückliches Verbot von Klonen, Weitergabe, KI-Training, Scraping und TDM
-- maschinenlesbarer TDM-Vorbehalt über `tdm-reservation: 1`
-- `/.well-known/tdmrep.json` nach dem W3C-TDMRep-Format
-- vollständige Crawlersperre über `robots.txt`, einschließlich bekannter KI-Crawler
-- `noindex`, `nosnippet` und `noimageindex` als Meta- und HTTP-Signale
-- strikte Content Security Policy und Schutz vor Einbettung in fremde Websites
-- keine Referrer-Weitergabe und restriktive Browser-Berechtigungen
-- API-Antworten werden nicht zwischengespeichert
-- sichtbarer Rechte- und Datenschutzbereich in den App-Einstellungen
-- Backups enthalten eine Vertraulichkeits- und Rechtekennzeichnung
-- Copyright-Banner in gebauten JavaScript-, CSS- und Serverdateien
+HaushaltKlar soll auf dem Handy und am Desktop ruhig, lesbar und sofort verständlich sein. Statt vieler gleich wichtiger Menüpunkte gibt es fünf klare Hauptbereiche:
 
-## Wichtige technische Grenze
+1. **Heute** – zeigt nur die aktuell wichtigste Aufgabe und wenige relevante Kennzahlen.
+2. **Einkauf** – Einkaufsliste, Kategorien, Preise und Ladenmodus.
+3. **Küche** – Rezepte, Vorrat und Wochenplanung.
+4. **Geld** – Einnahmen, Ausgaben, Budgets, Sparbetrag und Spar-Challenge.
+5. **Mehr** – Notizen, Challenges und Einstellungen.
 
-Eine ausgelieferte Web-App kann nicht absolut gegen Screenshots, manuelles Nachprogrammieren oder das Entfernen clientseitiger Schutzprüfungen gesichert werden. Das Repository muss deshalb **privat** sein. Solange es öffentlich ist, kann jeder den Quellcode ansehen und über GitHub forken. Bereits erstellte öffentliche Forks bleiben auch nach einer späteren Umstellung auf privat bestehen.
+## Komplett neue Oberfläche
 
-## Datenzugriff
+- neue responsive App-Shell
+- Seitenleiste auf Desktop, kompakte Bottom-Navigation auf Mobilgeräten
+- neues minimalistisches Designsystem ohne die bisherigen V19/V20-Komponenten
+- deutlich größere Schrift, Touch-Ziele und Formulare
+- konsequente Hell-/Dunkel-Darstellung
+- neue Login- und Registrierungsansicht
+- neue modale Eingabeformulare
+- neues App-Icon und neuer Startbildschirm
 
-Haushaltsdaten werden weiterhin über Supabase Auth und Row Level Security geschützt. Die App verwendet keinen Service-Role-Key im Browser. Benutzer- und Haushaltsdaten sind nicht für Werbung, Profilbildung, KI-Training oder Text- und Data-Mining freigegeben.
+## Funktionen
 
-## Deployment
+### Einkauf
+
+- Produkte mit Menge, Kategorie, Preis und Notiz
+- offen/alle/erledigt filtern
+- Ladenmodus mit größeren Bedienelementen
+- Einkauf abschließen und in Vorrat sowie Ausgaben übernehmen
+
+### Küche
+
+- eigene Rezepte mit Zutaten und Schritten
+- Rezeptdetail und Übergabe fehlender Zutaten an die Einkaufsliste
+- Vorrat mit Ablaufdatum, Lagerort und Mindestbestand
+- Nachkaufen-Markierung
+- Wochenplan für Frühstück, Mittagessen, Abendessen und Snacks
+
+### Geld und Sparen
+
+- Einnahmen und Ausgaben
+- Monatsstand
+- Budgets mit Fortschrittsanzeige
+- gespeicherter Sparbetrag
+- frei definierbare Spar-Challenge mit Ziel und Anzahl der Schritte
+
+Die Challenge wird als interner Systemeintrag in den vorhandenen Notizen gespeichert. Dadurch bleibt sie in der Supabase-Cloud synchronisiert, ohne eine zusätzliche Datenbankmigration zu benötigen.
+
+### Notizen und Einstellungen
+
+- Notizen mit Titel, Inhalt, Schlagwort, Fälligkeit und Pin-Funktion
+- Haushaltsname und Anzeigename
+- Hell, Dunkel oder Systemdarstellung
+- sichere Abmeldung
+
+## Technischer Aufbau
+
+- neues Frontend unter `src/v21/`
+- `scripts/assemble-assets.mjs` veröffentlicht ausschließlich das neue V21-Frontend
+- vorhandene Supabase-API und Datenstruktur bleiben als Backend erhalten
+- keine Service-Role- oder Secret-Schlüssel im Browser
+- PWA-Service-Worker mit eigenem V21-Cache
+
+## Entwicklung
 
 ```bash
 npm install
@@ -33,10 +73,10 @@ npm test
 npm run build
 ```
 
+Vercel:
+
 ```text
 Build Command: npm run build
 Output Directory: dist
 Node.js: 22.x
 ```
-
-Nach dem Deployment die Homescreen-App vollständig schließen und neu öffnen. Der Service Worker V19.3 entfernt ältere Caches.

@@ -17,12 +17,13 @@ async function assemble(sourceDirectory, outputFile, banner = '') {
   await writeFile(path.join(root, outputFile), Buffer.concat([Buffer.from(banner), ...buffers]));
 }
 
-await assemble('src/app', 'public/app.js', '/*! HaushaltKlar V19.3 | © 2026 redshoxx | Proprietary – All Rights Reserved | No cloning, scraping, AI training or TDM without written permission. */\n');
-await assemble('src/styles', 'public/styles.css', '/*! HaushaltKlar Design System V19.3 | © 2026 redshoxx | Proprietary – All Rights Reserved. */\n');
-await assemble('src/vercel-api', 'vercel-api.mjs', '/*! HaushaltKlar Server V19.3 | © 2026 redshoxx | Proprietary. */\n');
 await Promise.all([
+  assemble('src/v21/app', 'public/app.js', '/*! HaushaltKlar V21 Clean Rebuild | © 2026 redshoxx | Proprietary. */\n'),
+  assemble('src/v21/styles', 'public/styles.css', '/*! HaushaltKlar V21 Minimal Design System | © 2026 redshoxx | Proprietary. */\n'),
+  assemble('src/vercel-api', 'vercel-api.mjs', '/*! HaushaltKlar Server V21 | © 2026 redshoxx | Proprietary. */\n'),
   materializeBase64Asset('src/branding/icon-192.png.b64', 'public/icon-192.png'),
   materializeBase64Asset('src/branding/icon-512.png.b64', 'public/icon-512.png'),
   materializeBase64Asset('src/branding/apple-touch-icon.png.b64', 'public/apple-touch-icon.png')
 ]);
-console.log('App-, API- und Branding-Assets wurden vollständig zusammengesetzt.');
+
+console.log('HaushaltKlar V21 Frontend, API und Branding wurden zusammengesetzt.');
