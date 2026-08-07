@@ -1,7 +1,7 @@
 import { copyFile, mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises'
 import { spawnSync } from 'node:child_process'
 
-const VERSION = '3.1.0'
+const VERSION = '3.2.0'
 const staticFiles = ['manifest.webmanifest', 'icon.svg', 'sw.js']
 
 function stripModuleSyntax(core, app) {
@@ -18,7 +18,7 @@ window.__selfmadeStartError = function(message){
   if(window.__SELFMADE_READY__) return;
   var root=document.getElementById('app');
   if(!root) return;
-  root.innerHTML='<main class="onboarding"><div class="mark">!</div><div><span class="eyebrow">STARTFEHLER</span><h1>Selfmade konnte nicht starten.</h1><p>'+String(message||'Ein unerwarteter Fehler ist aufgetreten.')+'</p></div><button class="btn primary" onclick="location.reload()">Erneut versuchen</button><small>Version 3.1.0</small></main>';
+  root.innerHTML='<main class="onboarding"><div class="mark">!</div><div><span class="eyebrow">STARTFEHLER</span><h1>Selfmade konnte nicht starten.</h1><p>'+String(message||'Ein unerwarteter Fehler ist aufgetreten.')+'</p></div><button class="btn primary" onclick="location.reload()">Erneut versuchen</button><small>Version 3.2.0</small></main>';
 };
 window.addEventListener('error',function(e){window.__selfmadeStartError(e.message||'JavaScript-Fehler')});
 window.addEventListener('unhandledrejection',function(e){window.__selfmadeStartError(e.reason&&e.reason.message?e.reason.message:'Startfehler')});
@@ -51,12 +51,13 @@ for (const file of ['dist/check.js','core.js','app.js','sw.js']) {
 await rm('dist/check.js')
 
 const required = [
-  'selfmade-version" content="3.1.0"','window.__SELFMADE_READY__=true','__selfmadeStartError','Erneut versuchen','data-app-ready','id="app"','id="sheet"',
+  'selfmade-version" content="3.2.0"','window.__SELFMADE_READY__=true','__selfmadeStartError','Erneut versuchen','data-app-ready','id="app"','id="sheet"',
   'env(safe-area-inset-bottom','390px','.action-dock','.quick-add','.store-mode','.sheet-form','Weitere Optionen',
-  'autoCategory','quick-add-form','toggle-item','share-list','open-lists','smartSuggestions','open-settings','localStorage','selfmade-einkauf-v2','Nicht vergessen?'
+  'autoCategory','quick-add-form','toggle-item','share-list','open-lists','smartSuggestions','open-settings','localStorage','selfmade-einkauf-v2','Nicht vergessen?',
+  'data-swipe-row','pointerdown','pointermove','pointerup','deleteItemWithUndo','undo-delete','Nach rechts abhaken','.swipe-row','touch-action:pan-y'
 ]
 for (const token of required) if (!html.includes(token)) throw new Error(`QA-Prüfung fehlt: ${token}`)
 if (/function\s+(stats|categories)\s*\(/.test(appSource)) throw new Error('Statistik-/Kategorien-Screens dürfen nicht mehr aktiv sein.')
 if (appSource.includes('data-route') || cssSource.includes('.bottom-nav')) throw new Error('Alte Tab-Navigation ist noch aktiv.')
 if (html.includes('app.js.gz.b64') || html.includes('styles.css.gz.b64') || html.includes('type="module"')) throw new Error('Veraltete Build-/Modulstruktur aktiv.')
-console.log(`Selfmade V${VERSION}: reine Cozy-Einkaufslisten-App erfolgreich geprüft.`)
+console.log(`Selfmade V${VERSION}: Cozy-Einkauf mit Swipe-Aktionen erfolgreich geprüft.`)

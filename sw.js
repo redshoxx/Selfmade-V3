@@ -1,4 +1,4 @@
-const CACHE = 'selfmade-einkauf-v3.1.0'
+const CACHE = 'selfmade-einkauf-v3.2.0'
 const SHELL = ['/', '/index.html', '/manifest.webmanifest', '/icon.svg']
 
 self.addEventListener('install', event => {
