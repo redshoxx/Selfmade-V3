@@ -3,40 +3,24 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
-  <meta name="theme-color" content="#0b0d0c">
-  <meta name="color-scheme" content="dark light">
-  <meta name="description" content="Selfmade Einkauf – eine schnelle, schlichte und intelligente Einkaufslisten-App.">
+  <meta name="theme-color" content="#f5f2ec">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Selfmade – eine ruhige, schnelle und intelligente Einkaufslisten-App.">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Einkauf">
-  <meta name="selfmade-version" content="2.1.1">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Selfmade">
+  <meta name="selfmade-version" content="3.0.0">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/icon.svg">
   <style>/*__SELFMADE_INLINE_CSS__*/</style>
-  <title>Selfmade Einkauf</title>
+  <title>Selfmade</title>
 </head>
 <body>
-  <div id="app">
-    <main class="onboarding" style="min-height:100dvh">
-      <div></div><div class="brand-bag"><b>✓</b></div><div class="onboarding-copy"><h1>Selfmade Einkauf</h1><p>App wird geladen …</p></div><div></div>
-    </main>
-  </div>
+  <div id="app"><main class="onboarding"><div class="mark"></div><div><span class="eyebrow">SELFMADE</span><h1>Wird vorbereitet …</h1><p>Deine Einkaufsliste wird lokal geladen.</p></div></main></div>
   <dialog id="sheet" class="sheet"></dialog>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <input id="import-file" type="file" accept="application/json" hidden>
-  <script>
-    window.__SELFMADE_READY__ = false;
-    window.__selfmadeBootError = function (detail) {
-      if (window.__SELFMADE_READY__) return;
-      var root = document.getElementById('app');
-      if (!root) return;
-      root.innerHTML = '<main class="onboarding" style="min-height:100dvh"><div></div><div class="brand-bag"><b>!</b></div><div class="onboarding-copy"><h1>Startfehler</h1><p>' + String(detail || 'Die App konnte nicht gestartet werden.') + '</p></div><div class="onboarding-actions"><button class="primary-button" onclick="location.reload()">Erneut versuchen</button><small>Selfmade Einkauf · V2.1.1</small></div></main>';
-    };
-    window.addEventListener('error', function (event) { window.__selfmadeBootError(event.message || 'JavaScript-Fehler'); });
-    window.addEventListener('unhandledrejection', function (event) { window.__selfmadeBootError(event.reason && event.reason.message ? event.reason.message : event.reason || 'Startfehler'); });
-    setTimeout(function () { if (!window.__SELFMADE_READY__) window.__selfmadeBootError('Die App hat nicht innerhalb von 3 Sekunden gestartet.'); }, 3000);
-  </script>
   <script>/*__SELFMADE_INLINE_APP__*/</script>
 </body>
 </html>
