@@ -20,10 +20,10 @@ export const CATEGORIES = [
 const CATEGORY_RULES = [
   ['frozen', /\b(tk|tiefkuhl\w*|tiefgefrier\w*|eiscreme\w*|speiseeis\w*|frozen)\b|tiefkuhlpizza|tiefkuhlgemuse|tiefkuhlbeeren/i],
   ['drinks', /\b(wasser|mineralwasser|saft|nektar|cola|limonade|limo|kaffee|espresso|cappuccino|tee|energy|sirup|bier|wein|sekt|prosecco|getrank\w*)\b|apfelsaft|orangensaft|multivitaminsaft|eistee/i],
-  ['dairy', /\b(milch\w*|kase\w*|jogh?urt\w*|butter\w*|sahne\w*|obers\w*|topfen\w*|quark\w*|mozzarella\w*|feta\w*|parmesan\w*|frischkase\w*|pudding\w*|kefir\w*|eier?\w*)\b/i],
+  ['dairy', /\b(\w*milch\w*|kase\w*|jogh?urt\w*|butter\w*|sahne\w*|obers\w*|topfen\w*|quark\w*|mozzarella\w*|feta\w*|parmesan\w*|frischkase\w*|pudding\w*|kefir\w*|eier?\w*)\b/i],
   ['bakery', /\b(brot\w*|semmel\w*|brotchen\w*|baguette\w*|toast\w*|croissant\w*|geback\w*|kuchen\w*|torte\w*|muffin\w*|backware\w*)\b/i],
   ['meat', /\b(fleisch\w*|huhn\w*|hahnchen\w*|pute\w*|truthahn\w*|rind\w*|schwein\w*|wurst\w*|schinken\w*|speck\w*|fisch\w*|lachs\w*|thunfisch\w*|forelle\w*|garnel\w*|hack\w*|faschiert\w*|schnitzel\w*|steak\w*)\b/i],
-  ['pantry', /\b(nudel\w*|pasta\w*|reis\w*|mehl\w*|zucker\w*|salz\w*|pfeffer\w*|gewurz\w*|olivenol\w*|sonnenblumenol\w*|essig\w*|konserve\w*|dose\w*|bohne\w*|linsen\w*|kichererbse\w*|mais\w*|tomatenmark\w*|passata\w*|sauce\w*|bruh\w*|cornflakes\w*|muesli\w*|haferflock\w*)\b/i],
+  ['pantry', /\b(nudel\w*|pasta\w*|spaghetti\w*|penne\w*|fusilli\w*|reis\w*|mehl\w*|zucker\w*|salz\w*|pfeffer\w*|gewurz\w*|olivenol\w*|sonnenblumenol\w*|essig\w*|konserve\w*|dose\w*|bohne\w*|linsen\w*|kichererbse\w*|mais\w*|tomatenmark\w*|passata\w*|sauce\w*|bruh\w*|cornflakes\w*|muesli\w*|haferflock\w*)\b/i],
   ['snacks', /\b(chips\w*|schokolade\w*|keks\w*|snack\w*|nuss\w*|nusse\w*|gummibar\w*|popcorn\w*|cracker\w*|bonbon\w*|praline\w*|riegel\w*)\b/i],
   ['drugstore', /\b(shampoo\w*|duschgel\w*|zahnpasta\w*|zahnburste\w*|deo\w*|creme\w*|bodylotion\w*|rasierer\w*|rasier\w*|tampon\w*|binde\w*|windel\w*|kosmetik\w*|makeup\w*|parfum\w*)\b/i],
   ['household', /\b(spulmittel\w*|waschmittel\w*|weichspuler\w*|reiniger\w*|putzmittel\w*|kuchenrolle\w*|toilettenpapier\w*|klopapier\w*|mullbeutel\w*|schwamm\w*|seife\w*|geschirrspul\w*|spultab\w*|alufolie\w*|frischhaltefolie\w*|backpapier\w*|batterie\w*)\b/i],
