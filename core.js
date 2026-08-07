@@ -17,6 +17,10 @@ export const CATEGORIES = [
   { id: 'other', name: 'Sonstiges', icon: '·' }
 ]
 
+const RAW_CATEGORY_RULES = [
+  ['household', /\bküchenrolle\w*\b/i]
+]
+
 const CATEGORY_RULES = [
   ['frozen', /\b(tk|tiefkuhl\w*|tiefgefrier\w*|eiscreme\w*|speiseeis\w*|frozen)\b|tiefkuhlpizza|tiefkuhlgemuse|tiefkuhlbeeren/i],
   ['drinks', /\b(wasser|mineralwasser|saft|nektar|cola|limonade|limo|kaffee|espresso|cappuccino|tee|energy|sirup|bier|wein|sekt|prosecco|getrank\w*)\b|apfelsaft|orangensaft|multivitaminsaft|eistee/i],
@@ -50,8 +54,12 @@ export function normalizeProductName(name = '') {
 }
 
 export function autoCategory(name = '') {
-  const text = normalizeProductName(name)
-  if (!text) return 'other'
+  const raw = String(name).trim()
+  if (!raw) return 'other'
+  for (const [category, rule] of RAW_CATEGORY_RULES) {
+    if (rule.test(raw)) return category
+  }
+  const text = normalizeProductName(raw)
   for (const [category, rule] of CATEGORY_RULES) {
     if (rule.test(text)) return category
   }
