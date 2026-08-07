@@ -1,6 +1,6 @@
 {
-  "name": "selfmade-einkauf",
-  "version": "2.1.1",
+  "name": "selfmade",
+  "version": "3.0.0",
   "private": true,
   "type": "module",
   "scripts": {
