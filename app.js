@@ -1,4 +1,4 @@
-import { APP_VERSION, CATEGORIES, autoCategory, categoryById, categoryCounts, createInitialState, frequentSuggestions, listItems, normalizeState, progressFor, sortItems, uid } from './core.js'
+import { APP_VERSION, CATEGORIES, autoCategory, categoryById, createInitialState, frequentSuggestions, listItems, normalizeState, progressFor, sortItems, uid } from './core.js'
 
 const STORAGE_KEY = 'selfmade-einkauf-v2'
 const app = document.getElementById('app')
@@ -8,6 +8,9 @@ const importFile = document.getElementById('import-file')
 
 let state = loadState()
 let ui = { storeMode: false, doneOpen: false, expanded: false }
+let swipeGesture = null
+let suppressSwipeClickUntil = 0
+let undoDelete = null
 
 const icons = {
   cart:'<svg viewBox="0 0 24 24"><path d="M3 4h2l2.2 10.2a2 2 0 0 0 2 1.6h7.6a2 2 0 0 0 2-1.6L20 8H7"/><circle cx="10" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg>',
@@ -42,6 +45,7 @@ function nameKey(v=''){ return String(v).trim().toLocaleLowerCase('de-AT') }
 
 function render(){
   document.documentElement.dataset.theme = state.settings?.theme || 'light'
+  swipeGesture = null
   if(!state.settings?.onboarded){ app.innerHTML = onboarding(); return }
   app.innerHTML = ui.storeMode ? storeMode() : shopping()
 }
@@ -65,24 +69,18 @@ function shopping(){
       <button class="list-title" data-action="open-lists" aria-label="Einkaufsliste wechseln"><span class="eyebrow">EINKAUFSLISTE</span><span><strong>${esc(list.name)}</strong>${icons.down}</span></button>
       <button class="icon-btn" data-action="open-settings" aria-label="Einstellungen">${icons.settings}</button>
     </header>
-
     <section class="status-line" aria-label="Listenfortschritt"><div><strong>${p.open}</strong><span>${p.open===1?'Artikel fehlt':'Artikel fehlen'}</span></div><div class="status-progress"><i style="width:${p.percent}%"></i></div><small>${p.done} erledigt</small></section>
-
     <form id="quick-add-form" class="quick-add"><input name="name" maxlength="80" autocomplete="off" enterkeyhint="done" placeholder="Was brauchst du?" aria-label="Produkt hinzufügen"><button aria-label="Hinzufügen">${icons.plus}</button></form>
-
+    <p class="gesture-hint">Nach rechts abhaken · nach links löschen</p>
     ${reminders.length?`<section class="reminder-block"><div class="section-title"><span>${icons.sparkle}</span><div><strong>Nicht vergessen?</strong><small>Aus deinen bisherigen Einkäufen</small></div></div><div class="reminder-chips">${reminders.map(x=>`<button data-action="add-suggestion" data-name="${esc(x.name)}">${icons.plus}<span>${esc(x.name)}</span></button>`).join('')}</div></section>`:''}
-
     ${open.length?[...groups.entries()].map(([category,group])=>groupBlock(category,group)).join(''):emptyState()}
-
     ${done.length?`<section class="done-section"><button class="done-toggle" data-action="toggle-done"><span>${ui.doneOpen?icons.down:icons.chevron}</span><div><strong>Erledigt</strong><small>${done.length} Artikel</small></div></button>${ui.doneOpen?`<div class="done-list">${done.map(productRow).join('')}</div>`:''}</section>`:''}
   </main>${actionDock(p.open)}</div>`
 }
 
 function smartSuggestions(){
   const openNames = new Set(activeItems().filter(i=>!i.done).map(i=>nameKey(i.name)))
-  return frequentSuggestions(state, state.activeListId, 12)
-    .filter(item=>!openNames.has(nameKey(item.name)))
-    .slice(0,5)
+  return frequentSuggestions(state, state.activeListId, 12).filter(item=>!openNames.has(nameKey(item.name))).slice(0,5)
 }
 
 function groupBlock(category,items){
@@ -90,7 +88,16 @@ function groupBlock(category,items){
 }
 
 function productRow(item){
-  return `<article class="product-row ${item.done?'done':''}"><button class="check" data-action="toggle-item" data-id="${item.id}" aria-label="${item.done?'Wieder auf die Liste':'Als erledigt markieren'}">${item.done?icons.check:''}</button><button class="product-main" data-action="edit-item" data-id="${item.id}"><strong>${esc(item.name)}</strong><small>${formatQty(item.quantity)} ${esc(item.unit)}${item.note?` · ${esc(item.note)}`:''}</small></button><button class="row-more" data-action="edit-item" data-id="${item.id}" aria-label="Artikel bearbeiten">${icons.chevron}</button></article>`
+  const completeLabel = item.done ? 'Wieder öffnen' : 'Abhaken'
+  return `<div class="swipe-row" data-swipe-row data-id="${item.id}" data-done="${item.done?'true':'false'}">
+    <div class="swipe-action swipe-action-complete" aria-hidden="true">${icons.check}<span>${completeLabel}</span></div>
+    <div class="swipe-action swipe-action-delete" aria-hidden="true"><span>Löschen</span>${icons.trash}</div>
+    <article class="product-row swipe-content ${item.done?'done':''}">
+      <button class="check" data-action="toggle-item" data-id="${item.id}" aria-label="${item.done?'Wieder auf die Liste':'Als erledigt markieren'}">${item.done?icons.check:''}</button>
+      <button class="product-main" data-action="edit-item" data-id="${item.id}"><strong>${esc(item.name)}</strong><small>${formatQty(item.quantity)} ${esc(item.unit)}${item.note?` · ${esc(item.note)}`:''}</small></button>
+      <button class="row-more" data-action="edit-item" data-id="${item.id}" aria-label="Artikel bearbeiten">${icons.chevron}</button>
+    </article>
+  </div>`
 }
 
 function emptyState(){
@@ -107,7 +114,6 @@ function storeMode(){
   const p = progressFor(all)
   const groups = new Map()
   open.forEach(i=>{ if(!groups.has(i.category)) groups.set(i.category,[]); groups.get(i.category).push(i) })
-
   return `<section class="store-mode"><header><button class="icon-btn" data-action="toggle-store" aria-label="Ladenmodus schließen">${icons.back}</button><div><span>IM LADEN</span><h1>${p.open ? `${p.open} noch offen` : 'Alles erledigt'}</h1></div><b>${p.percent}%</b></header><div class="store-progress"><i style="width:${p.percent}%"></i></div><main>${open.length?[...groups.entries()].map(([category,items])=>`<section><h2>${esc(categoryName(category))}</h2>${items.map(productRow).join('')}</section>`).join(''):`<div class="store-finished"><div>${icons.check}</div><h2>Geschafft.</h2><p>Du hast alles von der Liste.</p><button class="btn primary" data-action="toggle-store">Einkauf beenden</button></div>`}</main></section>`
 }
 
@@ -138,7 +144,20 @@ function openSettings(){
 }
 
 function closeSheet(){ if(sheet.open) sheet.close() }
-function showToast(msg){ toast.textContent=msg; toast.classList.add('show'); clearTimeout(showToast.t); showToast.t=setTimeout(()=>toast.classList.remove('show'),1800) }
+function showToast(msg){
+  toast.innerHTML=`<span>${esc(msg)}</span>`
+  toast.classList.remove('has-action')
+  toast.classList.add('show')
+  clearTimeout(showToast.t)
+  showToast.t=setTimeout(()=>toast.classList.remove('show'),1800)
+}
+function showUndoToast(item,index){
+  undoDelete={item,index}
+  toast.innerHTML=`<span>${esc(item.name)} gelöscht</span><button data-action="undo-delete">Rückgängig</button>`
+  toast.classList.add('has-action','show')
+  clearTimeout(showToast.t)
+  showToast.t=setTimeout(()=>{toast.classList.remove('show','has-action');undoDelete=null},4200)
+}
 
 function addQuick(name){
   const n=String(name||'').trim()
@@ -153,6 +172,91 @@ function addQuick(name){
   mutate(s=>s.items.push({id:uid('item'),listId:s.activeListId,name:n,category:autoCategory(n),quantity:1,unit:'Stk.',note:'',done:false,favorite:false,createdAt:Date.now(),updatedAt:Date.now(),completedAt:null}),`${n} hinzugefügt`)
 }
 
+function toggleItem(id,msg=null){
+  mutate(s=>{
+    const item=s.items.find(x=>x.id===id)
+    if(!item)return
+    item.done=!item.done
+    item.completedAt=item.done?Date.now():null
+    item.updatedAt=Date.now()
+  },msg)
+}
+
+function deleteItemWithUndo(id){
+  const index=state.items.findIndex(item=>item.id===id)
+  if(index<0)return
+  const item={...state.items[index]}
+  state.items.splice(index,1)
+  save()
+  render()
+  showUndoToast(item,index)
+}
+
+function undoLastDelete(){
+  if(!undoDelete)return
+  const {item,index}=undoDelete
+  if(!state.items.some(x=>x.id===item.id)){
+    state.items.splice(Math.min(index,state.items.length),0,item)
+    save()
+    render()
+  }
+  undoDelete=null
+  showToast(`${item.name} wiederhergestellt`)
+}
+
+function resetSwipeRow(row){
+  if(!row)return
+  row.classList.remove('is-swiping','swiping-right','swiping-left','swipe-ready')
+  row.style.removeProperty('--swipe-x')
+  row.style.removeProperty('--swipe-progress')
+}
+
+function startSwipe(e){
+  if(e.pointerType==='mouse' && e.button!==0)return
+  const row=e.target.closest('[data-swipe-row]')
+  if(!row || sheet.open)return
+  swipeGesture={row,id:row.dataset.id,pointerId:e.pointerId,startX:e.clientX,startY:e.clientY,dx:0,axis:null,threshold:Math.min(92,Math.max(72,row.clientWidth*.22))}
+  row.classList.add('is-swiping')
+  try{row.setPointerCapture(e.pointerId)}catch{}
+}
+
+function moveSwipe(e){
+  const g=swipeGesture
+  if(!g || e.pointerId!==g.pointerId)return
+  const dx=e.clientX-g.startX
+  const dy=e.clientY-g.startY
+  if(!g.axis){
+    if(Math.max(Math.abs(dx),Math.abs(dy))<9)return
+    g.axis=Math.abs(dx)>Math.abs(dy)*1.18?'x':'y'
+    if(g.axis==='y'){resetSwipeRow(g.row);swipeGesture=null;return}
+  }
+  if(g.axis!=='x')return
+  e.preventDefault()
+  const limit=Math.min(122,g.row.clientWidth*.34)
+  g.dx=Math.max(-limit,Math.min(limit,dx))
+  const progress=Math.min(1,Math.abs(g.dx)/g.threshold)
+  g.row.style.setProperty('--swipe-x',`${g.dx}px`)
+  g.row.style.setProperty('--swipe-progress',String(progress))
+  g.row.classList.toggle('swiping-right',g.dx>0)
+  g.row.classList.toggle('swiping-left',g.dx<0)
+  g.row.classList.toggle('swipe-ready',Math.abs(g.dx)>=g.threshold)
+}
+
+function finishSwipe(e){
+  const g=swipeGesture
+  if(!g || e.pointerId!==g.pointerId)return
+  swipeGesture=null
+  if(g.axis!=='x'){resetSwipeRow(g.row);return}
+  suppressSwipeClickUntil=Date.now()+450
+  const action=Math.abs(g.dx)>=g.threshold?(g.dx>0?'complete':'delete'):null
+  resetSwipeRow(g.row)
+  if(navigator.vibrate && action) navigator.vibrate(12)
+  if(action==='complete'){
+    const item=state.items.find(x=>x.id===g.id)
+    toggleItem(g.id,item?.done?`${item.name} wieder geöffnet`:`${item?.name||'Artikel'} abgehakt`)
+  }else if(action==='delete') deleteItemWithUndo(g.id)
+}
+
 async function shareList(){
   const list=activeList()
   const open=sortItems(activeItems()).filter(i=>!i.done)
@@ -162,6 +266,11 @@ async function shareList(){
     else { await navigator.clipboard.writeText(text); showToast('Liste kopiert') }
   }catch{}
 }
+
+app.addEventListener('pointerdown',startSwipe)
+app.addEventListener('pointermove',moveSwipe)
+app.addEventListener('pointerup',finishSwipe)
+app.addEventListener('pointercancel',finishSwipe)
 
 app.addEventListener('submit',e=>{
   if(e.target.id!=='quick-add-form')return
@@ -200,6 +309,7 @@ sheet.addEventListener('submit',e=>{
 })
 
 document.addEventListener('click',async e=>{
+  if(Date.now()<suppressSwipeClickUntil && e.target.closest('[data-swipe-row]')){e.preventDefault();return}
   const b=e.target.closest('[data-action]')
   if(!b)return
   const action=b.dataset.action
@@ -208,7 +318,7 @@ document.addEventListener('click',async e=>{
   else if(action==='edit-item') openItemSheet(b.dataset.id)
   else if(action==='close-sheet') closeSheet()
   else if(action==='toggle-options'){const x=sheet.querySelector('.advanced');x.hidden=!x.hidden;b.textContent=x.hidden?'Weitere Optionen':'Weniger Optionen'}
-  else if(action==='toggle-item') mutate(s=>{const i=s.items.find(x=>x.id===b.dataset.id);if(i){i.done=!i.done;i.completedAt=i.done?Date.now():null;i.updatedAt=Date.now()}},b.closest('.store-mode')?'Liste aktualisiert':null)
+  else if(action==='toggle-item') toggleItem(b.dataset.id,b.closest('.store-mode')?'Liste aktualisiert':null)
   else if(action==='toggle-done'){ui.doneOpen=!ui.doneOpen;render()}
   else if(action==='toggle-store'){ui.storeMode=!ui.storeMode;render()}
   else if(action==='open-lists') openLists()
@@ -217,6 +327,7 @@ document.addEventListener('click',async e=>{
   else if(action==='edit-list') openListForm(b.dataset.id)
   else if(action==='delete-list'){const id=b.dataset.id;if(confirm('Liste inklusive aller Artikel löschen?')){mutate(s=>{s.lists=s.lists.filter(x=>x.id!==id);s.items=s.items.filter(x=>x.listId!==id);if(s.activeListId===id)s.activeListId=s.lists[0].id},'Liste gelöscht');openLists()}}
   else if(action==='delete-item'){if(confirm('Artikel löschen?')){mutate(s=>{s.items=s.items.filter(x=>x.id!==b.dataset.id)},'Artikel gelöscht');closeSheet()}}
+  else if(action==='undo-delete') undoLastDelete()
   else if(action==='add-suggestion') addQuick(b.dataset.name)
   else if(action==='open-settings') openSettings()
   else if(action==='share-list'){await shareList();if(sheet.open)closeSheet()}
