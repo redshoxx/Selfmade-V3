@@ -1,6 +1,5 @@
-import { CATEGORIES, autoCategory, categoryById, categoryCounts, createInitialState, frequentSuggestions, listItems, normalizeState, progressFor, sortItems, uid } from './core.js'
+import { APP_VERSION, CATEGORIES, autoCategory, categoryById, categoryCounts, createInitialState, frequentSuggestions, listItems, normalizeState, progressFor, sortItems, uid } from './core.js'
 
-const APP_VERSION = '3.1.0'
 const STORAGE_KEY = 'selfmade-einkauf-v2'
 const app = document.getElementById('app')
 const sheet = document.getElementById('sheet')
