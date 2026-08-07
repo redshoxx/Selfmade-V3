@@ -1,19 +1,16 @@
 {
-  "name": "Selfmade Einkauf",
-  "short_name": "Einkauf",
-  "description": "Eine schnelle, moderne und logisch aufgebaute Einkaufslisten-App.",
+  "name": "Selfmade",
+  "short_name": "Selfmade",
+  "description": "Eine ruhige, schnelle und intelligente Einkaufslisten-App.",
   "id": "/",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#0b0d0c",
-  "theme_color": "#0b0d0c",
+  "background_color": "#f5f2ec",
+  "theme_color": "#f5f2ec",
   "lang": "de-AT",
   "categories": ["shopping", "productivity", "lifestyle"],
   "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }],
-  "shortcuts": [
-    { "name": "Einkaufsliste", "short_name": "Liste", "url": "/" },
-    { "name": "Kategorien", "short_name": "Kategorien", "url": "/?view=categories" }
-  ]
+  "shortcuts": [{ "name": "Einkauf", "short_name": "Einkauf", "url": "/" }]
 }
