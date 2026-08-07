@@ -13,6 +13,8 @@
   --accent-soft:#eadccf;
   --danger:#b4574f;
   --done:#81766c;
+  --swipe-complete:#85796d;
+  --swipe-delete:#b4574f;
   --shadow:0 10px 32px rgba(64,54,45,.08);
   --dock:86px;
   font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,system-ui,sans-serif;
@@ -32,6 +34,8 @@ html[data-theme=dark]{
   --accent-soft:#382d25;
   --danger:#e98278;
   --done:#ad9e91;
+  --swipe-complete:#75695f;
+  --swipe-delete:#ad554e;
   --shadow:0 14px 42px rgba(0,0,0,.24);
 }
 *{box-sizing:border-box}
@@ -67,11 +71,12 @@ svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.75;strok
 .status-progress{height:5px;border-radius:99px;background:var(--surface-2);overflow:hidden}
 .status-progress i{display:block;height:100%;border-radius:inherit;background:var(--accent)}
 
-.quick-add{display:grid;grid-template-columns:minmax(0,1fr) 46px;align-items:center;min-height:58px;padding:5px 6px 5px 17px;border:1px solid var(--border);border-radius:19px;background:var(--surface);box-shadow:var(--shadow);margin-bottom:18px}
+.quick-add{display:grid;grid-template-columns:minmax(0,1fr) 46px;align-items:center;min-height:58px;padding:5px 6px 5px 17px;border:1px solid var(--border);border-radius:19px;background:var(--surface);box-shadow:var(--shadow);margin-bottom:8px}
 .quick-add input{width:100%;height:48px;border:0;outline:0;background:transparent;font-size:17px;line-height:1.2}
 .quick-add input::placeholder{color:var(--muted)}
 .quick-add button{display:grid;place-items:center;width:46px;height:46px;border-radius:15px;background:var(--text);color:var(--bg)}
 .quick-add button svg{width:24px;height:24px}
+.gesture-hint{margin:0 3px 12px;color:var(--muted);font-size:10px;letter-spacing:.01em}
 
 .reminder-block{padding:14px 0 18px;margin-bottom:4px;border-bottom:1px solid var(--border)}
 .section-title{display:flex;align-items:center;gap:10px;margin-bottom:12px}
@@ -89,8 +94,20 @@ svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.75;strok
 .group-title{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 2px 8px}
 .group-title strong{font-size:12px;font-weight:800;letter-spacing:.055em;text-transform:uppercase;color:var(--text-2)}
 .group-title small{font-size:11px;color:var(--muted)}
-.product-row{display:grid;grid-template-columns:48px minmax(0,1fr) 44px;align-items:center;min-height:66px;border-top:1px solid var(--border)}
-.product-group .product-row:last-child,.done-list .product-row:last-child{border-bottom:1px solid var(--border)}
+
+.swipe-row{--swipe-x:0px;--swipe-progress:0;position:relative;overflow:hidden;border-top:1px solid var(--border);touch-action:pan-y;isolation:isolate}
+.product-group .swipe-row:last-child,.done-list .swipe-row:last-child{border-bottom:1px solid var(--border)}
+.swipe-action{position:absolute;z-index:0;top:0;bottom:0;display:flex;align-items:center;gap:8px;width:132px;padding:0 18px;color:#fff;opacity:calc(.35 + var(--swipe-progress)*.65);pointer-events:none}
+.swipe-action svg{width:20px;height:20px;stroke-width:2}
+.swipe-action span{font-size:12px;font-weight:780;letter-spacing:.01em}
+.swipe-action-complete{left:0;justify-content:flex-start;background:var(--swipe-complete)}
+.swipe-action-delete{right:0;justify-content:flex-end;background:var(--swipe-delete)}
+.swipe-row:not(.swiping-right) .swipe-action-complete,.swipe-row:not(.swiping-left) .swipe-action-delete{visibility:hidden}
+.swipe-row.swipe-ready .swipe-action{filter:brightness(1.04)}
+.swipe-content{position:relative;z-index:1;transform:translate3d(var(--swipe-x),0,0);transition:transform .2s cubic-bezier(.2,.75,.25,1);background:var(--bg);will-change:transform}
+.swipe-row.is-swiping .swipe-content{transition:none}
+
+.product-row{display:grid;grid-template-columns:48px minmax(0,1fr) 44px;align-items:center;min-height:66px}
 .check{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;border:1.6px solid var(--muted);color:var(--surface)}
 .check svg{width:19px;height:19px}
 .product-row.done .check{background:var(--done);border-color:var(--done)}
@@ -111,6 +128,7 @@ svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.75;strok
 .done-toggle strong{font-size:14px}
 .done-toggle small{margin-top:2px;color:var(--muted);font-size:11px}
 .done-list{padding-top:4px}
+.done-list .swipe-row:first-child{border-top:0}
 
 .empty-state{text-align:center;padding:58px 20px 34px}
 .empty-icon{display:grid;place-items:center;width:68px;height:68px;margin:0 auto 18px;border-radius:23px;background:var(--surface-2);color:var(--text-2)}
@@ -139,6 +157,7 @@ svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.75;strok
 .store-mode .product-row{min-height:72px}
 .store-mode .check{width:42px;height:42px}
 .store-mode .product-main strong{font-size:18px}
+.store-mode .swipe-content{background:var(--bg)}
 .store-finished{text-align:center;padding:100px 20px 40px}
 .store-finished>div{display:grid;place-items:center;width:78px;height:78px;margin:0 auto 18px;border-radius:50%;background:var(--text);color:var(--bg)}
 .store-finished h2{margin:0 0 8px;font-size:26px}
@@ -194,8 +213,10 @@ svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.75;strok
 .settings-list .danger-row{color:var(--danger)}
 .version{text-align:center;margin:24px 0 6px;color:var(--muted);font-size:11px}
 
-.toast{position:fixed;top:max(14px,env(safe-area-inset-top,0px));left:50%;z-index:100;transform:translate(-50%,-14px);max-width:calc(100% - 32px);padding:11px 15px;border-radius:14px;background:var(--text);color:var(--bg);font-size:13px;font-weight:680;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.18s ease}
+.toast{position:fixed;top:max(14px,env(safe-area-inset-top,0px));left:50%;z-index:100;display:flex;align-items:center;gap:14px;transform:translate(-50%,-14px);max-width:calc(100% - 32px);padding:11px 15px;border-radius:14px;background:var(--text);color:var(--bg);font-size:13px;font-weight:680;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.18s ease}
 .toast.show{opacity:1;transform:translate(-50%,0)}
+.toast.has-action{pointer-events:auto}
+.toast button{min-height:30px;padding:0 6px;color:var(--bg);font-size:12px;font-weight:800;text-decoration:underline;text-underline-offset:3px}
 button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 34%,transparent);outline-offset:2px}
 
 @media(max-width:390px){
