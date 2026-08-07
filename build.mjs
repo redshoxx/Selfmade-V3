@@ -6,7 +6,6 @@ const VERSION = '2.0.1'
 const staticFiles = ['manifest.webmanifest', 'icon.svg', 'sw.js']
 const encodedFiles = {
   app: 'app.js.gz.b64',
-  core: 'core.js.gz.b64',
   css: 'styles.css.gz.b64'
 }
 
@@ -37,7 +36,7 @@ for (const file of staticFiles) {
 
 const [appSource, coreSource, cssSource, htmlTemplate] = await Promise.all([
   decode(encodedFiles.app),
-  decode(encodedFiles.core),
+  readFile('core.js', 'utf8'),
   decode(encodedFiles.css),
   readFile('index.html', 'utf8')
 ])
@@ -53,7 +52,7 @@ if (html.includes('__SELFMADE_INLINE_')) throw new Error('Inline-Platzhalter wur
 await writeFile('dist/index.html', html)
 await writeFile('dist/app.bundle.check.js', appBundle)
 
-for (const file of ['dist/app.bundle.check.js', 'dist/sw.js']) {
+for (const file of ['dist/app.bundle.check.js', 'dist/sw.js', 'core.js']) {
   const result = spawnSync(process.execPath, ['--check', file], { encoding: 'utf8' })
   if (result.status !== 0) throw new Error(`${file}: JavaScript-Syntaxprüfung fehlgeschlagen\n${result.stderr || result.stdout}`)
 }
