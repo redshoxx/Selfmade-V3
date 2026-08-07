@@ -1,13 +1,11 @@
 {
   "name": "selfmade-einkauf",
+  "version": "2.0.0",
   "private": true,
-  "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "build": "node build.mjs",
-    "test": "npm run build"
+    "test": "node --test tests/*.test.mjs",
+    "build": "node build.mjs"
   },
-  "engines": {
-    "node": ">=20"
-  }
+  "engines": { "node": ">=20" }
 }

@@ -1,24 +1,22 @@
-# Selfmade Einkauf V1
+# Selfmade Einkauf V2
 
-Eine bewusst reduzierte Einkaufslisten-PWA, vollständig neu aufgebaut.
+Kompletter Neuaufbau als reine Einkaufslisten-PWA im dunklen, grünen Design der bereitgestellten Referenz.
 
-## Funktionen
+## Funktionsumfang
 
 - mehrere Einkaufslisten
+- schnelle Artikelerfassung
 - automatische Kategorien
-- Schnellvorschläge und zuletzt verwendete Artikel
-- Kachel- und kompakte Listenansicht
+- Kategorienfilter und Kategorieansicht
+- Mengen, Einheiten und Notizen
 - Favoriten
-- Im-Laden-Modus
-- Offline-Betrieb
+- Im-Laden-Modus mit Fortschritt
+- Teilen über Web Share / Zwischenablage
+- Wochenstatistik und Top-Kategorien
+- Light / Dark / System
 - JSON-Backup und Wiederherstellung
-- lokale Speicherung ohne Konto
+- lokale Offline-Speicherung
+- PWA mit Service Worker
+- optimiert für iPhone 12 / 390 × 844 px und Safe Areas
 
-## Entwicklung
-
-```bash
-npm test
-npm run build
-```
-
-Die Produktionsdateien werden nach `dist/` geschrieben.
+Keine Rezepte, Finanzen, Vorratsverwaltung oder andere alte Module.

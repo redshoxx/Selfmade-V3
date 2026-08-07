@@ -1,36 +1,46 @@
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
-import { gunzipSync } from 'node:zlib'
+import { copyFile, mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises'
 import { spawnSync } from 'node:child_process'
+import { gunzipSync } from 'node:zlib'
 
-const segmentFiles = ["bundle-0.b64", "bundle-1.b64", "bundle-2.b64"]
-const encoded = (await Promise.all(segmentFiles.map((file) => readFile(file, 'utf8')))).join('').replace(/\s+/g, '')
-const archive = JSON.parse(gunzipSync(Buffer.from(encoded, 'base64')).toString('utf8'))
+const staticFiles = ['index.html', 'manifest.webmanifest', 'icon.svg', 'sw.js']
+const encodedFiles = [
+  ['app.js.gz.b64', 'app.js'],
+  ['core.js.gz.b64', 'core.js'],
+  ['styles.css.gz.b64', 'styles.css']
+]
 
 await rm('dist', { recursive: true, force: true })
 await mkdir('dist', { recursive: true })
 
-for (const [name, entry] of Object.entries(archive)) {
-  const content = entry.encoding === 'base64' ? Buffer.from(entry.content, 'base64') : entry.content
-  await writeFile(`dist/${name}`, content)
+for (const file of staticFiles) {
+  const info = await stat(file)
+  if (!info.isFile() || info.size === 0) throw new Error(`Build-Datei fehlt oder ist leer: ${file}`)
+  await copyFile(file, `dist/${file}`)
 }
 
-const required = ['index.html', 'styles.css', 'core.js', 'app.js', 'sw.js', 'manifest.webmanifest', 'icon.svg']
-for (const file of required) {
-  if (!archive[file]?.content) throw new Error(`Build-Datei fehlt: ${file}`)
+for (const [source, target] of encodedFiles) {
+  const encoded = (await readFile(source, 'utf8')).replace(/\s+/g, '')
+  const decoded = Buffer.from(encoded, 'base64')
+  const text = gunzipSync(decoded)
+  if (!text.length) throw new Error(`Entpackte Datei ist leer: ${target}`)
+  await writeFile(`dist/${target}`, text)
 }
 
-for (const file of ['core.js', 'app.js', 'sw.js']) {
-  const result = spawnSync(process.execPath, ['--check', `dist/${file}`], { encoding: 'utf8' })
-  if (result.status !== 0) throw new Error(`${file} enthält einen Syntaxfehler:\n${result.stderr || result.stdout}`)
+for (const file of ['dist/app.js', 'dist/core.js', 'dist/sw.js']) {
+  const result = spawnSync(process.execPath, ['--check', file], { encoding: 'utf8' })
+  if (result.status !== 0) throw new Error(`${file}: JavaScript-Syntaxprüfung fehlgeschlagen\n${result.stderr || result.stdout}`)
 }
 
-const html = archive['index.html'].content
-const css = archive['styles.css'].content
-for (const marker of ['selfmade-version" content="1.0.0"', 'id="sheet"', '/app.js?v=1.0.0']) {
-  if (!html.includes(marker)) throw new Error(`HTML-Prüfung fehlgeschlagen: ${marker}`)
+const html = await readFile('dist/index.html', 'utf8')
+const css = await readFile('dist/styles.css', 'utf8')
+const app = await readFile('dist/app.js', 'utf8')
+for (const required of ['id="app"', 'id="sheet"', '/app.js?v=2.0.0', 'selfmade-version" content="2.0.0']) {
+  if (!html.includes(required)) throw new Error(`HTML-Prüfung fehlgeschlagen: ${required}`)
 }
-for (const marker of ['safe-area-inset-bottom', '.bottom-nav', '.quick-add', '.sheet']) {
-  if (!css.includes(marker)) throw new Error(`CSS-Prüfung fehlgeschlagen: ${marker}`)
+for (const required of ['--green: #70ca3b', '.bottom-nav', '.category-chip', '.sheet', 'env(safe-area-inset-bottom']) {
+  if (!css.includes(required)) throw new Error(`Design-Prüfung fehlgeschlagen: ${required}`)
 }
-
-console.log('Selfmade Einkauf V1.0.0: neue reine Einkaufs-App erfolgreich gebaut.')
+for (const required of ['autoCategory', 'toggle-store', 'share-list', 'weeklyStats', 'openListsSheet']) {
+  if (!app.includes(required)) throw new Error(`App-Prüfung fehlgeschlagen: ${required}`)
+}
+console.log('Selfmade Einkauf V2.0.0: kompletter Dark-Green-Neuaufbau erfolgreich gebaut.')
