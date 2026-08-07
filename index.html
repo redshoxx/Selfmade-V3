@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Einkauf">
-  <meta name="selfmade-version" content="2.1.0">
+  <meta name="selfmade-version" content="2.1.1">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/icon.svg">
@@ -31,7 +31,7 @@
       if (window.__SELFMADE_READY__) return;
       var root = document.getElementById('app');
       if (!root) return;
-      root.innerHTML = '<main class="onboarding" style="min-height:100dvh"><div></div><div class="brand-bag"><b>!</b></div><div class="onboarding-copy"><h1>Startfehler</h1><p>' + String(detail || 'Die App konnte nicht gestartet werden.') + '</p></div><div class="onboarding-actions"><button class="primary-button" onclick="location.reload()">Erneut versuchen</button><small>Selfmade Einkauf · V2.1.0</small></div></main>';
+      root.innerHTML = '<main class="onboarding" style="min-height:100dvh"><div></div><div class="brand-bag"><b>!</b></div><div class="onboarding-copy"><h1>Startfehler</h1><p>' + String(detail || 'Die App konnte nicht gestartet werden.') + '</p></div><div class="onboarding-actions"><button class="primary-button" onclick="location.reload()">Erneut versuchen</button><small>Selfmade Einkauf · V2.1.1</small></div></main>';
     };
     window.addEventListener('error', function (event) { window.__selfmadeBootError(event.message || 'JavaScript-Fehler'); });
     window.addEventListener('unhandledrejection', function (event) { window.__selfmadeBootError(event.reason && event.reason.message ? event.reason.message : event.reason || 'Startfehler'); });
