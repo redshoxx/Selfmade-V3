@@ -1,15 +1,14 @@
-# Selfmade Save V1.1.0
+# NEST V1.2.0
 
-Reine manuelle Spar-, Buchungs- und Challenges-App.
+Manueller Finanzplaner für Ein- und Auszahlungen, Sparziele und Spar-Challenges.
 
-## Funktionen
-- Einzahlungen und Auszahlungen manuell erfassen
-- Verwendungszweck / Empfänger wie Netflix, Miete, Gehalt etc.
-- Kategorien und Notizen
-- Monatsübersicht und Ausgaben nach Kategorie
-- Manueller Startbetrag
-- Sparziele mit Einzahlen/Entnehmen
-- Spar-Challenges
-- lokale Speicherung und Offline-PWA
-
-Keine automatische Kontoanbindung und keine Zugangsdaten.
+## V1.2.0
+- Eigene Spar-Challenges erstellen
+- Name, Zielbetrag, Anzahl Schritte und optionales Zieldatum
+- Challenge-Fortschritt Schritt für Schritt
+- eigene Challenges bearbeiten und löschen
+- bestehende NEST-Challenge-Vorlagen bleiben erhalten
+- manuelle Ein- und Auszahlungen mit Verwendungszweck und Kategorien
+- Sparziele mit Einzahlen und Entnehmen
+- lokale Speicherung unter `selfmade-save-v1`
+- keine Bankanbindung

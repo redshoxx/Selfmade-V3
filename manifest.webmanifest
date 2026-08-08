@@ -1,0 +1,15 @@
+{
+  "name":"NEST – Finanzplaner",
+  "short_name":"NEST",
+  "description":"Manuelle Einnahmen, Ausgaben, Sparziele und Challenges.",
+  "id":"/",
+  "start_url":"/",
+  "scope":"/",
+  "display":"standalone",
+  "orientation":"portrait-primary",
+  "background_color":"#f4f0e9",
+  "theme_color":"#f4f0e9",
+  "lang":"de-AT",
+  "categories":["finance","productivity"],
+  "icons":[{"src":"/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}
