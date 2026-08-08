@@ -1,0 +1,75 @@
+/* NEST premium bottom navigation overrides */
+.tabs{
+  min-height:72px;
+  padding:7px;
+  gap:5px;
+  border-radius:26px;
+  border:1px solid color-mix(in srgb,var(--line) 78%,transparent);
+  background:color-mix(in srgb,var(--surface) 96%,transparent);
+  -webkit-backdrop-filter:blur(24px) saturate(1.15);
+  backdrop-filter:blur(24px) saturate(1.15);
+  box-shadow:0 18px 46px rgba(56,45,36,.15),0 2px 10px rgba(56,45,36,.06),inset 0 1px 0 color-mix(in srgb,#fff 52%,transparent);
+}
+.tabs button{
+  position:relative;
+  min-width:0;
+  min-height:56px;
+  padding:6px 4px 5px;
+  border-radius:19px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  color:color-mix(in srgb,var(--muted) 92%,var(--text));
+  font-size:10.5px;
+  line-height:1;
+  font-weight:650;
+  letter-spacing:-.01em;
+  transition:background-color .18s ease,color .18s ease,transform .18s ease,box-shadow .18s ease;
+}
+.tabs button b{
+  display:grid;
+  width:24px;
+  height:24px;
+  place-items:center;
+  font-size:0;
+  line-height:1;
+  font-weight:600;
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+  font-variant-emoji:text;
+}
+.tabs button b::before{font-size:21px;line-height:1;font-weight:500}
+.tabs button:nth-child(1) b::before{content:"\2302\FE0E"}
+.tabs button:nth-child(2) b::before{content:"\21C5\FE0E"}
+.tabs button:nth-child(3) b::before{content:"\25CE\FE0E"}
+.tabs button:nth-child(4) b::before{content:"\25C7\FE0E"}
+.tabs button.active{
+  background:var(--text);
+  color:var(--bg);
+  font-weight:760;
+  transform:translateY(-1px);
+  box-shadow:0 7px 18px color-mix(in srgb,var(--text) 18%,transparent),inset 0 1px 0 color-mix(in srgb,var(--bg) 14%,transparent);
+}
+.tabs button.active b::before{font-weight:650}
+.tabs button:active{transform:scale(.97)}
+.tabs button.active:active{transform:translateY(-1px) scale(.97)}
+
+/* Keep the floating add button visually aligned with the navigation. */
+.fab{
+  bottom:calc(88px + env(safe-area-inset-bottom,0px));
+  width:56px;
+  height:56px;
+  border-radius:18px;
+  box-shadow:0 12px 28px rgba(0,0,0,.17),0 2px 7px rgba(0,0,0,.08);
+}
+
+@media(max-width:390px){
+  .tabs{width:calc(100% - 18px);min-height:70px;padding:6px;border-radius:24px;gap:3px}
+  .tabs button{min-height:56px;border-radius:18px;font-size:10px}
+  .tabs button b::before{font-size:20px}
+}
+
+@media(min-width:700px){.tabs{width:410px}}
+
+@media(prefers-reduced-motion:reduce){.tabs button{transition:none}}
