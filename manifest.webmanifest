@@ -1,18 +1,15 @@
 {
-  "name": "Selfmade Einkauf",
-  "short_name": "Selfmade",
-  "description": "Eine ruhige, intelligente und unkomplizierte Einkaufslisten-App.",
-  "id": "/",
-  "start_url": "/",
-  "scope": "/",
-  "display": "standalone",
-  "orientation": "portrait-primary",
-  "background_color": "#f3eee6",
-  "theme_color": "#f3eee6",
-  "lang": "de-AT",
-  "categories": ["shopping", "productivity"],
-  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }],
-  "shortcuts": [
-    { "name": "Einkaufsliste öffnen", "short_name": "Einkauf", "url": "/" }
-  ]
+  "name":"Selfmade Save",
+  "short_name":"Save",
+  "description":"Sparziele, Challenges und Bankauswertung.",
+  "id":"/",
+  "start_url":"/",
+  "scope":"/",
+  "display":"standalone",
+  "orientation":"portrait-primary",
+  "background_color":"#f4f1eb",
+  "theme_color":"#f4f1eb",
+  "lang":"de-AT",
+  "categories":["finance","productivity"],
+  "icons":[{"src":"/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
 }
