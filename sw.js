@@ -1,5 +1,5 @@
-const CACHE='nest-v1.3.0-settings-v1'
-const SHELL=['/index.html','/styles.css?v=1.2.0','/nav.css?v=premium-nav-v1','/settings-v1.3.css?v=1.3.0','/import.js?v=wallet-import-v1','/app.js?v=1.2.0','/settings-v1.3.js?v=1.3.0','/manifest.webmanifest','/icon.svg']
+const CACHE='nest-v2.0.0-web-audit-v1'
+const SHELL=['/index.html','/styles.css?v=2.0.0','/nav.css?v=2.0.0','/settings-v1.3.css?v=2.0.0','/v2.css?v=2.0.0','/v2-core.js?v=2.0.0','/import.js?v=2.0.0','/app.js?v=2.0.0','/settings-v1.3.js?v=2.0.0','/v2-ui.js?v=2.0.0','/manifest.webmanifest','/icon.svg']
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting())))
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE&&(k.startsWith('nest-')||k.startsWith('selfmade-'))).map(k=>caches.delete(k)))).then(()=>self.clients.claim())))
 self.addEventListener('fetch',event=>{
