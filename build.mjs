@@ -1,7 +1,7 @@
 import {mkdir,rm,copyFile,readFile} from 'node:fs/promises'
 import {spawnSync} from 'node:child_process'
 await rm('dist',{recursive:true,force:true});await mkdir('dist',{recursive:true})
-for(const f of ['index.html','styles.css','app.js','import.js','manifest.webmanifest','sw.js','icon.svg'])await copyFile(f,`dist/${f}`)
+for(const f of ['index.html','styles.css','nav.css','app.js','import.js','manifest.webmanifest','sw.js','icon.svg'])await copyFile(f,`dist/${f}`)
 for(const f of ['app.js','import.js','sw.js','api/import-transaction.js']){const r=spawnSync(process.execPath,['--check',f],{encoding:'utf8'});if(r.status!==0)throw new Error(`${f}: ${r.stderr||r.stdout}`)}
 const t=spawnSync(process.execPath,['tests.mjs'],{encoding:'utf8'});if(t.status!==0)throw new Error(t.stderr||t.stdout)
 const i=spawnSync(process.execPath,['import-tests.cjs'],{encoding:'utf8'});if(i.status!==0)throw new Error(i.stderr||i.stdout)
