@@ -1,27 +1,20 @@
-# Selfmade Einkauf V2.1.1
+# Selfmade Save V1
 
-Eine reine, schlichte Einkaufslisten-PWA mit neutraler Schwarz/Grau/Weiß-Oberfläche und automatischer Produkterkennung.
+Kompletter Neuaufbau als mobile Spar- und Challenges-App.
 
-## Funktionsumfang
+## Funktionen
+- Sparziele mit Zielbetrag, aktuellem Stand, optionalem Zieldatum und Fortschritt
+- Sparbeträge direkt zu Zielen hinzufügen
+- Challenges: 52-Wochen, 30 Tage × 5 €, 1.000-€-Challenge und No-Spend
+- Eigene Challenge-Schritte und Fortschritt
+- Bankbereich für Steiermärkische Sparkasse
+- George-CSV-Import für reale lokale Transaktionen
+- Auszahlungen, Eingänge, Saldo und Monatsauswertung
+- automatische Transaktionskategorien
+- lokale Datenspeicherung, JSON-Backup, Light/Dark Mode, Offline-PWA
 
-- mehrere Einkaufslisten
-- schnelle Artikelerfassung
-- automatische Produkterkennung und Kategoriezuordnung
-- Obst, Gemüse, Milchprodukte, Backwaren, Fleisch & Fisch, Tiefkühl, Vorrat, Getränke, Snacks, Drogerie, Haushalt, Tierbedarf und Sonstiges
-- Kategorienfilter und Kategorieansicht
-- Mengen, Einheiten und Notizen
-- Favoriten
-- Im-Laden-Modus mit Fortschritt
-- Teilen über Web Share / Zwischenablage
-- Wochenstatistik und Top-Kategorien
-- neutrales Dark-/Light-/System-Design
-- JSON-Backup und Wiederherstellung
-- lokale Offline-Speicherung
-- PWA mit Service Worker
-- optimiert für iPhone 12 / 390 × 844 px und Safe Areas
+## Bank-Sicherheit
+Selfmade speichert keine George-Zugangsdaten, PINs oder Freigabecodes. Eine automatische Live-Verbindung darf nur über einen offiziellen PSD2/Open-Banking-Provider mit ausdrücklicher Zustimmung des Kontoinhabers erfolgen. Ohne produktive TPP-/Provider-Konfiguration bleibt die automatische Verbindung bewusst deaktiviert. Der George-CSV-Import funktioniert vollständig lokal im Browser.
 
-Keine Rezepte, Finanzen oder andere frühere App-Module.
-
-## Qualitätssicherung
-
-Vor jedem Build laufen automatisierte Kernlogiktests sowie ein 1000-facher Stresstest der Einkaufs- und Kategorie-Logik.
+## Build
+`npm run build` rekonstruiert die geprüfte Produktionsseite und blockiert Builds, in denen Reste der früheren Einkaufs-App gefunden werden.

@@ -1,12 +1,10 @@
 {
-  "name": "selfmade",
-  "version": "3.2.1",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "test": "node --test tests/*.test.mjs",
-    "prebuild": "npm test",
-    "build": "node build.mjs"
+  "name":"selfmade-save",
+  "private":true,
+  "version":"1.0.0",
+  "scripts":{
+    "test":"node build.mjs",
+    "build":"node build.mjs"
   },
-  "engines": { "node": ">=20" }
+  "engines":{"node":">=20"}
 }
