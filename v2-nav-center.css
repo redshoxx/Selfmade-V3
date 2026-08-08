@@ -1,9 +1,9 @@
-/* NEST v2 – centered manual booking action */
+/* NEST v2.0.1 – premium SVG navigation */
 .v2-legacy-fab{display:none!important}
 
 .tabs.v2-nav-centered{
   grid-template-columns:minmax(0,1fr) minmax(0,1fr) 66px minmax(0,1fr) minmax(0,1fr)!important;
-  min-height:76px;
+  min-height:78px;
   padding:8px 8px 7px;
   gap:3px!important;
   overflow:visible;
@@ -11,7 +11,7 @@
   box-shadow:0 20px 48px rgba(56,45,36,.16),0 4px 14px rgba(56,45,36,.07),inset 0 1px 0 color-mix(in srgb,#fff 55%,transparent);
 }
 .tabs.v2-nav-centered>button[data-route]{
-  min-height:58px;
+  min-height:60px;
   padding:7px 2px 5px;
   border-radius:18px;
   gap:4px;
@@ -20,18 +20,38 @@
   box-shadow:none;
   transform:none;
   font-size:9.5px;
-  font-weight:650;
+  font-weight:680;
+  letter-spacing:-.01em;
 }
-.tabs.v2-nav-centered>button[data-route] b{width:25px;height:25px}
+.tabs.v2-nav-centered>button[data-route] b,
+.tabs.v2-nav-centered>button[data-route] b::before{content:none!important}
+.tabs.v2-nav-centered .v2-nav-icon{
+  width:32px!important;
+  height:30px!important;
+  display:grid!important;
+  place-items:center!important;
+  border-radius:10px;
+  background:transparent;
+  color:inherit;
+  transition:background-color .16s ease,color .16s ease,transform .16s ease;
+}
+.tabs.v2-nav-centered .v2-nav-icon svg{
+  width:22px;
+  height:22px;
+  display:block;
+  overflow:visible;
+}
 .tabs.v2-nav-centered>button[data-route].active{
   color:var(--text);
-  background:color-mix(in srgb,var(--text) 7%,var(--surface));
-  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--text) 7%,transparent);
+  background:color-mix(in srgb,var(--text) 6%,var(--surface));
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--text) 6%,transparent);
+  font-weight:800;
 }
-.tabs.v2-nav-centered>button[data-route].active b{
-  border-radius:9px;
+.tabs.v2-nav-centered>button[data-route].active .v2-nav-icon{
   background:var(--text);
   color:var(--bg);
+  transform:translateY(-1px);
+  box-shadow:0 5px 12px color-mix(in srgb,var(--text) 15%,transparent);
 }
 .tabs.v2-nav-centered>button[data-route]:active{transform:scale(.96)}
 
@@ -39,8 +59,8 @@
   position:relative;
   align-self:start;
   min-width:66px;
-  height:70px;
-  margin-top:-17px;
+  height:72px;
+  margin-top:-18px;
   padding:0;
   display:flex;
   flex-direction:column;
@@ -60,11 +80,9 @@
   color:var(--bg);
   border:4px solid color-mix(in srgb,var(--surface) 96%,transparent);
   box-shadow:0 13px 28px rgba(32,27,23,.24),0 3px 9px rgba(32,27,23,.12),inset 0 1px 0 color-mix(in srgb,var(--bg) 15%,transparent);
-  font-size:32px;
-  line-height:1;
-  font-weight:350;
   transition:transform .16s ease,box-shadow .16s ease;
 }
+.v2-center-add-icon svg{width:27px;height:27px;display:block}
 .v2-center-add-copy{display:none}
 .v2-center-add::after{
   content:'Buchen';
@@ -72,18 +90,21 @@
   color:var(--text);
   font-size:9.5px;
   line-height:1;
-  font-weight:780;
+  font-weight:800;
   letter-spacing:-.01em;
 }
 .v2-center-add:active .v2-center-add-icon{transform:scale(.93);box-shadow:0 8px 18px rgba(32,27,23,.20)}
 
-.shell{padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))}
+.shell{padding-bottom:calc(112px + env(safe-area-inset-bottom,0px))}
 
 @media(max-width:390px){
   .tabs.v2-nav-centered{width:calc(100% - 14px);grid-template-columns:minmax(0,1fr) minmax(0,1fr) 62px minmax(0,1fr) minmax(0,1fr)!important;padding-inline:6px}
-  .tabs.v2-nav-centered>button[data-route]{font-size:9px;min-height:56px}
+  .tabs.v2-nav-centered>button[data-route]{font-size:9px;min-height:58px}
+  .tabs.v2-nav-centered .v2-nav-icon{width:30px!important;height:29px!important}
+  .tabs.v2-nav-centered .v2-nav-icon svg{width:21px;height:21px}
   .v2-center-add{min-width:62px}
-  .v2-center-add-icon{width:55px;height:55px;border-radius:18px;font-size:30px}
+  .v2-center-add-icon{width:55px;height:55px;border-radius:18px}
+  .v2-center-add-icon svg{width:25px;height:25px}
 }
 
 @media(min-width:900px){
@@ -108,7 +129,24 @@
     gap:11px!important;
     font-size:12px!important;
   }
-  .tabs.v2-nav-centered>button[data-route].active b{background:transparent;color:inherit}
+  .tabs.v2-nav-centered .v2-nav-icon{
+    width:34px!important;
+    height:34px!important;
+    flex:0 0 34px;
+    border-radius:11px;
+  }
+  .tabs.v2-nav-centered .v2-nav-icon svg{width:21px;height:21px}
+  .tabs.v2-nav-centered>button[data-route].active{
+    background:var(--text);
+    color:var(--bg);
+    box-shadow:0 8px 20px color-mix(in srgb,var(--text) 14%,transparent);
+  }
+  .tabs.v2-nav-centered>button[data-route].active .v2-nav-icon{
+    background:color-mix(in srgb,var(--bg) 13%,transparent);
+    color:var(--bg);
+    box-shadow:none;
+    transform:none;
+  }
   .v2-center-add{
     width:100%;
     height:auto;
@@ -134,8 +172,8 @@
     background:color-mix(in srgb,var(--bg) 13%,transparent);
     color:var(--bg);
     box-shadow:none;
-    font-size:26px;
   }
+  .v2-center-add-icon svg{width:22px;height:22px}
   .v2-center-add-copy{display:block;min-width:0;text-align:left}
   .v2-center-add-copy b,.v2-center-add-copy small{display:block}
   .v2-center-add-copy b{font-size:12px;line-height:1.15;font-weight:800}
@@ -145,4 +183,6 @@
   .v2-center-add:active .v2-center-add-icon{transform:none;box-shadow:none}
 }
 
-html[data-reduce-motion=on] .v2-center-add-icon,html[data-reduce-motion=on] .tabs.v2-nav-centered>button{transition:none!important}
+html[data-reduce-motion=on] .v2-center-add-icon,
+html[data-reduce-motion=on] .tabs.v2-nav-centered>button,
+html[data-reduce-motion=on] .tabs.v2-nav-centered .v2-nav-icon{transition:none!important}
