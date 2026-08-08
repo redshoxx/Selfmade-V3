@@ -1,58 +1,101 @@
-# NEST V1.3.0
+# NEST V2.0.0
 
-Finanzplaner für Ein- und Auszahlungen, Sparziele und Spar-Challenges mit optionalem Apple-Wallet-/Kurzbefehle-Import ohne direkte Bankanbindung.
+NEST ist ein Finanzplaner für **Mobile und Desktop/Web** mit manuellen Buchungen, Sparzielen, Challenges und optionalem Apple-Wallet-/Kurzbefehle-Import ohne direkte Bankanbindung.
 
-## V1.3.0 – Einstellungen
+## V2.0.0 – großes Update
 
-Die Einstellungen wurden zu einem eigenen Bereich ausgebaut:
+### Mobile + Desktop Web App
 
-- Erscheinungsbild: System, Hell oder Dunkel
+- bestehende mobile PWA bleibt erhalten
+- responsive Desktop-Web-App für PC und große Displays
+- Desktop-Navigation als feste Seitenleiste statt mobiler Bottom-Bar
+- größere Arbeitsfläche und bessere Informationsdichte auf PC
+- installierbar als Web-App/PWA auch auf Desktop-Browsern
+- Querformat und große Displays werden unterstützt
+
+### Neue Buchungslogik
+
+NEST führt ab V2 zusätzlich ein separates Buchungsprotokoll unter `nest-audit-v2`.
+
+Für neue Buchungen wird nachvollziehbar gespeichert:
+
+- wann die Buchung erfasst wurde
+- Buchungsdatum
+- wie sie verbucht wurde
+- manuell in NEST oder über Apple Wallet/Kurzbefehle
+- welche Felder später geändert wurden
+- wann eine Buchung gelöscht wurde
+
+Bestehende Buchungen aus V1.x werden automatisch übernommen. Wo die ursprüngliche Quelle nicht sicher bekannt ist, wird sie ausdrücklich als **„Aus älterer NEST-Version“** gekennzeichnet statt eine Quelle zu erfinden.
+
+### Bereits verbuchte / wiederkehrende Buchungen
+
+- gleiche Buchungen werden über Art, Bezeichnung, Betrag und Kategorie erkannt
+- die Detailansicht zeigt, wie oft eine gleiche Buchung bereits vorhanden ist
+- vergangene Buchungsdaten werden zusammen angezeigt
+- dadurch bleiben regelmäßige Zahlungen wie Miete, Streaming, Einkäufe oder andere wiederkehrende Ausgaben nachvollziehbar
+
+### Buchungsdetails und Protokoll
+
+Beim Öffnen einer Buchung zeigt NEST V2 zusätzlich:
+
+- Status `Verbucht`
+- Buchungsdatum
+- Erfassungszeitpunkt
+- Buchungsmethode
+- Notiz
+- ähnliche/bereits verbuchte Buchungen
+- vollständigen Verlauf der Buchung
+
+Auf der Buchungsseite gibt es außerdem eine **Buchungszentrale** mit Gesamtzahl, Wallet-Buchungen, manuellen Buchungen und wiederkehrenden Gruppen sowie Zugriff auf das globale Buchungsprotokoll.
+
+### Formulare V2
+
+- neu gestaltete Formulare auf Mobile und Desktop
+- klarere Feldgruppen
+- bessere Abstände und Typografie
+- größere und konsistentere Eingabefelder
+- Desktop-Formulare nutzen bei geeigneten Feldern zwei Spalten
+- wichtige Felder und längere Texte bleiben über die gesamte Formularbreite
+- vorhandene Funktionen zum Bearbeiten und Löschen bleiben erhalten
+
+### Einstellungen und Backups
+
+Die Einstellungen aus V1.3 bleiben erhalten:
+
+- System / Hell / Dunkel
 - komfortable oder kompakte Darstellung
 - Standard- oder große Schrift
-- Datenschutzmodus zum Verbergen sichtbarer Beträge
-- Animationen und Übergänge reduzieren
-- Startseite festlegen: Übersicht, Buchungen, Sparziele oder Challenges
-- Startbetrag direkt in den Einstellungen bearbeiten
-- vollständiges lokales NEST-Backup als JSON exportieren
-- Backup wieder importieren
-- alle lokalen App-Daten gezielt zurücksetzen
-- bestehende v1.2-Daten unter `selfmade-save-v1` bleiben kompatibel
+- Datenschutzmodus für sichtbare Beträge
+- reduzierte Animationen
+- Startseite festlegen
+- Startbetrag bearbeiten
 
-## Bestehende Funktionen
+V2-Backups enthalten zusätzlich das Buchungsprotokoll. Beim Zurücksetzen werden auch die V2-Protokolldaten entfernt.
 
-- manuelle Ein- und Auszahlungen mit Verwendungszweck und Kategorien
-- eigene Spar-Challenges mit Name, Zielbetrag, Schritten und optionalem Zieldatum
-- bestehende NEST-Challenge-Vorlagen
-- Sparziele mit Einzahlen und Entnehmen
-- optionaler Wallet-/Kurzbefehle-Import für neue Transaktionen
-- Duplikatschutz über stabile Import-IDs
-- automatische Händler-Kategorisierung für häufige Händler
-- lokale Speicherung
+## Bestehende Funktionen bleiben erhalten
+
+- manuelle Ein- und Auszahlungen
+- Kategorien, Datum und Notizen
+- Sparziele
+- eigene Spar-Challenges und Vorlagen
+- Wallet-/Kurzbefehle-Import
+- stabile Import-IDs gegen versehentliche Doppelimporte
+- automatische Händler-Kategorisierung
+- lokale Speicherung unter `selfmade-save-v1`
 - keine direkte Bankanbindung und keine Onlinebanking-Zugangsdaten
 
 ## Wallet-Import
 
-Der Vercel-Endpunkt lautet:
+Der Vercel-Endpunkt bleibt:
 
 `POST /api/import-transaction`
 
-Er speichert keine Bank-Zugangsdaten. Der iPhone-Kurzbefehl schickt nur die Transaktionsdaten an den Endpoint. Dieser validiert und normalisiert sie und gibt anschließend einen Import-Link zurück. Beim Öffnen dieses Links übernimmt NEST die Buchung in den bestehenden lokalen App-Speicher.
-
-### Vercel Secret
-
-Im Vercel-Projekt muss folgende Environment Variable gesetzt sein:
+Er benötigt die Vercel Environment Variable:
 
 `SELFMADE_IMPORT_TOKEN=<langes-zufälliges-geheimes-token>`
 
-Das Token niemals in GitHub committen.
-
-### Request aus Kurzbefehle
-
-Header:
-
-`Authorization: Bearer <SELFMADE_IMPORT_TOKEN>`
-
-JSON-Beispiel:
+Der iPhone-Kurzbefehl sendet beispielsweise:
 
 ```json
 {
@@ -60,26 +103,16 @@ JSON-Beispiel:
   "amount": 24.90,
   "merchant": "BILLA",
   "occurredAt": "2026-08-08T19:30:00+02:00",
-  "transactionId": "wallet-optional-id",
   "source": "Apple Wallet"
 }
 ```
 
-Der Endpoint antwortet unter anderem mit:
-
-```json
-{
-  "ok": true,
-  "importUrl": "https://DEINE-DOMAIN/?nestImport=..."
-}
-```
-
-Im Kurzbefehl anschließend den Wert `importUrl` aus der JSON-Antwort öffnen. NEST importiert die Buchung und entfernt den Import-Parameter wieder aus der URL.
+NEST erkennt diese Buchungen in V2 als **Apple Wallet / Kurzbefehle** und protokolliert den Import entsprechend.
 
 ## Sicherheit
 
-- Keine IBAN oder Onlinebanking-Zugangsdaten erforderlich.
-- POST-Imports sind durch `SELFMADE_IMPORT_TOKEN` geschützt.
-- Der API-Endpoint verwendet `Cache-Control: no-store`.
-- Das geheime Token wird nicht in den erzeugten Import-Link geschrieben.
-- Finanzdaten bleiben nach dem Import im bestehenden lokalen NEST-Speicher.
+- keine IBAN oder Onlinebanking-Zugangsdaten erforderlich
+- POST-Imports sind durch `SELFMADE_IMPORT_TOKEN` geschützt
+- der API-Endpoint verwendet `Cache-Control: no-store`
+- der geheime Token wird nicht in den Import-Link geschrieben
+- Finanzdaten und das Buchungsprotokoll bleiben lokal im NEST-App-Speicher
