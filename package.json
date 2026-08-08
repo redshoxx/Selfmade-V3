@@ -1,7 +1,7 @@
 {
   "name": "nest-finance",
   "private": true,
-  "version": "2.0.0",
+  "version": "2.0.1",
   "scripts": {
     "test": "node tests.mjs && node import-tests.cjs && node v2-tests.cjs",
     "build": "node build.mjs"
