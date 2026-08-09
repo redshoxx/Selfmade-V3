@@ -9,7 +9,7 @@ const STORE={
   label:'Lidl Liebenau',
   pageUrl:'https://www.lidl.at/s/de-AT/filialsuche/graz/liebenauer-hauptstrasse-164/'
 }
-const LANDING_URL='https://www.lidl.at/c/'
+const LANDING_URL='https://www.lidl.at/c/lidl-plus-jede-woche-neu/'
 const CACHE_MS=30*60*1000
 const MAX_CAMPAIGNS=32
 const MAX_OFFERS=1400
