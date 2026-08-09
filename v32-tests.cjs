@@ -3,7 +3,7 @@ function read(f){return fs.readFileSync(f,'utf8')}
 function ok(cond,msg){if(!cond)throw new Error(msg)}
 const js=read('v32-bookings.js'),css=read('v32-bookings.css'),index=read('index.html'),sw=read('sw.js'),pkg=JSON.parse(read('package.json')),build=read('build.mjs'),settings=read('settings-v3.js')
 const categories=['Lebensmittel','Wohnen','Mobilität','Freizeit','Shopping','Gesundheit','Haushalt','Abos & Verträge','Sparen','Sonstiges','Gehalt','Bonus','Verkauf','Rückzahlung','Geschenk']
-ok(pkg.version==='4.1.0','package version ist nicht 4.1.0')
+ok(pkg.version==='4.2.0','package version ist nicht 4.2.0')
 ok(js.includes("RELEASE='3.2.1'"),'3.2.1 Buchungsmodul fehlt')
 for(const c of categories)ok(js.includes(`'${c}'`)||js.includes(`\"${c}\"`),`Kategorie fehlt: ${c}`)
 for(const token of ['monthly','quarterly','semiannual','yearly','Monatlich','Vierteljährlich','Alle 6 Monate','Jährlich','processRecurring','nest-recurring-v3.2.1','Nächste Buchung'])ok(js.includes(token),`Wiederholungsfunktion fehlt: ${token}`)
@@ -15,4 +15,4 @@ ok(build.includes("'v32-bookings.js'")&&build.includes("'v32-bookings.css'"),'Bu
 ok(css.includes('[data-v32-category="lebensmittel"]')&&css.includes('[data-v32-category="gehalt"]'),'Kategorie-Farben fehlen')
 ok(css.includes('.v321-recurring')&&css.includes('.v321-recurring-preview'),'Wiederholungs-UI fehlt')
 ok(settings.includes('recurring:recurring()?.exportData?.()')&&settings.includes('recurring()?.reset?.()'),'Wiederholungen fehlen im Backup/Reset')
-console.log('NEST V4.1 booking and recurring compatibility tests passed')
+console.log('NEST V4.2 booking and recurring compatibility tests passed')
