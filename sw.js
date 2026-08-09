@@ -1,5 +1,5 @@
-const CACHE='nest-v2.0.2-ios-boot-b'
-const SHELL=['/index.html','/styles.css?v=2.0.2b','/nav.css?v=2.0.2b','/settings-v1.3.css?v=2.0.2b','/v2.css?v=2.0.2b','/v2-nav-center.css?v=2.0.2b','/v202.css?v=2.0.2b','/boot-v2.0.2.js?v=2.0.2b','/v202-core-safe.js?v=2.0.2b','/v202-wallet-guard.js?v=2.0.2b','/import-v2.0.2.js?v=2.0.2b','/app-v2.0.2.js?v=2.0.2b','/settings-v2.0.2.js?v=2.0.2b','/manifest.webmanifest','/icon.svg']
+const CACHE='nest-v2.0.2-challenges-c'
+const SHELL=['/index.html','/styles.css?v=2.0.2c','/nav.css?v=2.0.2c','/settings-v1.3.css?v=2.0.2c','/v2.css?v=2.0.2c','/v2-nav-center.css?v=2.0.2c','/v202.css?v=2.0.2c','/challenges-v2.0.2.css?v=2.0.2c','/boot-v2.0.2.js?v=2.0.2c','/v202-core-safe.js?v=2.0.2c','/v202-wallet-guard.js?v=2.0.2c','/import-v2.0.2.js?v=2.0.2c','/challenges-v2.0.2.js?v=2.0.2c','/app-v2.0.2.js?v=2.0.2c','/settings-v2.0.2.js?v=2.0.2c','/manifest.webmanifest','/icon.svg']
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting())))
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE&&(k.startsWith('nest-')||k.startsWith('selfmade-'))).map(k=>caches.delete(k)))).then(()=>self.clients.claim())))
 self.addEventListener('fetch',event=>{
