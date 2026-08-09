@@ -10,13 +10,14 @@ function clean(v,max=300){return String(v==null?'':v).replace(/\s+/g,' ').trim()
 function decodeEntities(text){return String(text||'').replace(/&nbsp;|&#160;/gi,' ').replace(/&amp;/gi,'&').replace(/&quot;/gi,'"').replace(/&#39;|&apos;/gi,"'").replace(/&lt;/gi,'<').replace(/&gt;/gi,'>').replace(/&#(\d+);/g,(_,n)=>String.fromCodePoint(Number(n)||32)).replace(/&#x([0-9a-f]+);/gi,(_,n)=>String.fromCodePoint(parseInt(n,16)||32))}
 function stripTags(v){return clean(decodeEntities(String(v||'').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,' ').replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi,' ').replace(/<[^>]+>/g,' ')),260)}
 function safeLidlUrl(value,base=SOURCE_URL){try{const u=new URL(decodeEntities(value),base);if(!/^(www\.)?lidl\.at$/i.test(u.hostname))return'';u.hash='';return u.href}catch{return''}}
+function safeImageUrl(value,base=SOURCE_URL){try{const u=new URL(decodeEntities(value),base);if(u.protocol!=='https:')return'';u.hash='';return u.href}catch{return''}}
 function hash(s){let h=2166136261;for(const ch of String(s||'')){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return(h>>>0).toString(36)}
-function attr(tag,name){const m=String(tag||'').match(new RegExp('\\b'+name+'\\s*=\\s*["\\\']([^"\\\']+)["\\\']','i'));return m?decodeEntities(m[1]):''}
+function attr(tag,name){const m=String(tag||'').match(new RegExp(`\\b${name}\\s*=\\s*["']([^"']+)["']`,'i'));return m?decodeEntities(m[1]):''}
 function imageFromHtml(html,base=SOURCE_URL){
   const srcset=String(html||'').match(/\bsrcset\s*=\s*["']([^"']+)["']/i)
-  if(srcset){const choices=decodeEntities(srcset[1]).split(',').map(x=>x.trim().split(/\s+/)[0]).filter(Boolean);const u=safeLidlUrl(choices[choices.length-1],base);if(u)return u}
-  for(const key of ['src','data-src','data-lazy-src']){const m=String(html||'').match(new RegExp('\\b'+key+'\\s*=\\s*["\\\']([^"\\\']+)["\\\']','i'));if(m){const u=safeLidlUrl(m[1],base);if(u)return u}}
-  const bg=String(html||'').match(/background-image\s*:\s*url\((?:["']?)([^)"']+)(?:["']?)\)/i);if(bg){const u=safeLidlUrl(bg[1],base);if(u)return u}
+  if(srcset){const choices=decodeEntities(srcset[1]).split(',').map(x=>x.trim().split(/\s+/)[0]).filter(Boolean);const u=safeImageUrl(choices[choices.length-1],base);if(u)return u}
+  for(const key of ['src','data-src','data-lazy-src']){const m=String(html||'').match(new RegExp(`\\b${key}\\s*=\\s*["']([^"']+)["']`,'i'));if(m){const u=safeImageUrl(m[1],base);if(u)return u}}
+  const bg=String(html||'').match(/background-image\s*:\s*url\((?:["']?)([^)"']+)(?:["']?)\)/i);if(bg){const u=safeImageUrl(bg[1],base);if(u)return u}
   return''
 }
 function sectionInfo(text){const t=clean(text,120).toLowerCase();if(t.includes('reiseprospekt'))return{key:'travel',label:'Reiseprospekte'};if(t.includes('sonderflyer'))return{key:'special',label:'Sonderflyer'};if(t.includes('aktuelle flugbl'))return{key:'weekly',label:'Aktuelle Flugblätter'};return null}
@@ -40,7 +41,7 @@ function parseFlyers(html,base=SOURCE_URL){
 }
 function metaImage(html,base){
   const patterns=[/<meta\b[^>]*property=["']og:image(?::secure_url)?["'][^>]*content=["']([^"']+)["']/i,/<meta\b[^>]*content=["']([^"']+)["'][^>]*property=["']og:image(?::secure_url)?["']/i,/<meta\b[^>]*name=["']twitter:image["'][^>]*content=["']([^"']+)["']/i]
-  for(const re of patterns){const m=String(html||'').match(re);if(m){const u=safeLidlUrl(m[1],base);if(u)return u}}
+  for(const re of patterns){const m=String(html||'').match(re);if(m){const u=safeImageUrl(m[1],base);if(u)return u}}
   return imageFromHtml(html,base)
 }
 async function fetchWithTimeout(url,ms=12000){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),ms);try{return await fetch(url,{signal:controller.signal,redirect:'follow',headers:{Accept:'text/html,application/xhtml+xml','Accept-Language':'de-AT,de;q=0.9','User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/151 Safari/537.36 NEST/4.2'}})}finally{clearTimeout(timer)}}
@@ -50,7 +51,8 @@ async function mapLimit(items,limit,fn){const out=new Array(items.length);let cu
 async function fetchFlyers({force=false}={}){
   if(!force&&memoryCache.data&&Date.now()-memoryCache.at<CACHE_MS)return{...memoryCache.data,cached:true}
   try{
-    const html=await getHtml(SOURCE_URL),parsed=parseFlyers(html,SOURCE_URL),flyers=await mapLimit(parsed,3,enrichCover)
+    const html=await getHtml(SOURCE_URL),parsed=parseFlyers(html,SOURCE_URL)
+    const first=parsed.slice(0,15),rest=parsed.slice(15),flyers=[...(await mapLimit(first,3,enrichCover)),...rest]
     if(!flyers.length)throw new Error('Keine Flugblätter erkannt')
     const counts={weekly:flyers.filter(x=>x.category==='weekly').length,special:flyers.filter(x=>x.category==='special').length,travel:flyers.filter(x=>x.category==='travel').length}
     const data={ok:true,apiVersion:API_VERSION,source:'lidl.at',sourceUrl:SOURCE_URL,fetchedAt:new Date().toISOString(),flyers,counts}
@@ -61,4 +63,4 @@ function json(res,status,body,cache='public, s-maxage=1800, stale-while-revalida
 async function handler(req,res){if(req.method!=='GET'){res.setHeader('Allow','GET');return json(res,405,{ok:false,error:'method_not_allowed'},'no-store')}try{return json(res,200,await fetchFlyers({force:String(req.query&&req.query.force||'')==='1'}))}catch(error){const timeout=error&&error.name==='AbortError';console.error('Lidl flyer sync failed',error);return json(res,timeout?504:502,{ok:false,error:timeout?'lidl_flyer_timeout':'lidl_flyer_unavailable',message:clean(error&&error.message,160)},'no-store')}}
 
 module.exports=handler
-module.exports._test={API_VERSION,SOURCE_URL,clean,decodeEntities,stripTags,safeLidlUrl,imageFromHtml,sectionInfo,titleDate,parseFlyers,metaImage,fetchFlyers}
+module.exports._test={API_VERSION,SOURCE_URL,clean,decodeEntities,stripTags,safeLidlUrl,safeImageUrl,imageFromHtml,sectionInfo,titleDate,parseFlyers,metaImage,fetchFlyers}
