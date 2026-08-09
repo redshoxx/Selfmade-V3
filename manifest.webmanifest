@@ -1,7 +1,7 @@
 {
-  "name":"NEST 3.0 – Finanzen & Einkauf",
+  "name":"NEST 3.0.1 – Finanzen & Einkauf",
   "short_name":"NEST",
-  "description":"Minimalistischer Finanz-, Spar- und Einkaufsplaner mit kontextabhängigem Plus, Barcode-Scanner und Produktdaten.",
+  "description":"Minimalistischer Finanz-, Spar- und Einkaufsplaner mit kompakter Einkaufsliste, Swipe-Löschen, Barcode-Scanner und Produktdaten.",
   "id":"/",
   "start_url":"/",
   "scope":"/",
