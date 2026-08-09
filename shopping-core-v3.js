@@ -1,0 +1,56 @@
+(function(root,factory){
+'use strict'
+var api=factory(root)
+if(typeof module!=='undefined'&&module.exports)module.exports=api
+if(root)root.NestShoppingCoreV3=api
+})(typeof globalThis!=='undefined'?globalThis:this,function(root){
+'use strict'
+var RELEASE='3.0.0'
+var STORE_KEY='nest-shopping-v2.2'
+var BACKUP_KEY='nest-shopping-v2.2-backup'
+var PROBE_KEY='nest-shopping-probe-v3'
+var memory={}
+var UNITS=['stk','pkg','kg','g','l','ml']
+var CATEGORIES=['Obst & Gemüse','Milch & Kühlung','Fleisch & Fisch','Backwaren','Getränke','Vorrat','Tiefkühl','Drogerie','Haushalt','Sonstiges']
+function memoryStorage(){return{getItem:function(k){return Object.prototype.hasOwnProperty.call(memory,k)?memory[k]:null},setItem:function(k,v){memory[k]=String(v)},removeItem:function(k){delete memory[k]}}}
+function clone(v){return JSON.parse(JSON.stringify(v))}
+function num(v,d){var x=Number(v);return Number.isFinite(x)?x:(d==null?0:d)}
+function clean(v,max){return String(v==null?'':v).replace(/\s+/g,' ').trim().slice(0,max||180)}
+function digits(v){return String(v==null?'':v).replace(/\D/g,'').slice(0,18)}
+function uid(prefix){return(prefix||'shop')+'_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,10)}
+function finiteOrNull(v){if(v==null||v==='')return null;var x=Number(v);return Number.isFinite(x)?Math.round(x*1000)/1000:null}
+function hashString(s){var h=2166136261,i;for(i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return(h>>>0).toString(16).padStart(8,'0')}
+function defaultState(){return{version:RELEASE,items:[],updatedAt:Date.now()}}
+function normalizeNutrition(n){n=n||{};return{energyKcal:finiteOrNull(n.energyKcal),energyKj:finiteOrNull(n.energyKj),fat:finiteOrNull(n.fat),saturatedFat:finiteOrNull(n.saturatedFat),carbs:finiteOrNull(n.carbs),sugars:finiteOrNull(n.sugars),protein:finiteOrNull(n.protein),salt:finiteOrNull(n.salt),fiber:finiteOrNull(n.fiber)}}
+function normalizeProduct(p){if(!p||typeof p!=='object')return null;var code=digits(p.code||p.barcode);return{code:code,name:clean(p.name||p.productName||'Unbekanntes Produkt',120),brand:clean(p.brand||p.brands||'',100),quantity:clean(p.quantity||'',80),productQuantity:finiteOrNull(p.productQuantity),productQuantityUnit:['g','ml'].indexOf(String(p.productQuantityUnit||'').toLowerCase())>=0?String(p.productQuantityUnit).toLowerCase():'',servingSize:clean(p.servingSize||'',80),image:clean(p.image||'',500),nutriscore:/^[a-e]$/i.test(String(p.nutriscoreGrade||p.nutriscore||''))?String(p.nutriscoreGrade||p.nutriscore).toLowerCase():'',ingredients:clean(p.ingredients||'',1600),allergens:Array.isArray(p.allergens)?p.allergens.map(function(x){return clean(x,80)}).filter(Boolean).slice(0,30):[],categories:clean(p.categories||'',500),category:normalizeCategory(p.category||inferCategory(p.name,p.categories)),nutrition:normalizeNutrition(p.nutrition),source:clean(p.source||'Open Food Facts',80),fetchedAt:num(p.fetchedAt,Date.now())}}
+function normalizeUnit(v){v=String(v||'').toLowerCase();if(v==='st'||v==='stück'||v==='stueck')v='stk';if(v==='packung'||v==='pack')v='pkg';return UNITS.indexOf(v)>=0?v:'stk'}
+function normalizeCategory(v){v=clean(v,80);return CATEGORIES.indexOf(v)>=0?v:'Sonstiges'}
+function inferCategory(name,categories){var t=(clean(name,180)+' '+clean(categories,500)).toLowerCase();var rules=[['Obst & Gemüse',/(apfel|äpfel|banan|orange|mandarine|zitrone|tomat|gurke|paprika|salat|kartoff|zwiebel|karotte|möhre|gemüse|obst|fruit|vegetable|berry|beere)/],['Milch & Kühlung',/(milch|joghurt|yogurt|käse|cheese|butter|quark|topfen|sahne|obers|mozzarella|kühl|dairy)/],['Fleisch & Fisch',/\b(fleisch|huhn|hähn|pute|rind|schwein|wurst|schinken|fisch|lachs|thunfisch|meat|fish)\b/],['Backwaren',/\b(brot|semmel|brötchen|toast|baguette|croissant|backware|bakery)\b/],['Getränke',/(wasser|saft|cola|limonade|energy|kaffee|coffee|tee|tea|drink|beverage)/],['Tiefkühl',/\b(tiefkühl|frozen|eiscreme|ice cream|pizza)\b/],['Drogerie',/\b(shampoo|duschgel|zahnpasta|deodorant|deo|kosmetik|pflege|hygiene|toilet paper|toilettenpapier)\b/],['Haushalt',/\b(spülmittel|waschmittel|reiniger|küchenrolle|müllbeutel|haushalt|cleaner|detergent)\b/],['Vorrat',/\b(nudel|pasta|reis|rice|mehl|zucker|sugar|salz|öl|oil|konserve|dose|müsli|cereal|schokolade|chocolate|keks|biscuit|snack)\b/]];for(var i=0;i<rules.length;i++)if(rules[i][1].test(t))return rules[i][0];return'Sonstiges'}
+function normalizeAmount(v,unit){var n=num(v,1);if(unit==='stk'||unit==='pkg')return Math.max(1,Math.min(999,Math.round(n)));return Math.max(.001,Math.min(99999,Math.round(n*1000)/1000))}
+function normalizeItem(x){x=x||{};var product=normalizeProduct(x.product);var barcode=digits(x.barcode||(product&&product.code)),unit=normalizeUnit(x.unit),amount=x.amount!=null?x.amount:(x.count!=null?x.count:(x.quantity!=null?x.quantity:1));var category=normalizeCategory(x.category||(product&&product.category)||inferCategory(x.name||(product&&product.name),product&&product.categories));return{id:clean(x.id||uid('item'),80),name:clean(x.name||(product&&product.name)||'Produkt',120),amount:normalizeAmount(amount,unit),unit:unit,checked:Boolean(x.checked),barcode:barcode,product:product,category:category,note:clean(x.note||'',240),createdAt:num(x.createdAt,Date.now()),updatedAt:num(x.updatedAt,x.createdAt||Date.now())}}
+function validState(s){return!!(s&&typeof s==='object'&&!Array.isArray(s)&&Array.isArray(s.items))}
+function normalizeState(s){s=s&&typeof s==='object'?s:{};return{version:RELEASE,items:Array.isArray(s.items)?s.items.map(normalizeItem):[],updatedAt:num(s.updatedAt,Date.now())}}
+function resolveStorage(input){if(input)return{storage:input,persistent:true,error:''};try{var s=root&&root.localStorage;if(!s)throw new Error('Lokaler Speicher nicht verfügbar');s.setItem(PROBE_KEY,'1');if(s.getItem(PROBE_KEY)!=='1')throw new Error('Speicherprüfung fehlgeschlagen');s.removeItem(PROBE_KEY);return{storage:s,persistent:true,error:''}}catch(e){return{storage:memoryStorage(),persistent:false,error:String(e&&e.message||e)}}}
+function createStore(input){var resolved=resolveStorage(input),storage=resolved.storage,persistent=resolved.persistent,lastError=resolved.error
+function parse(raw){try{return JSON.parse(raw)}catch(e){return null}}
+function writeVerified(key,value){var text=String(value);storage.setItem(key,text);if(storage.getItem(key)!==text)throw new Error('Einkaufsdaten konnten nicht verifiziert werden')}
+function envelope(state){var cleanState=normalizeState(state),payload=JSON.stringify(cleanState);return JSON.stringify({schema:2,release:RELEASE,savedAt:new Date().toISOString(),checksum:hashString(payload),state:cleanState})}
+function readBackup(){var e=parse(storage.getItem(BACKUP_KEY));if(!e||!validState(e.state))return null;var cleanState=normalizeState(e.state);return !e.checksum||hashString(JSON.stringify(cleanState))===e.checksum?cleanState:null}
+function writeBackup(state){try{writeVerified(BACKUP_KEY,envelope(state));return true}catch(e){lastError=String(e&&e.message||e);return false}}
+function load(){var raw=parse(storage.getItem(STORE_KEY)),state=validState(raw)?normalizeState(raw):null;if(!state)state=readBackup()||defaultState();try{writeVerified(STORE_KEY,JSON.stringify(state))}catch(e){lastError=String(e&&e.message||e)}writeBackup(state);return clone(state)}
+function save(next){var cleanState=normalizeState(next);cleanState.updatedAt=Date.now();writeVerified(STORE_KEY,JSON.stringify(cleanState));writeBackup(cleanState);return clone(cleanState)}
+function addManual(data){data=typeof data==='string'?{name:data}:data||{};var category=!data.category||data.category==='auto'?inferCategory(data.name,''):data.category,state=load(),item=normalizeItem({name:data.name,amount:data.amount||1,unit:data.unit||'stk',category:category,note:data.note||''});if(!clean(data.name,120))throw new Error('Produktname fehlt');state.items.unshift(item);return{item:item,state:save(state)}}
+function addProduct(product,opts){opts=opts||{};var p=normalizeProduct(product);if(!p||!p.code)throw new Error('Produktdaten ungültig');var state=load(),existing=null,i,unit=normalizeUnit(opts.unit||'stk'),amount=normalizeAmount(opts.amount||1,unit);for(i=0;i<state.items.length;i++)if(!state.items[i].checked&&state.items[i].barcode===p.code&&state.items[i].unit===unit){existing=state.items[i];break}if(existing){existing.amount=normalizeAmount(existing.amount+amount,unit);existing.product=p;existing.name=p.name||existing.name;existing.category=p.category||existing.category;existing.updatedAt=Date.now();return{item:existing,state:save(state),merged:true}}var item=normalizeItem({name:p.name,amount:amount,unit:unit,barcode:p.code,product:p,category:p.category});state.items.unshift(item);return{item:item,state:save(state),merged:false}}
+function update(id,patch){var state=load(),found=false;state.items=state.items.map(function(it){if(it.id!==id)return it;found=true;var next=Object.assign({},it,patch||{},{id:it.id,createdAt:it.createdAt,updatedAt:Date.now()});return normalizeItem(next)});if(!found)throw new Error('Produkt nicht gefunden');return save(state)}
+function toggle(id){var state=load(),it=state.items.find(function(x){return x.id===id});if(!it)throw new Error('Produkt nicht gefunden');return update(id,{checked:!it.checked})}
+function remove(id){var state=load(),before=state.items.length;state.items=state.items.filter(function(it){return it.id!==id});if(state.items.length===before)throw new Error('Produkt nicht gefunden');return save(state)}
+function clearChecked(){var state=load();state.items=state.items.filter(function(it){return!it.checked});return save(state)}
+function replace(data){if(!validState(data))throw new Error('Ungültige Einkaufsdaten');return save(data)}
+function exportData(){return{version:RELEASE,state:load()}}
+function importData(payload){var state=payload&&payload.state?payload.state:payload;return replace(state)}
+function reset(){storage.removeItem(STORE_KEY);storage.removeItem(BACKUP_KEY);if(storage.getItem(STORE_KEY)!==null||storage.getItem(BACKUP_KEY)!==null)throw new Error('Einkaufsdaten konnten nicht vollständig gelöscht werden');return true}
+function status(){return{persistent:persistent,available:persistent,lastError:lastError,storeKey:STORE_KEY,backupKey:BACKUP_KEY,release:RELEASE}}
+return{RELEASE:RELEASE,STORE_KEY:STORE_KEY,BACKUP_KEY:BACKUP_KEY,load:load,save:save,addManual:addManual,addProduct:addProduct,update:update,toggle:toggle,remove:remove,clearChecked:clearChecked,replace:replace,exportData:exportData,importData:importData,reset:reset,status:status}}
+var store=createStore()
+return{RELEASE:RELEASE,STORE_KEY:STORE_KEY,BACKUP_KEY:BACKUP_KEY,UNITS:UNITS,CATEGORIES:CATEGORIES,normalizeProduct:normalizeProduct,normalizeItem:normalizeItem,normalizeState:normalizeState,normalizeUnit:normalizeUnit,normalizeCategory:normalizeCategory,inferCategory:inferCategory,validState:validState,createStore:createStore,store:store}
+})
