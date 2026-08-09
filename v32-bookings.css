@@ -1,4 +1,4 @@
-/* NEST 3.2 – booking category identity */
+/* NEST 3.2.1 – booking category identity + recurring bookings */
 .v3-row[data-v32-category]{grid-template-columns:42px minmax(0,1fr) auto 18px;min-height:68px;padding:9px 10px}
 .v3-row[data-v32-category] .v3-row-copy{display:flex;min-width:0;flex-direction:column;align-items:flex-start}
 .v3-row[data-v32-category] .v3-row-copy b{font-size:12px;line-height:1.2}
@@ -22,9 +22,20 @@
 .v3-row[data-v32-category="geschenk"]{--v32-cat:#925a78;--v32-cat-soft:rgba(146,90,120,.12)}
 .v3-row[data-v32-category="sonstiges"]{--v32-cat:#6d6b66;--v32-cat-soft:rgba(109,107,102,.10)}
 html[data-theme=dark] .v3-row[data-v32-category]{--v32-cat-soft:rgba(255,255,255,.08)}
+.v321-recurring{margin-top:4px;padding:12px;border:1px solid var(--line);border-radius:16px;background:var(--surface2)}
+.v321-recurring .v3-field{margin:0}
+.v321-recurring .v3-field>span{font-size:9px;font-weight:800;color:var(--muted)}
+.v321-recurring select{margin-top:6px}
+.v321-recurring-preview{margin-top:9px;padding-top:9px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px}
+.v321-recurring-preview[hidden]{display:none!important}
+.v321-recurring-preview span{font-size:8.5px;font-weight:850;color:var(--text)}
+.v321-recurring-preview b{font-size:8.5px;color:var(--muted);text-align:right}
 @media(max-width:430px){
   .v3-row[data-v32-category]{grid-template-columns:40px minmax(0,1fr) auto 16px;min-height:66px;padding:8px 9px;gap:8px}
   .v32-category-icon{width:38px!important;height:38px!important;border-radius:12px!important}
   .v32-category-icon svg{width:18px!important;height:18px!important}
   .v32-category-badge{height:19px;line-height:19px;font-size:7.3px}
+  .v321-recurring{padding:10px;border-radius:15px}
+  .v321-recurring-preview{align-items:flex-start;flex-direction:column;gap:3px}
+  .v321-recurring-preview b{text-align:left}
 }
