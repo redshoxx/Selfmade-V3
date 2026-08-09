@@ -1,0 +1,21 @@
+/* NEST v3.0.1 – compact shopping list + swipe delete */
+.v3-shop-row{position:relative;min-height:54px;padding:6px 8px;grid-template-columns:28px minmax(0,1fr) 30px;gap:9px;overflow:hidden;touch-action:pan-y;-webkit-user-select:none;user-select:none}
+.v3-product-img{display:none!important}
+.v3-check{width:26px;height:26px;border-radius:9px;border-width:1px}
+.v3-check svg{width:13px;height:13px}
+.v3-shop-main{min-width:0;padding:4px 0}
+.v3-shop-main b{font-size:11.5px}
+.v3-shop-main small{margin-top:2px;font-size:8.4px}
+.v3-mini-more{width:30px;height:30px;border-radius:10px}
+.v3-mini-more svg{width:15px}
+.v3-shop-row>.v3-check,.v3-shop-row>.v3-shop-main,.v3-shop-row>.v3-mini-more{position:relative;z-index:2;transform:translate3d(var(--v301-swipe-x,0px),0,0);transition:transform .2s cubic-bezier(.2,.8,.2,1)}
+.v3-shop-row.v301-swiping>.v3-check,.v3-shop-row.v301-swiping>.v3-shop-main,.v3-shop-row.v301-swiping>.v3-mini-more{transition:none}
+.v301-swipe-delete{position:absolute;z-index:3;top:0;right:0;bottom:0;width:82px;border:0;border-radius:0 16px 16px 0;background:#c93f35;color:#fff;font:inherit;font-size:10px;font-weight:850;letter-spacing:.01em;display:flex;align-items:center;justify-content:center;gap:5px;transform:translate3d(100%,0,0);transition:transform .2s cubic-bezier(.2,.8,.2,1);touch-action:manipulation}
+.v301-swipe-delete svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.v3-shop-row.v301-open .v301-swipe-delete,.v3-shop-row.v301-swiping.v301-reveal .v301-swipe-delete{transform:translate3d(0,0,0)}
+.v3-shop-row.done .v301-swipe-delete{opacity:1}
+.v301-undo-toast{display:flex;align-items:center;gap:12px}
+.v301-undo-toast span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v301-undo-toast button{border:0;background:transparent;color:inherit;font:inherit;font-size:10px;font-weight:900;text-decoration:underline;text-underline-offset:2px}
+@media(max-width:430px){.v3-shop-row{min-height:52px;padding:5px 7px;grid-template-columns:27px minmax(0,1fr) 29px;gap:8px}.v3-check{width:25px;height:25px}.v3-mini-more{width:29px;height:29px}.v301-swipe-delete{width:78px}}
+@media(prefers-reduced-motion:reduce){.v3-shop-row>.v3-check,.v3-shop-row>.v3-shop-main,.v3-shop-row>.v3-mini-more,.v301-swipe-delete{transition:none!important}}
