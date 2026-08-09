@@ -8,8 +8,14 @@ function due(){const info=nowInfo();return !Number(info.lastSuccess)||Date.now()
 function fmtTime(ts){if(!ts)return'';try{return new Intl.DateTimeFormat('de-AT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(ts))}catch{return''}}
 function setRelease(){document.documentElement.dataset.nestRelease=RELEASE;const meta=document.querySelector('meta[name="nest-version"]');if(meta)meta.content=RELEASE;const top=document.querySelector('.v3-top>div>span');if(top)top.textContent='NEST · V'+RELEASE;document.title='NEST 4'}
 function statusLabel(){const info=nowInfo();if(syncing)return'Aktualisiere Angebote …';if(lastMessage)return lastMessage;if(info.lastSuccess)return`Auto · ${fmtTime(info.lastSuccess)}`;return'Auto-Sync bereit'}
+function patchSettings(){
+  const d=document.getElementById('settingsV3');if(!d)return
+  d.querySelectorAll('span').forEach(el=>{if(/^NEST\s*·\s*V4\.0\.0$/.test(String(el.textContent||'').trim()))el.textContent='NEST · V'+RELEASE})
+  const form=d.querySelector('form');if(!form||form.querySelector('[data-v41-settings]'))return
+  const actions=form.querySelector('.v3-settings-actions'),info=nowInfo(),row=document.createElement('div');row.className='v3-setting-row';row.dataset.v41Settings='1';row.innerHTML=`<span><b>Lidl Auto-Sync</b><small>${info.lastSuccess?`Zuletzt ${fmtTime(info.lastSuccess)} · ${Number(info.lastCount)||0} Angebote`:'Noch nicht synchronisiert'}</small></span><b>${info.lastError?'!':'OK'}</b>`;if(actions)form.insertBefore(row,actions);else form.appendChild(row)
+}
 function enhanceStatus(){
-  setRelease()
+  setRelease();patchSettings()
   const entry=document.querySelector('.v4-lidl-entry .v4-entry-copy')
   if(entry){let badge=entry.querySelector('.v41-auto-status');if(!badge){badge=document.createElement('span');badge.className='v41-auto-status';entry.appendChild(badge)}badge.textContent=statusLabel()}
   const toolbar=document.querySelector('.v4-lidl-dialog .v4-toolbar')
@@ -45,7 +51,7 @@ async function sync(force=false){
     return{ok:false,error:message}
   }finally{syncing=false;schedule()}
 }
-document.addEventListener('click',e=>{const b=e.target.closest?.('[data-v41-sync]');if(!b)return;e.preventDefault();e.stopPropagation();sync(true)},true)
+document.addEventListener('click',e=>{const syncBtn=e.target.closest?.('[data-v41-sync]');if(syncBtn){e.preventDefault();e.stopPropagation();sync(true);return}if(e.target.closest?.('[data-v3="settings"]'))setTimeout(()=>{patchSettings();schedule()},0)},true)
 const app=document.getElementById('app');if(app){observer=new MutationObserver(schedule);observer.observe(app,{childList:true})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{schedule();setTimeout(()=>sync(false),900)},{once:true});else{schedule();setTimeout(()=>sync(false),900)}
 root.addEventListener('pageshow',()=>{schedule();if(due())sync(false)})
