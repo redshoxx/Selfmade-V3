@@ -1,5 +1,5 @@
-const CACHE='nest-v2.0.2-stability'
-const SHELL=['/index.html','/styles.css?v=2.0.2','/nav.css?v=2.0.2','/settings-v1.3.css?v=2.0.2','/v2.css?v=2.0.2','/v2-nav-center.css?v=2.0.2','/v202.css?v=2.0.2','/v202-core.js?v=2.0.2','/v202-wallet-guard.js?v=2.0.2','/import-v2.0.2.js?v=2.0.2','/app-v2.0.2.js?v=2.0.2','/settings-v2.0.2.js?v=2.0.2','/manifest.webmanifest','/icon.svg']
+const CACHE='nest-v2.0.2-ios-boot-b'
+const SHELL=['/index.html','/styles.css?v=2.0.2b','/nav.css?v=2.0.2b','/settings-v1.3.css?v=2.0.2b','/v2.css?v=2.0.2b','/v2-nav-center.css?v=2.0.2b','/v202.css?v=2.0.2b','/boot-v2.0.2.js?v=2.0.2b','/v202-core-safe.js?v=2.0.2b','/v202-wallet-guard.js?v=2.0.2b','/import-v2.0.2.js?v=2.0.2b','/app-v2.0.2.js?v=2.0.2b','/settings-v2.0.2.js?v=2.0.2b','/manifest.webmanifest','/icon.svg']
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting())))
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE&&(k.startsWith('nest-')||k.startsWith('selfmade-'))).map(k=>caches.delete(k)))).then(()=>self.clients.claim())))
 self.addEventListener('fetch',event=>{
