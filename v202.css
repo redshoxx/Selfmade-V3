@@ -1,0 +1,16 @@
+/* NEST v2.0.2 – stability and persistence UI fixes */
+.v2-tx-row{width:100%;text-align:left;border:0}
+.v2-tx-row .amount{margin-left:auto}
+#toast.bad{background:var(--bad);color:#fff}
+#settings202{width:100%;max-width:620px;max-height:94dvh;margin:auto auto 0;padding:0;border:0;border-radius:28px 28px 0 0;background:var(--surface);color:var(--text);box-shadow:0 -20px 60px rgba(0,0,0,.22)}
+#settings202::backdrop{background:rgba(31,25,21,.42);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+#settings202 .s13-shell{max-height:94dvh}
+#settings202 .s13-card>.s13-row em{font-style:normal;font-size:11px;font-weight:800;color:var(--good)}
+html[data-density=compact] .row{min-height:58px;padding-block:8px}
+html[data-text-size=large] .row-main strong{font-size:15px}
+html[data-text-size=large] .row-main small{font-size:12px}
+html[data-privacy=on] .hero strong,html[data-privacy=on] .hero b,html[data-privacy=on] .amount,html[data-privacy=on] .goal p,html[data-privacy=on] .challenge .meta,html[data-privacy=on] .v2-detail-amount strong,html[data-privacy=on] .v2-audit-row>b{filter:blur(7px);user-select:none}
+@media(min-width:900px){
+  #settings202{width:min(760px,calc(100% - 60px));max-width:760px;max-height:88dvh;margin:auto;border-radius:28px}
+  #settings202 .s13-shell{max-height:88dvh}
+}
