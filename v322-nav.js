@@ -1,13 +1,21 @@
 (function(root){
 'use strict'
-const RELEASE='3.2.2'
+const RELEASE='4.0.0'
 const HOME='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 10.5 12 3.5l8.5 7v9a1 1 0 0 1-1 1h-5v-6h-5v6h-5a1 1 0 0 1-1-1z"/></svg>'
 let queued=false
 function release(){
-  document.title='NEST 3.2'
+  document.title='NEST 4'
   document.documentElement.dataset.nestRelease=RELEASE
   const meta=document.querySelector('meta[name="nest-version"]');if(meta)meta.content=RELEASE
   const top=document.querySelector('.v3-top>div>span');if(top&&top.textContent!=='NEST · V'+RELEASE)top.textContent='NEST · V'+RELEASE
+}
+function loadV4(){
+  if(!document.getElementById('nestV4LidlCss')){
+    const link=document.createElement('link');link.id='nestV4LidlCss';link.rel='stylesheet';link.href='/v4-lidl.css?v=4.0.0-r14';document.head.appendChild(link)
+  }
+  if(!root.NestLidlV4&&!document.getElementById('nestV4LidlJs')){
+    const script=document.createElement('script');script.id='nestV4LidlJs';script.src='/v4-lidl.js?v=4.0.0-r14';script.async=true;document.head.appendChild(script)
+  }
 }
 function injectStyle(){
   if(document.getElementById('v322NavStyle'))return
@@ -39,7 +47,7 @@ function injectStyle(){
 }
 function enhance(){
   queued=false
-  injectStyle();release()
+  injectStyle();loadV4();release()
   const nav=document.querySelector('.v3-nav')
   if(nav){
     nav.classList.add('v322-nav')
@@ -72,7 +80,7 @@ function enhance(){
 }
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(enhance)}
 const app=document.getElementById('app')
-if(app)new MutationObserver(schedule).observe(app,{childList:true,subtree:true})
+if(app)new MutationObserver(schedule).observe(app,{childList:true})
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule()
 root.addEventListener('pageshow',schedule)
 root.addEventListener('load',schedule,{once:true})
