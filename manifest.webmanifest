@@ -1,15 +1,19 @@
 {
-  "name":"NEST 3.1 – Finanzen, Aufgaben & Einkauf",
+  "name":"NEST – Finanzen, Aufgaben & Einkauf",
   "short_name":"NEST",
-  "description":"Minimalistischer Finanz-, Aufgaben-, Spar- und Einkaufsplaner mit kontextabhängigem Plus, Swipe-Gesten, Erinnerungen und Barcode-Scanner.",
+  "description":"Minimalistischer Finanz-, Aufgaben-, Spar- und Einkaufsplaner mit kontextabhängigem Plus, Erinnerungen und Barcode-Scanner.",
   "id":"/",
-  "start_url":"/",
+  "start_url":"/?source=homescreen",
   "scope":"/",
   "display":"standalone",
-  "orientation":"any",
+  "display_override":["standalone"],
+  "orientation":"portrait-primary",
   "background_color":"#f6f5f2",
   "theme_color":"#f6f5f2",
   "lang":"de-AT",
   "categories":["finance","productivity","shopping","utilities"],
-  "icons":[{"src":"/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+  "icons":[
+    {"src":"/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any"},
+    {"src":"/icon-maskable.svg","sizes":"any","type":"image/svg+xml","purpose":"maskable"}
+  ]
 }
