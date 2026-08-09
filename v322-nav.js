@@ -10,9 +10,11 @@ function release(){
   const top=document.querySelector('.v3-top>div>span');if(top&&top.textContent!=='NEST · V'+RELEASE)top.textContent='NEST · V'+RELEASE
 }
 function loadV4(){
-  if(!document.getElementById('nestV4LidlCss')){
-    const link=document.createElement('link');link.id='nestV4LidlCss';link.rel='stylesheet';link.href='/v4-lidl.css?v=4.0.0-r14';document.head.appendChild(link)
+  let css=document.getElementById('nestV4LidlCss')
+  if(!css){
+    css=document.createElement('link');css.id='nestV4LidlCss';css.rel='stylesheet';css.href='/v4-lidl.css?v=4.0.0-r14';css.dataset.v4Fallback='1';document.head.appendChild(css)
   }
+  if(css.dataset.v4Fallback!=='1')return
   if(!root.NestLidlV4&&!document.getElementById('nestV4LidlJs')){
     const script=document.createElement('script');script.id='nestV4LidlJs';script.src='/v4-lidl.js?v=4.0.0-r14';script.async=true;document.head.appendChild(script)
   }
