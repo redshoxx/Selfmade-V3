@@ -1,7 +1,7 @@
 {
-  "name":"NEST 2 – Finanzplaner",
+  "name":"NEST 2.1 – Finanzplaner",
   "short_name":"NEST",
-  "description":"Finanzplaner für Mobile und Desktop mit nachvollziehbaren Buchungen, Sparzielen, Challenges und Wallet-Import.",
+  "description":"Finanzplaner für Mobile und Desktop mit gemeinsamem Sparbereich für Sparziele und Challenges, Buchungsprotokoll und Wallet-Import.",
   "id":"/",
   "start_url":"/",
   "scope":"/",
