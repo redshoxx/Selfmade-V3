@@ -1,5 +1,6 @@
 const assert=require('node:assert/strict')
 const Core=require('./v202-core.js')
+const {createGuard}=require('./v202-wallet-guard.js')
 class MemoryStorage{
   constructor(){this.map=new Map();this.fail=false}
   getItem(k){return this.map.has(k)?this.map.get(k):null}
@@ -22,9 +23,12 @@ state.transactions[0].amount=13.5
 state=repo.saveState(state,{method:'manual'})
 audit=repo.readAudit()
 assert.ok(repo.eventsFor('tx_manual',audit).some(e=>e.action==='updated'&&e.changes.includes('amount')))
-const wallet=repo.importTransaction({id:'imp_wallet_1',type:'expense',amount:4.2,title:'BILLA',category:'Lebensmittel',date:'2026-08-09',note:'Apple Wallet'})
+const wallet=repo.importTransaction({id:'imp_wallet_1',type:'expense',amount:4.2,title:'BILLA',category:'Lebensmittel',date:'2026-08-09',note:'Apple Wallet',createdAt:1000000})
 assert.equal(wallet.status,'imported')
 assert.equal(repo.importTransaction({id:'imp_wallet_1',type:'expense',amount:4.2,title:'BILLA',category:'Lebensmittel',date:'2026-08-09'}).status,'duplicate')
+const guard=createGuard(repo)
+assert.equal(guard.importTransaction({id:'imp_wallet_retry',type:'expense',amount:4.2,title:'BILLA',category:'Lebensmittel',date:'2026-08-09',createdAt:1060000}).status,'duplicate','Gleiche Wallet-Buchung innerhalb 2 Minuten muss blockiert werden')
+assert.equal(guard.importTransaction({id:'imp_wallet_later',type:'expense',amount:4.2,title:'BILLA',category:'Lebensmittel',date:'2026-08-09',createdAt:1181001}).status,'imported','Spätere echte Buchung darf nicht blockiert werden')
 audit=repo.readAudit()
 const walletTx=repo.loadState().transactions.find(t=>t.id==='imp_wallet_1')
 assert.equal(repo.latestMethod('imp_wallet_1',audit,walletTx),'wallet')
@@ -45,4 +49,4 @@ assert.ok(repo.eventsFor('tx_manual',repo.readAudit()).some(e=>e.action==='delet
 repo.resetAll()
 assert.equal(storage.getItem(repo.CORE_KEY),null)
 assert.equal(storage.getItem(repo.BACKUP_KEY),null)
-console.log('NEST v2.0.2 persistence regression tests passed.')
+console.log('NEST v2.0.2 persistence and Wallet duplicate regression tests passed.')
