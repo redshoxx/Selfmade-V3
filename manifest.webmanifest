@@ -1,14 +1,14 @@
 {
-  "name":"NEST 2.2 – Finanzplaner & Einkauf",
+  "name":"NEST 3.0 – Finanzen & Einkauf",
   "short_name":"NEST",
-  "description":"Finanzplaner für Mobile und Desktop mit Einkaufsliste, Barcode-Scanner, Produkt- und Nährwertdaten, gemeinsamem Sparbereich, Buchungsprotokoll und Wallet-Import.",
+  "description":"Minimalistischer Finanz-, Spar- und Einkaufsplaner mit kontextabhängigem Plus, Barcode-Scanner und Produktdaten.",
   "id":"/",
   "start_url":"/",
   "scope":"/",
   "display":"standalone",
   "orientation":"any",
-  "background_color":"#f4f0e9",
-  "theme_color":"#f4f0e9",
+  "background_color":"#f6f5f2",
+  "theme_color":"#f6f5f2",
   "lang":"de-AT",
   "categories":["finance","productivity","shopping"],
   "icons":[{"src":"/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
