@@ -1,0 +1,30 @@
+/* NEST 3.2 – booking category identity */
+.v3-row[data-v32-category]{grid-template-columns:42px minmax(0,1fr) auto 18px;min-height:68px;padding:9px 10px}
+.v3-row[data-v32-category] .v3-row-copy{display:flex;min-width:0;flex-direction:column;align-items:flex-start}
+.v3-row[data-v32-category] .v3-row-copy b{font-size:12px;line-height:1.2}
+.v3-row[data-v32-category] .v3-row-copy small{margin-top:4px;font-size:8.6px;color:var(--muted)}
+.v32-category-icon{width:40px!important;height:40px!important;border-radius:13px!important;background:var(--v32-cat-soft,var(--surface2))!important;color:var(--v32-cat,var(--text))!important;display:grid!important;place-items:center!important}
+.v32-category-icon svg{width:19px!important;height:19px!important;stroke-width:1.75!important}
+.v32-category-badge{display:inline-flex;align-items:center;max-width:100%;height:20px;margin-top:5px;padding:0 7px;border-radius:999px;background:var(--v32-cat-soft,var(--surface2));color:var(--v32-cat,var(--muted));font-size:7.6px;font-weight:850;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v3-row[data-v32-category="lebensmittel"]{--v32-cat:#3f7754;--v32-cat-soft:rgba(63,119,84,.11)}
+.v3-row[data-v32-category="wohnen"]{--v32-cat:#4d648d;--v32-cat-soft:rgba(77,100,141,.11)}
+.v3-row[data-v32-category="mobilitaet"]{--v32-cat:#a96432;--v32-cat-soft:rgba(169,100,50,.12)}
+.v3-row[data-v32-category="freizeit"]{--v32-cat:#76558f;--v32-cat-soft:rgba(118,85,143,.11)}
+.v3-row[data-v32-category="shopping"]{--v32-cat:#a14f72;--v32-cat-soft:rgba(161,79,114,.11)}
+.v3-row[data-v32-category="gesundheit"]{--v32-cat:#a64f4c;--v32-cat-soft:rgba(166,79,76,.11)}
+.v3-row[data-v32-category="haushalt"]{--v32-cat:#80684d;--v32-cat-soft:rgba(128,104,77,.12)}
+.v3-row[data-v32-category="abos"]{--v32-cat:#607184;--v32-cat-soft:rgba(96,113,132,.12)}
+.v3-row[data-v32-category="sparen"]{--v32-cat:#8b7335;--v32-cat-soft:rgba(139,115,53,.12)}
+.v3-row[data-v32-category="gehalt"]{--v32-cat:#347457;--v32-cat-soft:rgba(52,116,87,.12)}
+.v3-row[data-v32-category="bonus"]{--v32-cat:#8c6f2f;--v32-cat-soft:rgba(140,111,47,.12)}
+.v3-row[data-v32-category="verkauf"]{--v32-cat:#39747b;--v32-cat-soft:rgba(57,116,123,.12)}
+.v3-row[data-v32-category="rueckzahlung"]{--v32-cat:#4d718d;--v32-cat-soft:rgba(77,113,141,.12)}
+.v3-row[data-v32-category="geschenk"]{--v32-cat:#925a78;--v32-cat-soft:rgba(146,90,120,.12)}
+.v3-row[data-v32-category="sonstiges"]{--v32-cat:#6d6b66;--v32-cat-soft:rgba(109,107,102,.10)}
+html[data-theme=dark] .v3-row[data-v32-category]{--v32-cat-soft:rgba(255,255,255,.08)}
+@media(max-width:430px){
+  .v3-row[data-v32-category]{grid-template-columns:40px minmax(0,1fr) auto 16px;min-height:66px;padding:8px 9px;gap:8px}
+  .v32-category-icon{width:38px!important;height:38px!important;border-radius:12px!important}
+  .v32-category-icon svg{width:18px!important;height:18px!important}
+  .v32-category-badge{height:19px;line-height:19px;font-size:7.3px}
+}
