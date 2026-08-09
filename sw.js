@@ -1,5 +1,5 @@
-const CACHE='nest-v3.1.0-r5'
-const SHELL=['/index.html','/v3.css?v=3.1.0-r5','/v3-shopping.css?v=3.1.0-r5','/v301-shopping.css?v=3.1.0-r5','/tasks-v3.1.css?v=3.1.0-r5','/v3-dialogs.css?v=3.1.0-r5','/boot-v2.0.2.js?v=3.1.0-r5','/v202-core-safe.js?v=3.1.0-r5','/shopping-core-v3.js?v=3.1.0-r5','/tasks-core-v3.1-fixed.js?v=3.1.0-r5','/tasks-v3.1.js?v=3.1.0-r5','/v202-wallet-guard.js?v=3.1.0-r5','/import-v2.0.2.js?v=3.1.0-r5','/app-v3.js?v=3.1.0-r5','/settings-v3.js?v=3.1.0-r5','/v301-shopping.js?v=3.1.0-r5','/manifest.webmanifest','/icon.svg']
+const CACHE='nest-v3.1.0-r6'
+const SHELL=['/index.html','/v3.css?v=3.1.0-r6','/v3-shopping.css?v=3.1.0-r6','/v301-shopping.css?v=3.1.0-r6','/tasks-v3.1.css?v=3.1.0-r6','/v3-dialogs.css?v=3.1.0-r6','/boot-v2.0.2.js?v=3.1.0-r6','/v202-core-safe.js?v=3.1.0-r6','/shopping-core-v3.js?v=3.1.0-r6','/tasks-core-v3.1-fixed.js?v=3.1.0-r6','/tasks-v3.1.js?v=3.1.0-r6','/v202-wallet-guard.js?v=3.1.0-r6','/import-v2.0.2.js?v=3.1.0-r6','/app-v3.js?v=3.1.0-r6','/settings-v3.js?v=3.1.0-r6','/v301-shopping.js?v=3.1.0-r6','/manifest.webmanifest','/icon.svg']
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting())))
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE&&(k.startsWith('nest-')||k.startsWith('selfmade-'))).map(k=>caches.delete(k)))).then(()=>self.clients.claim())))
 self.addEventListener('fetch',event=>{
