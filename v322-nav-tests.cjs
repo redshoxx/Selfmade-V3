@@ -1,0 +1,16 @@
+const fs=require('node:fs')
+function read(f){return fs.readFileSync(f,'utf8')}
+function ok(cond,msg){if(!cond)throw new Error(msg)}
+const nav=read('v322-nav.js'),index=read('index.html'),sw=read('sw.js'),build=read('build.mjs'),pkg=JSON.parse(read('package.json'))
+ok(pkg.version==='3.2.2','package version ist nicht 3.2.2')
+ok(nav.includes("RELEASE='3.2.2'"),'3.2.2 release fehlt im Navigationsmodul')
+ok(nav.includes("data-route','overview"),'Übersicht-Button oben fehlt')
+ok(nav.includes("oldHome.remove()"),'Übersicht wird nicht aus Bottom-Bar entfernt')
+ok(nav.includes('v322-top-actions'),'Top-Actions fehlen')
+ok(nav.includes('grid-template-columns:repeat(5'),'5er Bottom-Navigation fehlt')
+ok(index.includes('/v322-nav.js?v=3.2.2-r13'),'3.2.2 Navigation wird nicht geladen')
+ok(index.indexOf('/v322-nav.js')>index.indexOf('/v32-bookings.js'),'Navigation muss nach Buchungsmodul geladen werden')
+ok(sw.includes("nest-v3.2.2-r13"),'3.2.2 Cache fehlt')
+ok(sw.includes('/v322-nav.js?v=3.2.2-r13'),'Navigation fehlt im Service Worker')
+ok(build.includes("'v322-nav.js'"),'Navigation fehlt im Build')
+console.log('NEST V3.2.2 navigation tests passed')
