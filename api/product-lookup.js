@@ -1,5 +1,6 @@
 'use strict'
 const API_VERSION='v3.6'
+const API_PATH_VERSION='v3'
 const FIELDS=['code','product_name','brands','quantity','product_quantity','product_quantity_unit','serving_size','serving_quantity','serving_quantity_unit','image_front_small_url','image_front_url','image_url','nutriments','nutrition_data_per','nutriscore_grade','nutrition_grades','ingredients_text','allergens_tags','categories','categories_tags']
 function json(res,status,body,cache){res.status(status);res.setHeader('Content-Type','application/json; charset=utf-8');res.setHeader('Cache-Control',cache||'no-store');return res.json(body)}
 function cleanText(v,max=500){return String(v==null?'':v).replace(/\s+/g,' ').trim().slice(0,max)}
@@ -18,7 +19,7 @@ async function handler(req,res){
   if(req.method!=='GET'){res.setHeader('Allow','GET');return json(res,405,{ok:false,error:'method_not_allowed'})}
   const barcode=normalizeBarcode(req.query&&req.query.barcode)
   if(!barcode)return json(res,400,{ok:false,error:'invalid_barcode'})
-  const endpoint=`https://world.openfoodfacts.org/api/${API_VERSION}/product/${encodeURIComponent(barcode)}?product_type=food&lc=de&cc=at&fields=${encodeURIComponent(FIELDS.join(','))}`
+  const endpoint=`https://world.openfoodfacts.org/api/${API_PATH_VERSION}/product/${encodeURIComponent(barcode)}?product_type=food&lc=de&cc=at&fields=${encodeURIComponent(FIELDS.join(','))}`
   try{
     const response=await fetchWithTimeout(endpoint,{headers:{Accept:'application/json','User-Agent':'NEST/3.0.0 (https://selfmade-v3.vercel.app)'}},9000)
     if(response.status===404)return json(res,200,{ok:true,found:false,barcode},'public, s-maxage=3600, stale-while-revalidate=86400')
@@ -26,8 +27,8 @@ async function handler(req,res){
     if(!response.ok)return json(res,502,{ok:false,error:'product_service_error',status:response.status})
     const data=await response.json(),product=data&&data.product
     if(!product)return json(res,200,{ok:true,found:false,barcode},'public, s-maxage=3600, stale-while-revalidate=86400')
-    return json(res,200,{ok:true,found:true,barcode,product:mapProduct(product,barcode)},'public, s-maxage=43200, stale-while-revalidate=172800')
+    return json(res,200,{ok:true,found:true,barcode,product:mapProduct(product,barcode),apiVersion:API_VERSION},'public, s-maxage=43200, stale-while-revalidate=172800')
   }catch(error){const timeout=error&&error.name==='AbortError';console.error('Open Food Facts lookup failed',error);return json(res,timeout?504:502,{ok:false,error:timeout?'product_service_timeout':'product_service_unavailable'})}
 }
 module.exports=handler
-module.exports._test={API_VERSION,FIELDS,normalizeBarcode,nutrient,energy,nutrition,quantityInfo,categoryFromProduct,mapProduct}
+module.exports._test={API_VERSION,API_PATH_VERSION,FIELDS,normalizeBarcode,nutrient,energy,nutrition,quantityInfo,categoryFromProduct,mapProduct}
