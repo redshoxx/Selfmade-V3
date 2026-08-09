@@ -5,17 +5,17 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
   <meta name="theme-color" content="#f6f5f2">
   <meta name="color-scheme" content="light dark">
-  <meta name="description" content="NEST 4 – Finanz-, Aufgaben-, Spar- und Einkaufsplaner mit Lidl-Angebotsintelligenz, Kategorie-Icons und wiederkehrenden Buchungen.">
+  <meta name="description" content="NEST 4.1 – Finanz-, Aufgaben-, Spar- und Einkaufsplaner mit automatischer Lidl-Angebotssynchronisierung.">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="NEST">
-  <meta name="nest-version" content="4.0.0">
+  <meta name="nest-version" content="4.1.0">
   <script>
   (function(){
     var local=location.hostname==='localhost'||location.hostname==='127.0.0.1'
-    document.documentElement.dataset.nestBuild='4.0.0-r14'
-    if(local)document.documentElement.dataset.nestLocalBuild='4.0.0-r14'
+    document.documentElement.dataset.nestBuild='4.1.0-r15'
+    if(local)document.documentElement.dataset.nestLocalBuild='4.1.0-r15'
     if(typeof document.startViewTransition==='function'){
       try{
         document.startViewTransition=function(update){
@@ -37,6 +37,7 @@
   <link rel="stylesheet" href="/v3-dialogs.css?v=3.2.2-r13">
   <link rel="stylesheet" href="/v32-bookings.css?v=3.2.2-r13">
   <link id="nestV4LidlCss" rel="stylesheet" href="/v4-lidl.css?v=4.0.0-r14">
+  <link rel="stylesheet" href="/v41-lidl-auto.css?v=4.1.0-r15">
   <style>
     .v3-main{animation:nest-fast-enter .13s cubic-bezier(.2,.8,.2,1)!important}
     @keyframes nest-fast-enter{from{opacity:.72;transform:translate3d(0,3px,0)}to{opacity:1;transform:translate3d(0,0,0)}}
@@ -135,5 +136,6 @@
   <script src="/v32-bookings.js?v=3.2.2-r13"></script>
   <script src="/v322-nav.js?v=4.0.0-r14"></script>
   <script id="nestV4LidlJs" src="/v4-lidl.js?v=4.0.0-r14"></script>
+  <script src="/v41-lidl-auto.js?v=4.1.0-r15"></script>
 </body>
 </html>
