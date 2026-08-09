@@ -35,5 +35,38 @@
   <script src="/app-v3.js?v=3.1.0"></script>
   <script src="/settings-v3.js?v=3.1.0"></script>
   <script src="/v301-shopping.js?v=3.1.0"></script>
+  <script>
+  (function(root){
+    'use strict'
+    function tasksActive(){return document.documentElement.dataset.v31Tasks==='on'||document.querySelector('.v3-main')?.dataset.page==='tasks'}
+    function toast(message,bad){var t=document.getElementById('toast');if(!t)return;t.textContent=message;t.classList.toggle('bad',!!bad);t.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(function(){t.classList.remove('show','bad')},2600)}
+    function saveTask(form){
+      var Tasks=root.NestTasksCoreV31,UI=root.NestTasksV31
+      if(!Tasks||!UI)throw new Error('Aufgabenmodul ist nicht bereit')
+      var d=new FormData(form),id=String(d.get('id')||''),title=String(d.get('title')||'').trim(),date=String(d.get('date')||''),time=String(d.get('time')||''),priority=String(d.get('priority')||'normal'),repeat=String(d.get('repeat')||'none'),linkType=String(d.get('linkType')||'none'),linkId=linkType==='savings'?String(d.get('linkId')||''):'',rawReminder=String(d.get('reminderMinutes')||''),reminderMinutes=rawReminder===''?null:Number(rawReminder)
+      if(!title||!date)throw new Error('Bitte Aufgabe und Datum eingeben')
+      var patch={title:title,date:date,time:time,priority:priority,repeat:repeat,linkType:linkType,linkId:linkId,reminderMinutes:reminderMinutes}
+      if(id)Tasks.store.update(id,patch);else Tasks.store.add(patch)
+      var dialog=document.getElementById('v31TaskDialog');if(dialog&&dialog.open)dialog.close()
+      UI.open()
+      toast(id?'Aufgabe gespeichert':'Aufgabe erstellt')
+      if(reminderMinutes!=null&&'Notification' in root&&Notification.permission==='default')Notification.requestPermission().catch(function(){})
+    }
+    root.addEventListener('click',function(e){
+      var taskRoute=e.target.closest&&e.target.closest('[data-v31-route="tasks"]')
+      if(taskRoute){e.preventDefault();e.stopImmediatePropagation();root.NestTasksV31?.open?.();return}
+      var plus=e.target.closest&&e.target.closest('.v3-plus')
+      if(plus&&tasksActive()){e.preventDefault();e.stopImmediatePropagation();root.NestTasksV31?.openForm?.();return}
+      var regular=e.target.closest&&e.target.closest('[data-route]')
+      if(regular&&tasksActive())root.NestTasksV31?.close?.()
+    },true)
+    root.addEventListener('submit',function(e){
+      var form=e.target
+      if(!form||form.id!=='v31TaskForm')return
+      e.preventDefault();e.stopImmediatePropagation()
+      try{saveTask(form)}catch(err){console.error(err);toast(err&&err.message||'Aufgabe konnte nicht gespeichert werden',true)}
+    },true)
+  })(globalThis)
+  </script>
 </body>
 </html>
