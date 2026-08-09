@@ -1,7 +1,7 @@
 {
-  "name":"NEST – Finanzen, Aufgaben & Einkauf",
+  "name":"NEST 3.2 – Finanzen, Aufgaben & Einkauf",
   "short_name":"NEST",
-  "description":"Minimalistischer Finanz-, Aufgaben-, Spar- und Einkaufsplaner mit kontextabhängigem Plus, Erinnerungen und Barcode-Scanner.",
+  "description":"Finanz-, Aufgaben-, Spar- und Einkaufsplaner mit Kategorie-Icons für Buchungen, Erinnerungen und Barcode-Scanner.",
   "id":"/",
   "start_url":"/?source=homescreen",
   "scope":"/",
