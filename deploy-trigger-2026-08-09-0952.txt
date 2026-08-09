@@ -1,1 +1,2 @@
 Trigger Vercel production deployment for NEST v2.1.0 compact savings UI.
+Redeploy requested: 2026-08-09T10:08:00+02:00
