@@ -1,5 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="118" fill="#24211f"/>
-  <path d="M142 348V164c0-13 10-24 24-24h35l110 151V140h59v208h-55L201 194v154h-59Z" fill="#f4f0e9"/>
-  <circle cx="369" cy="141" r="24" fill="#b58a55"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="NEST">
+  <defs>
+    <linearGradient id="bg" x1="72" y1="52" x2="440" y2="464" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#25231f"/>
+      <stop offset="1" stop-color="#11110f"/>
+    </linearGradient>
+    <linearGradient id="mark" x1="145" y1="150" x2="370" y2="364" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fffdf8"/>
+      <stop offset="1" stop-color="#e9e3d9"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <rect x="18" y="18" width="476" height="476" rx="96" fill="none" stroke="#ffffff" stroke-opacity=".055" stroke-width="2"/>
+  <path d="M151 352V160" stroke="url(#mark)" stroke-width="58" stroke-linecap="round"/>
+  <path d="M361 352V160" stroke="url(#mark)" stroke-width="58" stroke-linecap="round"/>
+  <path d="M176 177L337 335" stroke="url(#mark)" stroke-width="58" stroke-linecap="round"/>
+  <circle cx="380" cy="132" r="18" fill="#C49A62"/>
 </svg>
