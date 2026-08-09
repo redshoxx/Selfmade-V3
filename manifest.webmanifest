@@ -1,7 +1,7 @@
 {
-  "name":"NEST 4.2 – Finanzen, Aufgaben & Einkauf",
+  "name":"NEST 4.3 – Finanzen, Aufgaben & Einkauf",
   "short_name":"NEST",
-  "description":"Finanz-, Aufgaben-, Spar- und Einkaufsplaner mit Lidl-Flugblättern, Kategorie-Icons, wiederkehrenden Buchungen und Barcode-Scanner.",
+  "description":"Finanz-, Aufgaben-, Spar- und Einkaufsplaner mit Lidl Liebenau Angeboten, Flugblättern, Kategorie-Icons, wiederkehrenden Buchungen und Barcode-Scanner.",
   "id":"/",
   "start_url":"/?source=homescreen",
   "scope":"/",
