@@ -1,0 +1,3 @@
+Trigger Vercel production deployment for NEST v3.1.0.
+Requested: 2026-08-09T17:14:00+02:00
+Includes Aufgaben, Erinnerungen, Wiederholungen, Verknüpfungen, Swipe-Gesten, v3.0.1 Einkauf fixes and regression tests.
