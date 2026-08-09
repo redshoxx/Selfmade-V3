@@ -18,10 +18,10 @@ function clone(v){return JSON.parse(JSON.stringify(v))}
 function clean(v,max){return String(v==null?'':v).replace(/\s+/g,' ').trim().slice(0,max||180)}
 function num(v,d){var n=Number(v);return Number.isFinite(n)?n:(d==null?0:d)}
 function uid(prefix){return(prefix||'task')+'_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,9)}
-function validDate(v){return /^\d{4}-\d{2}-\d{2}$/.test(String(v||''))?String(v):''}
-function validTime(v){return /^([01]\d|2[0-3]):[0-5]\d$/.test(String(v||''))?String(v):''}
 function localDate(d){d=d||new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
-function dateFromLocal(value,time){var parts=String(value||'').split('-').map(Number);if(parts.length!==3||!parts.every(Number.isFinite))return null;var t=validTime(time||'09:00').split(':').map(Number),d=new Date(parts[0],parts[1]-1,parts[2],t[0]||0,t[1]||0,0,0);return Number.isFinite(d.getTime())?d:null}
+function validDate(v){v=String(v||'');if(!/^\d{4}-\d{2}-\d{2}$/.test(v))return'';var p=v.split('-').map(Number),d=new Date(p[0],p[1]-1,p[2],12,0,0,0);return localDate(d)===v?v:''}
+function validTime(v){return /^([01]\d|2[0-3]):[0-5]\d$/.test(String(v||''))?String(v):''}
+function dateFromLocal(value,time){var date=validDate(value);if(!date)return null;var parts=date.split('-').map(Number),t=validTime(time||'09:00').split(':').map(Number),d=new Date(parts[0],parts[1]-1,parts[2],t[0]||0,t[1]||0,0,0);return Number.isFinite(d.getTime())?d:null}
 function addDays(value,days){var d=dateFromLocal(value,'12:00');if(!d)return value;d.setDate(d.getDate()+days);return localDate(d)}
 function nextMonthly(value){var d=dateFromLocal(value,'12:00');if(!d)return value;var day=d.getDate();d.setDate(1);d.setMonth(d.getMonth()+1);var last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();d.setDate(Math.min(day,last));return localDate(d)}
 function nextDate(value,repeat){repeat=String(repeat||'none');if(repeat==='daily')return addDays(value,1);if(repeat==='weekly')return addDays(value,7);if(repeat==='monthly')return nextMonthly(value);return value}
@@ -29,7 +29,7 @@ function hashString(s){var h=2166136261,i;for(i=0;i<s.length;i++){h^=s.charCodeA
 function normalizePriority(v){v=String(v||'normal');return PRIORITIES.indexOf(v)>=0?v:'normal'}
 function normalizeRepeat(v){v=String(v||'none');return REPEATS.indexOf(v)>=0?v:'none'}
 function normalizeLinkType(v){v=String(v||'none');return LINK_TYPES.indexOf(v)>=0?v:'none'}
-function normalizeReminderMinutes(v){if(v==null||v==='')return null;var n=Math.round(num(v,0));return[-1440,-60,-15,0].indexOf(n)>=0?n:null}
+function normalizeReminderMinutes(v){if(v==null||v==='')return null;var raw=Number(v);if(!Number.isFinite(raw))return null;var n=Math.round(raw);return[-1440,-60,-15,0].indexOf(n)>=0?n:null}
 function normalizeTask(x,index){x=x||{};var date=validDate(x.date)||localDate();var completed=Boolean(x.completed);return{id:clean(x.id||uid('task'),90),title:clean(x.title||'Aufgabe',140),date:date,time:validTime(x.time),priority:normalizePriority(x.priority),reminderMinutes:normalizeReminderMinutes(x.reminderMinutes),repeat:normalizeRepeat(x.repeat),linkType:normalizeLinkType(x.linkType),linkId:clean(x.linkId||'',100),completed:completed,completedAt:completed?num(x.completedAt,Date.now()):0,createdAt:num(x.createdAt,Date.now()),updatedAt:num(x.updatedAt,x.createdAt||Date.now()),order:Number.isFinite(Number(x.order))?Number(x.order):num(index,0),seriesId:clean(x.seriesId||x.id||'',90),occurrenceOf:clean(x.occurrenceOf||'',90),remindedAt:num(x.remindedAt,0)}}
 function validState(s){return!!(s&&typeof s==='object'&&!Array.isArray(s)&&Array.isArray(s.tasks))}
 function normalizeState(s){s=s&&typeof s==='object'?s:{};var tasks=Array.isArray(s.tasks)?s.tasks.map(normalizeTask):[];return{version:RELEASE,tasks:tasks,updatedAt:num(s.updatedAt,Date.now())}}
