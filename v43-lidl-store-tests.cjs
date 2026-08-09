@@ -4,6 +4,7 @@ const Api=require('./api/lidl-store-offers.js')._test
 ok(Api.API_VERSION==='4.3.0','V4.3 Lidl API Version fehlt')
 ok(Api.STORE.address==='Liebenauer Hauptstrasse 164'&&Api.STORE.postalCode==='8041'&&Api.STORE.city==='Graz','Falsche Lidl Stammfiliale')
 ok(Api.STORE.pageUrl.includes('/graz/liebenauer-hauptstrasse-164/'),'Falsche Lidl Filialseite')
+ok(Api.LANDING_URL==='https://www.lidl.at/c/lidl-plus-jede-woche-neu/','Falsche Lidl Angebotszentrale')
 const range=Api.parseRange('gültig ab 10.8. bis 12.8.',new Date('2026-08-10T12:00:00'))
 ok(range.validFrom==='2026-08-10'&&range.validTo==='2026-08-12','Aktueller Lidl Gültigkeitszeitraum wird falsch erkannt')
 const range2=Api.parseRange('Gültig von Do. 13.8. - Sa. 15.8.',new Date('2026-08-10T12:00:00'))
