@@ -25,6 +25,7 @@ function dateFromLocal(value,time){var date=validDate(value);if(!date)return nul
 function addDays(value,days){var d=dateFromLocal(value,'12:00');if(!d)return value;d.setDate(d.getDate()+days);return localDate(d)}
 function nextMonthly(value){var d=dateFromLocal(value,'12:00');if(!d)return value;var day=d.getDate();d.setDate(1);d.setMonth(d.getMonth()+1);var last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();d.setDate(Math.min(day,last));return localDate(d)}
 function nextDate(value,repeat){repeat=String(repeat||'none');if(repeat==='daily')return addDays(value,1);if(repeat==='weekly')return addDays(value,7);if(repeat==='monthly')return nextMonthly(value);return value}
+function bucket(task,today){today=today||localDate();if(task.completed)return'completed';return task.date<=today?'today':'upcoming'}
 function hashString(s){var h=2166136261,i;for(i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return(h>>>0).toString(16).padStart(8,'0')}
 function normalizePriority(v){v=String(v||'normal');return PRIORITIES.indexOf(v)>=0?v:'normal'}
 function normalizeRepeat(v){v=String(v||'none');return REPEATS.indexOf(v)>=0?v:'none'}
@@ -53,7 +54,6 @@ function reorder(ids){ids=Array.isArray(ids)?ids:[];var state=load(),positions=n
 function reminderAt(task){if(!task||task.completed||task.reminderMinutes==null)return null;var d=dateFromLocal(task.date,task.time||'09:00');if(!d)return null;return d.getTime()+task.reminderMinutes*60000}
 function dueReminders(now){now=num(now,Date.now());return load().tasks.filter(function(t){var at=reminderAt(t);return at!=null&&at<=now&&!t.completed&&(!t.remindedAt||t.remindedAt<at)})}
 function markReminded(id,stamp){return update(id,{remindedAt:num(stamp,Date.now())})}
-function bucket(task,today){today=today||localDate();if(task.completed)return'completed';return task.date<=today?'today':'upcoming'}
 function replace(data){if(!validState(data))throw new Error('Ungültige Aufgabendaten');return save(data)}
 function exportData(){return{version:RELEASE,state:load()}}
 function importData(payload){var state=payload&&payload.state?payload.state:payload;return replace(state)}
