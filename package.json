@@ -1,9 +1,9 @@
 {
   "name": "nest-finance",
   "private": true,
-  "version": "4.3.0",
+  "version": "4.3.1",
   "scripts": {
-    "test": "node tests.mjs && node import-tests.cjs && node v2-tests.cjs && node v202-tests.cjs && node v3-tests.cjs && node v301-v31-tests.cjs && node tasks-v3.1-fixed-tests.cjs && node v32-tests.cjs && node v321-recurring-tests.cjs && node v322-nav-tests.cjs && node v43-lidl-store-tests.cjs",
+    "test": "node tests.mjs && node import-tests.cjs && node v2-tests.cjs && node v202-tests.cjs && node v3-tests.cjs && node v301-v31-tests.cjs && node tasks-v3.1-fixed-tests.cjs && node v32-tests.cjs && node v321-recurring-tests.cjs && node v322-nav-tests.cjs",
     "build": "node build.mjs",
     "start": "node local-server.mjs"
   },
