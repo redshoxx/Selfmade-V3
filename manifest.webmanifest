@@ -1,7 +1,7 @@
 {
-  "name":"NEST 3.2 – Finanzen, Aufgaben & Einkauf",
+  "name":"NEST 4 – Finanzen, Aufgaben & Einkauf",
   "short_name":"NEST",
-  "description":"Finanz-, Aufgaben-, Spar- und Einkaufsplaner mit Kategorie-Icons für Buchungen, Erinnerungen und Barcode-Scanner.",
+  "description":"Finanz-, Aufgaben-, Spar- und Einkaufsplaner mit Lidl-Angebotsintelligenz, Kategorie-Icons, wiederkehrenden Buchungen und Barcode-Scanner.",
   "id":"/",
   "start_url":"/?source=homescreen",
   "scope":"/",
