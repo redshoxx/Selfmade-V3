@@ -1,10 +1,12 @@
 import {mkdir,rm,copyFile,readFile} from 'node:fs/promises'
 import {spawnSync} from 'node:child_process'
 await rm('dist',{recursive:true,force:true});await mkdir('dist',{recursive:true})
-for(const f of ['index.html','styles.css','nav.css','settings-v1.3.css','v2.css','v2-nav-center.css','app.js','import.js','settings-v1.3.js','v2-core.js','v2-ui.js','v2-nav-center.js','manifest.webmanifest','sw.js','icon.svg'])await copyFile(f,`dist/${f}`)
-for(const f of ['app.js','import.js','settings-v1.3.js','v2-core.js','v2-ui.js','v2-nav-center.js','sw.js','api/import-transaction.js']){const r=spawnSync(process.execPath,['--check',f],{encoding:'utf8'});if(r.status!==0)throw new Error(`${f}: ${r.stderr||r.stdout}`)}
-for(const test of ['tests.mjs','import-tests.cjs','v2-tests.cjs']){const r=spawnSync(process.execPath,[test],{encoding:'utf8'});if(r.status!==0)throw new Error(r.stderr||r.stdout);console.log(r.stdout.trim())}
-const all=(await Promise.all(['index.html','app.js','import.js','settings-v1.3.js','v2-core.js','v2-ui.js','v2-nav-center.js','manifest.webmanifest','sw.js'].map(f=>readFile(f,'utf8')))).join('\n')
-for(const token of ['2.0.1','NEST','Eigene Challenge','Einzahlung','Auszahlung','Sparziele','selfmade-save-v1','nest-audit-v2','NestV2Core','NestV2UI','nestImport','v2-center-add','Neue Buchung','<svg','transactions','challenges'])if(!all.includes(token))throw new Error(`QA fehlt: ${token}`)
+const active=['index.html','styles.css','nav.css','settings-v1.3.css','v2.css','v2-nav-center.css','v202.css','v202-core.js','v202-wallet-guard.js','import-v2.0.2.js','app-v2.0.2.js','settings-v2.0.2.js','manifest.webmanifest','sw.js','icon.svg']
+for(const f of active)await copyFile(f,`dist/${f}`)
+for(const f of ['v202-core.js','v202-wallet-guard.js','import-v2.0.2.js','app-v2.0.2.js','settings-v2.0.2.js','sw.js','api/import-transaction.js']){const r=spawnSync(process.execPath,['--check',f],{encoding:'utf8'});if(r.status!==0)throw new Error(`${f}: ${r.stderr||r.stdout}`)}
+for(const test of ['tests.mjs','import-tests.cjs','v2-tests.cjs','v202-tests.cjs']){const r=spawnSync(process.execPath,[test],{encoding:'utf8'});if(r.status!==0)throw new Error(`${test}: ${r.stderr||r.stdout}`);console.log(r.stdout.trim())}
+const all=(await Promise.all(['index.html','v202-core.js','v202-wallet-guard.js','import-v2.0.2.js','app-v2.0.2.js','settings-v2.0.2.js','manifest.webmanifest','sw.js','api/import-transaction.js'].map(f=>readFile(f,'utf8')))).join('\n')
+for(const token of ['2.0.2','selfmade-save-v1','selfmade-save-v1-backup-v202','nest-audit-v2','NestV202','Gespeicherter Wert konnte nicht verifiziert werden','Neue Buchung','<svg','Wallet-Import','Buchungsprotokoll','source:\'wallet\''])if(!all.includes(token))throw new Error(`QA fehlt: ${token}`)
+for(const forbidden of ['<script src="/app.js','<script src="/v2-ui.js','<script src="/settings-v1.3.js','Storage.prototype.setItem'])if(all.includes(forbidden))throw new Error(`Legacy-Runtime aktiv: ${forbidden}`)
 for(const token of ['Steiermärkische','George CSV','PSD2','Automatisch verbinden'])if(all.includes(token))throw new Error(`Bank-Rest gefunden: ${token}`)
-console.log('NEST V2.0.1: Build, SVG-Navigation, zentrale Buchungsaktion, Desktop-Web-App, Wallet-Import und Buchungsprotokoll erfolgreich.')
+console.log('NEST V2.0.2: Persistenz, Backup-Recovery, Wallet, Formulare, Navigation und Audit geprüft.')
