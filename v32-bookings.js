@@ -1,6 +1,6 @@
 (function(root){
 'use strict'
-const RELEASE='3.2.0',Core=root.NestV202
+const RELEASE='3.2.1',Core=root.NestV202,REC_KEY='nest-recurring-v3.2.1'
 const ICONS={
   lebensmittel:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6h2l1.6 8.5h9.8l2-6H6.1"/><circle cx="9.5" cy="19" r="1.2"/><circle cx="17" cy="19" r="1.2"/></svg>',
   wohnen:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 10.5 12 3.8l8.5 6.7V20h-6v-5.5h-5V20h-6z"/></svg>',
@@ -21,44 +21,53 @@ const ICONS={
 const KEY_BY_CATEGORY={
   'Lebensmittel':'lebensmittel','Wohnen':'wohnen','Mobilität':'mobilitaet','Freizeit':'freizeit','Shopping':'shopping','Gesundheit':'gesundheit','Haushalt':'haushalt','Abos & Verträge':'abos','Sparen':'sparen','Sonstiges':'sonstiges','Gehalt':'gehalt','Bonus':'bonus','Verkauf':'verkauf','Rückzahlung':'rueckzahlung','Geschenk':'geschenk'
 }
+const RECURRENCES={
+  monthly:{months:1,label:'Monatlich'},
+  quarterly:{months:3,label:'Vierteljährlich'},
+  semiannual:{months:6,label:'Alle 6 Monate'},
+  yearly:{months:12,label:'Jährlich'}
+}
+let recurringMemory={version:1,schedules:[]},queued=false,lastDetailId=''
+function clone(v){return JSON.parse(JSON.stringify(v))}
 function dateLabel(v){if(!v)return'';const d=new Date(String(v).slice(0,10)+'T12:00:00');return Number.isFinite(d.getTime())?new Intl.DateTimeFormat('de-AT',{day:'2-digit',month:'short'}).format(d):String(v)}
-function release(){
-  document.title='NEST 3.2'
-  document.documentElement.dataset.nestRelease=RELEASE
-  const meta=document.querySelector('meta[name="nest-version"]');if(meta)meta.content=RELEASE
-  const top=document.querySelector('.v3-top>div>span');if(top&&top.textContent!=='NEST · V'+RELEASE)top.textContent='NEST · V'+RELEASE
-}
+function fullDateLabel(v){if(!v)return'';const d=new Date(String(v).slice(0,10)+'T12:00:00');return Number.isFinite(d.getTime())?new Intl.DateTimeFormat('de-AT',{day:'2-digit',month:'long',year:'numeric'}).format(d):String(v)}
+function localDate(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function validDate(v){return /^\d{4}-\d{2}-\d{2}$/.test(String(v||''))}
+function addMonths(start,delta){if(!validDate(start))return'';const [y,m,d]=String(start).split('-').map(Number),first=new Date(Date.UTC(y,m-1+delta,1)),year=first.getUTCFullYear(),month=first.getUTCMonth(),last=new Date(Date.UTC(year,month+1,0)).getUTCDate(),day=Math.min(d,last);return `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`}
+function hash(value){let h=2166136261;const s=String(value||'');for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return(h>>>0).toString(36)}
+function occurrenceId(anchorId,date){return `rec_${hash(anchorId)}_${String(date).replace(/-/g,'')}`}
+function newTxId(){return `tx_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,7)}`}
+function readRecurring(){try{const raw=localStorage.getItem(REC_KEY);if(!raw)return clone(recurringMemory);const parsed=JSON.parse(raw);if(!parsed||!Array.isArray(parsed.schedules))return clone(recurringMemory);recurringMemory={version:1,schedules:parsed.schedules.filter(x=>x&&x.transactionId&&RECURRENCES[x.frequency]&&validDate(x.startDate)).map(x=>({transactionId:String(x.transactionId),frequency:String(x.frequency),startDate:String(x.startDate).slice(0,10),createdAt:Number(x.createdAt)||Date.now(),updatedAt:Number(x.updatedAt)||Date.now()}))};return clone(recurringMemory)}catch(e){console.error('NEST Wiederholungen konnten nicht gelesen werden',e);return clone(recurringMemory)}}
+function writeRecurring(next){const clean={version:1,schedules:Array.isArray(next?.schedules)?next.schedules:[]};recurringMemory=clone(clean);try{localStorage.setItem(REC_KEY,JSON.stringify(clean))}catch(e){console.error('NEST Wiederholungen konnten nicht gespeichert werden',e)}return clone(clean)}
+function scheduleFor(id,store=readRecurring()){return store.schedules.find(x=>String(x.transactionId)===String(id))||null}
+function upsertRecurring(transactionId,frequency,startDate){const store=readRecurring(),now=Date.now(),i=store.schedules.findIndex(x=>String(x.transactionId)===String(transactionId)),item={transactionId:String(transactionId),frequency:String(frequency),startDate:String(startDate).slice(0,10),createdAt:i>=0?store.schedules[i].createdAt:now,updatedAt:now};if(i>=0)store.schedules[i]=item;else store.schedules.push(item);writeRecurring(store);return item}
+function removeRecurring(transactionId){const store=readRecurring(),before=store.schedules.length;store.schedules=store.schedules.filter(x=>String(x.transactionId)!==String(transactionId));if(store.schedules.length!==before)writeRecurring(store)}
+function release(){document.title='NEST 3.2';document.documentElement.dataset.nestRelease=RELEASE;const meta=document.querySelector('meta[name="nest-version"]');if(meta)meta.content=RELEASE;const top=document.querySelector('.v3-top>div>span');if(top&&top.textContent!=='NEST · V'+RELEASE)top.textContent='NEST · V'+RELEASE}
 function fallbackCategory(meta){return String(meta?.textContent||'').split(' · ')[0].trim()||'Sonstiges'}
-function enhanceRow(row,tx){
-  if(!row)return
-  const copy=row.querySelector('.v3-row-copy'),meta=copy?.querySelector('small'),icon=row.querySelector('.v3-row-icon')
-  if(!copy||!meta||!icon)return
-  const category=String(tx?.category||fallbackCategory(meta)),key=KEY_BY_CATEGORY[category]||'sonstiges'
-  row.dataset.v32Category=key
-  row.dataset.v32Ready='1'
-  icon.classList.add('v32-category-icon')
-  if(icon.dataset.v32Icon!==key){icon.innerHTML=ICONS[key]||ICONS.sonstiges;icon.dataset.v32Icon=key}
-  let badge=copy.querySelector('.v32-category-badge')
-  if(!badge){badge=document.createElement('span');badge.className='v32-category-badge';copy.insertBefore(badge,meta)}
-  if(badge.textContent!==category)badge.textContent=category
-  const date=tx?.date?dateLabel(tx.date):String(meta.textContent||'').split(' · ').slice(-1)[0].trim()
-  if(meta.textContent!==date)meta.textContent=date
-}
-let queued=false
-function enhance(){
-  queued=false
-  release()
-  let byId=new Map()
-  try{const s=Core?.loadState?.();byId=new Map((s?.transactions||[]).map(t=>[String(t.id),t]))}catch(e){console.error('NEST 3.2 Buchungsdaten konnten nicht gelesen werden',e)}
-  document.querySelectorAll('.v3-row[data-v3="tx-detail"]').forEach(row=>enhanceRow(row,byId.get(String(row.dataset.id||''))))
-}
+function recurringOccurrenceParent(tx){const m=/^@nest-recurring-occurrence:([^:]+):(\d{4}-\d{2}-\d{2})$/.exec(String(tx?.note||''));if(!m)return null;try{return{parentId:decodeURIComponent(m[1]),date:m[2]}}catch{return{parentId:m[1],date:m[2]}}}
+function enhanceRow(row,tx,recStore){if(!row)return;const copy=row.querySelector('.v3-row-copy'),meta=copy?.querySelector('small'),icon=row.querySelector('.v3-row-icon');if(!copy||!meta||!icon)return;const category=String(tx?.category||fallbackCategory(meta)),key=KEY_BY_CATEGORY[category]||'sonstiges';row.dataset.v32Category=key;row.dataset.v32Ready='1';icon.classList.add('v32-category-icon');if(icon.dataset.v32Icon!==key){icon.innerHTML=ICONS[key]||ICONS.sonstiges;icon.dataset.v32Icon=key}let badge=copy.querySelector('.v32-category-badge');if(!badge){badge=document.createElement('span');badge.className='v32-category-badge';copy.insertBefore(badge,meta)}if(badge.textContent!==category)badge.textContent=category;const baseDate=tx?.date?dateLabel(tx.date):String(meta.textContent||'').split(' · ').slice(-1)[0].trim(),rec=tx?scheduleFor(tx.id,recStore):null,occ=recurringOccurrenceParent(tx);const suffix=rec?` · ↻ ${RECURRENCES[rec.frequency].label}`:occ?' · automatisch':'';if(meta.textContent!==baseDate+suffix)meta.textContent=baseDate+suffix}
+function euro(v){return new Intl.NumberFormat('de-AT',{style:'currency',currency:'EUR'}).format(Number(v)||0)}
+function correctOverviewBalance(state){const box=document.querySelector('.v3-balance');if(!box)return;const today=localDate(),month=today.slice(0,7);let totalIn=0,totalOut=0,monthIn=0,monthOut=0;(state.transactions||[]).forEach(t=>{if(String(t.date||'')>today)return;const amount=Number(t.amount)||0;if(t.type==='income'){totalIn+=amount;if(String(t.date).startsWith(month))monthIn+=amount}else{totalOut+=amount;if(String(t.date).startsWith(month))monthOut+=amount}});const balance=(Number(state.openingBalance)||0)+totalIn-totalOut,net=monthIn-monthOut,strong=box.querySelector(':scope>strong'),vals=box.querySelectorAll('p b');if(strong)strong.textContent=euro(balance);if(vals[0]){vals[0].textContent=(net>=0?'+':'')+euro(net);vals[0].classList.toggle('good',net>=0);vals[0].classList.toggle('bad',net<0)}if(vals[1])vals[1].textContent=euro(monthOut)}
+function enhance(){queued=false;release();let state={transactions:[]};try{state=Core?.loadState?.()||state}catch(e){console.error('NEST 3.2 Buchungsdaten konnten nicht gelesen werden',e)}const byId=new Map((state.transactions||[]).map(t=>[String(t.id),t])),recStore=readRecurring();document.querySelectorAll('.v3-row[data-v3="tx-detail"]').forEach(row=>enhanceRow(row,byId.get(String(row.dataset.id||'')),recStore));correctOverviewBalance(state);enhanceTxForm();if(lastDetailId)enhanceDetail(lastDetailId)}
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(enhance)}
-const app=document.getElementById('app')
+function recurrenceOptions(value){return `<option value="none" ${!RECURRENCES[value]?'selected':''}>Keine Wiederholung</option><option value="monthly" ${value==='monthly'?'selected':''}>Monatlich</option><option value="quarterly" ${value==='quarterly'?'selected':''}>Vierteljährlich · alle 3 Monate</option><option value="semiannual" ${value==='semiannual'?'selected':''}>Alle 6 Monate</option><option value="yearly" ${value==='yearly'?'selected':''}>Jährlich</option>`}
+function enhanceTxForm(){const form=document.querySelector('#sheet form[data-form="tx"]');if(!form||form.dataset.v321RecurringReady==='1')return;const idInput=form.elements.id,dateInput=form.elements.date;if(!idInput||!dateInput)return;const rec=scheduleFor(String(idInput.value||'')),section=document.createElement('section');section.className='v321-recurring';section.innerHTML=`<label class="v3-field"><span>Wiederholung</span><select name="recurrence">${recurrenceOptions(rec?.frequency||'none')}</select></label><div class="v321-recurring-preview" hidden></div>`;dateInput.closest('.v3-field')?.insertAdjacentElement('afterend',section);form.dataset.v321RecurringReady='1';const select=section.querySelector('select'),preview=section.querySelector('.v321-recurring-preview'),dateTitle=dateInput.closest('.v3-field')?.querySelector(':scope>span');function refresh(){const frequency=select.value,cfg=RECURRENCES[frequency],start=String(dateInput.value||'');if(cfg&&!idInput.value)idInput.value=newTxId();if(dateTitle)dateTitle.textContent=cfg?'Startdatum':'Datum';if(!cfg||!validDate(start)){preview.hidden=true;preview.textContent='';return}const next=addMonths(start,cfg.months);preview.hidden=false;preview.innerHTML=`<span>↻ ${cfg.label}</span><b>Nächste Buchung: ${fullDateLabel(next)}</b>`}select.addEventListener('change',refresh);dateInput.addEventListener('change',refresh);dateInput.addEventListener('input',refresh);refresh()}
+function enhanceDetail(id){const detail=document.querySelector('#sheet .v3-detail-sheet');if(!detail)return;const state=Core?.loadState?.(),tx=(state?.transactions||[]).find(x=>String(x.id)===String(id));if(!tx)return;const rec=scheduleFor(tx.id),occ=recurringOccurrenceParent(tx),meta=detail.querySelector('.v3-detail-meta');if(!meta)return;let line=meta.querySelector('[data-v321-detail]');if(!rec&&!occ){line?.remove();return}if(!line){line=document.createElement('p');line.dataset.v321Detail='1';meta.appendChild(line)}if(rec){const cfg=RECURRENCES[rec.frequency],next=nextRecurringDate(rec,localDate());line.innerHTML=`<span>Wiederholung</span><b>${cfg.label}${next?' · '+dateLabel(next):''}</b>`}else{line.innerHTML='<span>Wiederholung</span><b>Automatisch gebucht</b>'}}
+function nextRecurringDate(rec,afterDate){const cfg=RECURRENCES[rec?.frequency];if(!cfg||!validDate(rec.startDate))return'';for(let i=1;i<=480;i++){const date=addMonths(rec.startDate,cfg.months*i);if(date>afterDate)return date}return''}
+function processRecurring(renderAfter=true){if(!Core?.loadState||!Core?.saveState)return 0;const recStore=readRecurring(),state=Core.loadState(),today=localDate(),byId=new Map((state.transactions||[]).map(t=>[String(t.id),t])),existing=new Set((state.transactions||[]).map(t=>String(t.id))),kept=[];let created=0,storeChanged=false;for(const rec of recStore.schedules){const anchor=byId.get(String(rec.transactionId)),cfg=RECURRENCES[rec.frequency];if(!anchor||!cfg||!validDate(rec.startDate)){storeChanged=true;continue}kept.push(rec);for(let i=1;i<=480;i++){const due=addMonths(rec.startDate,cfg.months*i);if(!due||due>today)break;const id=occurrenceId(anchor.id,due);if(existing.has(id))continue;const now=Date.now()+created;state.transactions.push({id,type:anchor.type,amount:Number(anchor.amount)||0,title:anchor.title,category:anchor.category,date:due,note:`@nest-recurring-occurrence:${encodeURIComponent(anchor.id)}:${due}`,createdAt:now,updatedAt:now,source:'system'});existing.add(id);created++}}if(storeChanged)writeRecurring({version:1,schedules:kept});if(created){Core.saveState(state,{method:'system'});if(renderAfter)root.NestAppV3?.render?.(false);schedule()}return created}
+function submittedTx(form){const d=new FormData(form),id=String(d.get('id')||''),frequency=String(d.get('recurrence')||'none'),startDate=String(d.get('date')||''),expected={type:d.get('type')==='income'?'income':'expense',amount:Number(d.get('amount')),title:String(d.get('title')||'').trim(),category:String(d.get('category')||'Sonstiges'),date:startDate};return{id,frequency,startDate,expected}}
+function transactionMatches(tx,expected){return !!(tx&&tx.type===expected.type&&Number(tx.amount)===Number(expected.amount)&&String(tx.title)===expected.title&&String(tx.category)===expected.category&&String(tx.date)===expected.date)}
+const app=document.getElementById('app'),sheet=document.getElementById('sheet')
 if(app)new MutationObserver(schedule).observe(app,{childList:true})
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule()
-root.addEventListener('pageshow',schedule)
+if(sheet)new MutationObserver(()=>requestAnimationFrame(enhanceTxForm)).observe(sheet,{childList:true})
+document.addEventListener('click',e=>{const row=e.target.closest?.('[data-v3="tx-detail"]');if(row){lastDetailId=String(row.dataset.id||'');setTimeout(()=>enhanceDetail(lastDetailId),0)}},true)
+document.addEventListener('submit',e=>{const form=e.target?.closest?.('#sheet form[data-form="tx"]');if(!form)return;const data=submittedTx(form);setTimeout(()=>{const state=Core.loadState(),tx=(state.transactions||[]).find(x=>String(x.id)===data.id);if(!transactionMatches(tx,data.expected))return;if(RECURRENCES[data.frequency])upsertRecurring(tx.id,data.frequency,data.startDate);else removeRecurring(tx.id);processRecurring(false);root.NestAppV3?.render?.(false);schedule()},0)},true)
+root.addEventListener('storage',e=>{if(e.key===REC_KEY||e.key===Core?.CORE_KEY){processRecurring(false);schedule()}})
+root.addEventListener('pageshow',()=>{processRecurring(false);schedule()})
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){processRecurring(false);schedule()}})
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{processRecurring(false);schedule()},{once:true});else{processRecurring(false);schedule()}
 root.addEventListener('load',schedule,{once:true})
-setTimeout(schedule,120)
-setTimeout(schedule,600)
-root.NestBookingsV32={RELEASE,enhance,schedule}
+setTimeout(schedule,120);setTimeout(schedule,600);setInterval(()=>{if(document.visibilityState==='visible')processRecurring(true)},60*60*1000)
+root.NestRecurringV321={RELEASE,KEY:REC_KEY,load:readRecurring,save:writeRecurring,remove:removeRecurring,processDue:processRecurring,exportData:()=>readRecurring(),importData:data=>writeRecurring(data&&Array.isArray(data.schedules)?data:{version:1,schedules:[]}),reset:()=>{recurringMemory={version:1,schedules:[]};try{localStorage.removeItem(REC_KEY)}catch{}},status:()=>({available:true,count:readRecurring().schedules.length})}
+root.NestBookingsV32={RELEASE,enhance,schedule,processRecurring}
 })(globalThis)
