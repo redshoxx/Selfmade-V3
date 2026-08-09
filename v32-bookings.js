@@ -1,6 +1,6 @@
 (function(root){
 'use strict'
-const RELEASE='3.2.0'
+const RELEASE='3.2.0',Core=root.NestV202
 const ICONS={
   lebensmittel:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 6h2l1.6 8.5h9.8l2-6H6.1"/><circle cx="9.5" cy="19" r="1.2"/><circle cx="17" cy="19" r="1.2"/></svg>',
   wohnen:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 10.5 12 3.8l8.5 6.7V20h-6v-5.5h-5V20h-6z"/></svg>',
@@ -21,36 +21,44 @@ const ICONS={
 const KEY_BY_CATEGORY={
   'Lebensmittel':'lebensmittel','Wohnen':'wohnen','Mobilität':'mobilitaet','Freizeit':'freizeit','Shopping':'shopping','Gesundheit':'gesundheit','Haushalt':'haushalt','Abos & Verträge':'abos','Sparen':'sparen','Sonstiges':'sonstiges','Gehalt':'gehalt','Bonus':'bonus','Verkauf':'verkauf','Rückzahlung':'rueckzahlung','Geschenk':'geschenk'
 }
-function setText(el,value){if(el&&el.textContent!==value)el.textContent=value}
+function dateLabel(v){if(!v)return'';const d=new Date(String(v).slice(0,10)+'T12:00:00');return Number.isFinite(d.getTime())?new Intl.DateTimeFormat('de-AT',{day:'2-digit',month:'short'}).format(d):String(v)}
 function release(){
   document.title='NEST 3.2'
   document.documentElement.dataset.nestRelease=RELEASE
-  const meta=document.querySelector('meta[name="nest-version"]');if(meta&&meta.content!==RELEASE)meta.content=RELEASE
-  const top=document.querySelector('.v3-top>div>span');if(top)setText(top,'NEST · V'+RELEASE)
+  const meta=document.querySelector('meta[name="nest-version"]');if(meta)meta.content=RELEASE
+  const top=document.querySelector('.v3-top>div>span');if(top&&top.textContent!=='NEST · V'+RELEASE)top.textContent='NEST · V'+RELEASE
 }
-function enhanceRow(row){
-  if(!row||row.dataset.v32Ready==='1')return
+function fallbackCategory(meta){return String(meta?.textContent||'').split(' · ')[0].trim()||'Sonstiges'}
+function enhanceRow(row,tx){
+  if(!row)return
   const copy=row.querySelector('.v3-row-copy'),meta=copy?.querySelector('small'),icon=row.querySelector('.v3-row-icon')
   if(!copy||!meta||!icon)return
-  const parts=String(meta.textContent||'').split(' · '),category=(parts.shift()||'Sonstiges').trim(),date=parts.join(' · ').trim(),key=KEY_BY_CATEGORY[category]||'sonstiges'
+  const category=String(tx?.category||fallbackCategory(meta)),key=KEY_BY_CATEGORY[category]||'sonstiges'
   row.dataset.v32Category=key
   row.dataset.v32Ready='1'
   icon.classList.add('v32-category-icon')
-  icon.innerHTML=ICONS[key]||ICONS.sonstiges
+  if(icon.dataset.v32Icon!==key){icon.innerHTML=ICONS[key]||ICONS.sonstiges;icon.dataset.v32Icon=key}
   let badge=copy.querySelector('.v32-category-badge')
   if(!badge){badge=document.createElement('span');badge.className='v32-category-badge';copy.insertBefore(badge,meta)}
-  badge.textContent=category
-  meta.textContent=date
+  if(badge.textContent!==category)badge.textContent=category
+  const date=tx?.date?dateLabel(tx.date):String(meta.textContent||'').split(' · ').slice(-1)[0].trim()
+  if(meta.textContent!==date)meta.textContent=date
 }
 let queued=false
 function enhance(){
   queued=false
   release()
-  document.querySelectorAll('.v3-row[data-v3="tx-detail"]').forEach(enhanceRow)
+  let byId=new Map()
+  try{const s=Core?.loadState?.();byId=new Map((s?.transactions||[]).map(t=>[String(t.id),t]))}catch(e){console.error('NEST 3.2 Buchungsdaten konnten nicht gelesen werden',e)}
+  document.querySelectorAll('.v3-row[data-v3="tx-detail"]').forEach(row=>enhanceRow(row,byId.get(String(row.dataset.id||''))))
 }
-function schedule(){if(queued)return;queued=true;queueMicrotask(enhance)}
+function schedule(){if(queued)return;queued=true;requestAnimationFrame(enhance)}
 const app=document.getElementById('app')
-if(app)new MutationObserver(schedule).observe(app,{childList:true,subtree:true})
+if(app)new MutationObserver(schedule).observe(app,{childList:true})
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule()
-root.NestBookingsV32={RELEASE,enhance}
+root.addEventListener('pageshow',schedule)
+root.addEventListener('load',schedule,{once:true})
+setTimeout(schedule,120)
+setTimeout(schedule,600)
+root.NestBookingsV32={RELEASE,enhance,schedule}
 })(globalThis)
