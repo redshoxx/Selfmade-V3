@@ -10,6 +10,9 @@ html[data-density=compact] .row{min-height:58px;padding-block:8px}
 html[data-text-size=large] .row-main strong{font-size:15px}
 html[data-text-size=large] .row-main small{font-size:12px}
 html[data-privacy=on] .hero strong,html[data-privacy=on] .hero b,html[data-privacy=on] .amount,html[data-privacy=on] .goal p,html[data-privacy=on] .challenge .meta,html[data-privacy=on] .v2-detail-amount strong,html[data-privacy=on] .v2-audit-row>b{filter:blur(7px);user-select:none}
+.nest-boot-error{gap:10px;text-align:center;padding-inline:24px}
+.nest-boot-error small{display:block;max-width:520px;color:var(--muted);font-size:11px;line-height:1.45;overflow-wrap:anywhere}
+.nest-boot-error button{margin-top:8px;min-width:150px;min-height:46px;padding:0 18px;border-radius:14px;background:var(--text);color:var(--bg);font-weight:800}
 @media(min-width:900px){
   #settings202{width:min(760px,calc(100% - 60px));max-width:760px;max-height:88dvh;margin:auto;border-radius:28px}
   #settings202 .s13-shell{max-height:88dvh}
