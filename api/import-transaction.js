@@ -18,7 +18,6 @@ function json(res, status, body) {
   res.setHeader('Cache-Control', 'no-store')
   return res.json(body)
 }
-
 function readBody(req) {
   if (req.body && typeof req.body === 'object') return req.body
   if (typeof req.body === 'string' && req.body.trim()) {
@@ -26,26 +25,32 @@ function readBody(req) {
   }
   return req.body == null ? {} : null
 }
-
 function cleanText(value, max = 180) {
   return String(value == null ? '' : value).replace(/\s+/g, ' ').trim().slice(0, max)
 }
-
+function validCalendarDate(year, month, day) {
+  const d = new Date(Date.UTC(year, month - 1, day))
+  return d.getUTCFullYear() === year && d.getUTCMonth() === month - 1 && d.getUTCDate() === day
+}
 function normalizeDate(value) {
   const raw = cleanText(value, 64)
   if (!raw) return new Date().toISOString().slice(0, 10)
+  const calendar = raw.match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (calendar) {
+    const year = Number(calendar[1]), month = Number(calendar[2]), day = Number(calendar[3])
+    if (!validCalendarDate(year, month, day)) return null
+    return `${calendar[1]}-${calendar[2]}-${calendar[3]}`
+  }
   const parsed = new Date(raw)
   if (!Number.isFinite(parsed.getTime())) return null
   return parsed.toISOString().slice(0, 10)
 }
-
 function inferCategory(title, requested) {
   const explicit = cleanText(requested, 50)
   if (explicit) return explicit
   for (const [pattern, category] of CATEGORY_RULES) if (pattern.test(title)) return category
   return 'Sonstiges'
 }
-
 function stableImportId(input) {
   const supplied = cleanText(input.transactionId || input.idempotencyKey, 120)
   if (supplied) return `imp_${crypto.createHash('sha256').update(supplied).digest('hex').slice(0, 24)}`
@@ -53,11 +58,9 @@ function stableImportId(input) {
   const canonical = [input.type, input.amount, input.title, occurredAt, input.note].join('|')
   return `imp_${crypto.createHash('sha256').update(canonical).digest('hex').slice(0, 24)}`
 }
-
 function encodePayload(payload) {
   return Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url')
 }
-
 function appOrigin(req) {
   const proto = cleanText(req.headers['x-forwarded-proto'] || 'https', 10).split(',')[0]
   const host = cleanText(req.headers['x-forwarded-host'] || req.headers.host, 200).split(',')[0]
@@ -65,73 +68,35 @@ function appOrigin(req) {
 }
 
 module.exports = function handler(req, res) {
-  if (req.method === 'GET') {
-    return json(res, 200, {
-      ok: true,
-      endpoint: '/api/import-transaction',
-      method: 'POST',
-      auth: 'Authorization: Bearer <SELFMADE_IMPORT_TOKEN>'
-    })
-  }
-
+  if (req.method === 'GET') return json(res, 200, {ok:true,endpoint:'/api/import-transaction',method:'POST',auth:'Authorization: Bearer <SELFMADE_IMPORT_TOKEN>'})
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'GET, POST')
     return json(res, 405, { ok: false, error: 'method_not_allowed' })
   }
-
   const secret = process.env.SELFMADE_IMPORT_TOKEN
   if (!secret) return json(res, 503, { ok: false, error: 'import_not_configured' })
-
   const authorization = cleanText(req.headers.authorization, 500)
   const expected = `Bearer ${secret}`
-  const authBuffer = Buffer.from(authorization)
-  const expectedBuffer = Buffer.from(expected)
+  const authBuffer = Buffer.from(authorization), expectedBuffer = Buffer.from(expected)
   const authenticated = authBuffer.length === expectedBuffer.length && crypto.timingSafeEqual(authBuffer, expectedBuffer)
   if (!authenticated) return json(res, 401, { ok: false, error: 'unauthorized' })
-
   const body = readBody(req)
   if (!body) return json(res, 400, { ok: false, error: 'invalid_json' })
-
   const amount = Number(body.amount)
-  if (!Number.isFinite(amount) || amount <= 0 || amount > MAX_AMOUNT) {
-    return json(res, 400, { ok: false, error: 'invalid_amount' })
-  }
-
+  if (!Number.isFinite(amount) || amount <= 0 || amount > MAX_AMOUNT) return json(res, 400, { ok: false, error: 'invalid_amount' })
   const type = ALLOWED_TYPES.has(body.type) ? body.type : 'expense'
   const title = cleanText(body.merchant || body.title || body.description, 80)
   if (!title) return json(res, 400, { ok: false, error: 'missing_merchant' })
-
   const date = normalizeDate(body.occurredAt || body.timestamp || body.date)
   if (!date) return json(res, 400, { ok: false, error: 'invalid_date' })
-
   const note = cleanText(body.note || (body.source ? `Import: ${body.source}` : 'Apple Wallet Import'), 180)
   const category = inferCategory(title, body.category)
-  const id = stableImportId({
-    transactionId: body.transactionId,
-    idempotencyKey: req.headers['x-idempotency-key'],
-    occurredAt: body.occurredAt || body.timestamp || body.date,
-    type,
-    amount: Math.round(amount * 100) / 100,
-    title,
-    note
-  })
-
-  const transaction = {
-    id,
-    type,
-    amount: Math.round(amount * 100) / 100,
-    title,
-    category,
-    date,
-    note,
-    createdAt: Date.now()
-  }
-
+  const id = stableImportId({transactionId:body.transactionId,idempotencyKey:req.headers['x-idempotency-key'],occurredAt:body.occurredAt||body.timestamp||body.date,type,amount:Math.round(amount*100)/100,title,note})
+  const transaction = {id,type,amount:Math.round(amount*100)/100,title,category,date,note,createdAt:Date.now(),updatedAt:Date.now(),source:'wallet'}
   const token = encodePayload({ version: 1, transaction })
   const origin = appOrigin(req)
   const importUrl = `${origin || ''}/?nestImport=${encodeURIComponent(token)}`
-
   return json(res, 200, { ok: true, importUrl, transaction })
 }
 
-module.exports._test = { cleanText, normalizeDate, inferCategory, stableImportId, encodePayload }
+module.exports._test = { cleanText, normalizeDate, inferCategory, stableImportId, encodePayload, validCalendarDate }
