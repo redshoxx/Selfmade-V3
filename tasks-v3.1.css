@@ -79,3 +79,14 @@
 }
 @media(prefers-reduced-motion:reduce){.v31-task-content{transition:none!important}}
 html[data-reduce-motion=on] .v31-task-content{transition:none!important}
+
+/* NEST r8 – content-first: empty sections stay invisible */
+.v31-head{display:none!important}
+.v31-task-empty{display:none!important}
+.v31-task-section:not(:has(.v31-task-row)){display:none!important}
+.v31-task-section:has(.v31-task-row){margin-top:14px}
+.v3-main .v3-empty{display:none!important}
+.v3-main .v3-section:has(.v3-empty){display:none!important}
+.v3-main[data-page="shopping"] .v3-empty-page{display:none!important}
+.v3-main[data-page="shopping"]:has(.v3-empty-page):not(:has(.v3-done)) .v3-shop-head{display:none!important}
+.v3-main[data-page="savings"] .v3-section:has(.v3-empty-page){display:none!important}
