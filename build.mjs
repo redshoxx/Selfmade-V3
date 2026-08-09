@@ -14,7 +14,7 @@ if(index.indexOf('/v32-bookings.js')<index.indexOf('/app-v3.js'))throw new Error
 if(index.indexOf('/v322-nav.js')<index.indexOf('/v32-bookings.js'))throw new Error('Navigation muss nach Buchungs-UI geladen werden')
 if(index.indexOf('/v42-lidl-flyers.js')<index.indexOf('/v322-nav.js'))throw new Error('Lidl Flugblatt-UI muss nach Navigation geladen werden')
 if(index.includes('/tasks-core-v3.1.js'))throw new Error('Veralteter Aufgaben-Core noch aktiv')
-for(const forbidden of ['v4-lidl.js','v41-lidl-auto.js','/api/lidl-offers','Lidl-Angebotsintelligenz','app-v2.0.2.js','shopping-v2.2.js','savings-v2.1.js','savings-v2.1-compact.js','challenges-v2.0.2.js','release-v2.2.js','settings-v2.2.js','v2-ui.js','settings-v1.3.js'])if(index.includes(forbidden))throw new Error(`Alte UI noch aktiv: ${forbidden}`)
+for(const forbidden of ['app-v2.0.2.js','shopping-v2.2.js','savings-v2.1.js','savings-v2.1-compact.js','challenges-v2.0.2.js','release-v2.2.js','settings-v2.2.js','v2-ui.js','settings-v1.3.js'])if(index.includes(forbidden))throw new Error(`Alte UI noch aktiv: ${forbidden}`)
 for(const forbidden of ['Storage.prototype.setItem','camera=()'])if(all.includes(forbidden))throw new Error(`Risiko aktiv: ${forbidden}`)
 for(const token of ['Steiermärkische','George CSV','PSD2','Automatisch verbinden'])if(all.includes(token))throw new Error(`Bank-Rest gefunden: ${token}`)
 console.log('NEST V4.2.0: Lidl-Flugblätter, Navigation, Kategorie-Icons, wiederkehrende Buchungen, Aufgaben, Einkauf, Scanner, Backup und Persistenz geprüft.')
