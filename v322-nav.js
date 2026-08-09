@@ -1,9 +1,9 @@
 (function(root){
 'use strict'
-const RELEASE='4.2.0'
+const RELEASE='4.3.0'
 const HOME='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 10.5 12 3.5l8.5 7v9a1 1 0 0 1-1 1h-5v-6h-5v6h-5a1 1 0 0 1-1-1z"/></svg>'
 let queued=false
-function release(){document.title='NEST 4.2';document.documentElement.dataset.nestRelease=RELEASE;const meta=document.querySelector('meta[name="nest-version"]');if(meta)meta.content=RELEASE;const top=document.querySelector('.v3-top>div>span');if(top&&top.textContent!=='NEST · V'+RELEASE)top.textContent='NEST · V'+RELEASE}
+function release(){document.title='NEST 4.3';document.documentElement.dataset.nestRelease=RELEASE;const meta=document.querySelector('meta[name="nest-version"]');if(meta)meta.content=RELEASE;const top=document.querySelector('.v3-top>div>span');if(top&&top.textContent!=='NEST · V'+RELEASE)top.textContent='NEST · V'+RELEASE}
 function injectStyle(){if(document.getElementById('v322NavStyle'))return;const style=document.createElement('style');style.id='v322NavStyle';style.textContent=`
 .v322-top-actions{display:flex;align-items:center;gap:7px;flex:0 0 auto}
 .v322-home-btn,.v322-top-actions .v3-icon-btn{width:40px!important;height:40px!important;border:1px solid var(--line)!important;border-radius:13px!important;background:var(--surface)!important;color:var(--text)!important;display:grid!important;place-items:center!important;box-shadow:0 5px 16px rgba(20,18,15,.05)!important}
