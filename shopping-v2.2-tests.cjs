@@ -1,0 +1,20 @@
+const assert=require('node:assert/strict')
+const C=require('./shopping-core-v2.2.js')
+const P=require('./api/product-lookup.js')._test
+class MemoryStorage{constructor(){this.map=new Map();this.fail=false}getItem(k){return this.map.has(k)?this.map.get(k):null}setItem(k,v){if(this.fail)throw new Error('write blocked');this.map.set(k,String(v))}removeItem(k){this.map.delete(k)}}
+const storage=new MemoryStorage(),store=C.createStore(storage)
+assert.equal(C.RELEASE,'2.2.0')
+let state=store.load();assert.deepEqual(state.items,[])
+let r=store.addManual('Milch',2);assert.equal(r.item.name,'Milch');assert.equal(store.load().items[0].count,2)
+const product={code:'3017624010701',name:'Test Produkt',brand:'Marke',quantity:'500 g',nutrition:{energyKcal:539,fat:30.9,saturatedFat:10.6,carbs:57.5,sugars:56.3,protein:6.3,salt:.107,fiber:3.4},nutriscoreGrade:'e'}
+r=store.addProduct(product,1);assert.equal(r.merged,false);assert.equal(store.load().items[0].product.nutrition.energyKcal,539)
+r=store.addProduct(product,2);assert.equal(r.merged,true);assert.equal(store.load().items[0].count,3)
+const id=store.load().items[0].id;store.toggle(id);assert.equal(store.load().items.find(x=>x.id===id).checked,true);store.setCount(id,4);assert.equal(store.load().items.find(x=>x.id===id).count,4)
+const before=store.load();storage.setItem(store.STORE_KEY,'{broken');const recovered=store.load();assert.equal(recovered.items.length,before.items.length);assert.equal(recovered.items.find(x=>x.id===id).count,4)
+const exported=store.exportData();store.clearChecked();store.importData(exported);assert.equal(store.load().items.length,before.items.length)
+const stable=store.load();storage.fail=true;assert.throws(()=>store.save({...stable,items:[]}),/write blocked|verifiziert/);storage.fail=false;assert.equal(store.load().items.length,stable.items.length)
+store.remove(id);assert.ok(!store.load().items.some(x=>x.id===id));store.reset();assert.equal(storage.getItem(store.STORE_KEY),null);assert.equal(storage.getItem(store.BACKUP_KEY),null)
+assert.equal(P.normalizeBarcode('3017 6240 10701'),'3017624010701');assert.equal(P.normalizeBarcode('abc'),'');assert.equal(P.normalizeBarcode('123456'),'')
+const mapped=P.mapProduct({code:'3017624010701',product_name:'Nut Test',brands:'Brand',quantity:'400 g',nutriscore_grade:'b',nutriments:{'energy-kcal_100g':123,'energy-kj_100g':515,fat_100g:4.5,'saturated-fat_100g':1.2,carbohydrates_100g:12,sugars_100g:5,proteins_100g:7,salt_100g:.4,fiber_100g:2.1},allergens_tags:['de:milk','en:tree-nuts']},'3017624010701')
+assert.equal(mapped.nutrition.energyKcal,123);assert.equal(mapped.nutrition.fat,4.5);assert.equal(mapped.nutriscoreGrade,'b');assert.deepEqual(mapped.allergens,['milk','tree nuts']);assert.ok(P.FIELDS.includes('nutriments'))
+console.log('NEST v2.2 shopping persistence, barcode and nutrition regression tests passed.')
