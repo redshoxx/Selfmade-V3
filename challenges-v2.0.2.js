@@ -6,14 +6,23 @@ if(root)root.NestChallengesV202=api
 })(typeof globalThis!=='undefined'?globalThis:this,function(Core){
 'use strict'
 var TEMPLATES=[
-  {key:'52',name:'52-Wochen-Challenge',target:1378,steps:52,kicker:'Klassiker',detail:'Jede Woche einen Schritt weiter – von 1 € bis 52 €.',accent:'52 Wochen'},
-  {key:'30x5',name:'30 Tage × 5 €',target:150,steps:30,kicker:'Kurz & klar',detail:'30 Schritte mit jeweils 5 € – ideal für einen schnellen Start.',accent:'5 € / Tag'},
-  {key:'1000',name:'1.000-€-Challenge',target:1000,steps:20,kicker:'Großes Ziel',detail:'20 übersichtliche Schritte mit jeweils 50 € bis 1.000 €.',accent:'50 € / Schritt'}
+  {key:'7x2',name:'7 Tage × 2 €',target:14,steps:7,stepValue:2,kicker:'Mini Start',detail:'Eine Woche lang täglich 2 € sparen – perfekt zum Ausprobieren.',accent:'2 € / Tag'},
+  {key:'30x1',name:'30 Tage × 1 €',target:30,steps:30,stepValue:1,kicker:'Einfach starten',detail:'30 Tage lang jeden Tag 1 € zur Seite legen.',accent:'1 € / Tag'},
+  {key:'30x5',name:'30 Tage × 5 €',target:150,steps:30,stepValue:5,kicker:'Kurz & klar',detail:'30 Schritte mit jeweils 5 € – ideal für einen schnellen Start.',accent:'5 € / Tag'},
+  {key:'100x2',name:'100 Tage × 2 €',target:200,steps:100,stepValue:2,kicker:'Konsequent',detail:'100 kleine Schritte mit jeweils 2 € – langsam, aber stetig.',accent:'2 € / Tag'},
+  {key:'26x10',name:'26 Wochen × 10 €',target:260,steps:26,stepValue:10,kicker:'Halbes Jahr',detail:'Alle zwei Wochen bzw. 26 Wochen lang jeweils 10 € sparen.',accent:'10 € / Woche'},
+  {key:'12x25',name:'12 Monate × 25 €',target:300,steps:12,stepValue:25,kicker:'Monatlich',detail:'Ein Jahr lang jeden Monat 25 € zurücklegen.',accent:'25 € / Monat'},
+  {key:'365x1',name:'365 Tage × 1 €',target:365,steps:365,stepValue:1,kicker:'Ganzes Jahr',detail:'Jeden Tag 1 € sparen und nach einem Jahr 365 € erreichen.',accent:'1 € / Tag'},
+  {key:'52x10',name:'52 Wochen × 10 €',target:520,steps:52,stepValue:10,kicker:'Wochenplan',detail:'Jede Woche 10 € sparen – gleichmäßig über das ganze Jahr.',accent:'10 € / Woche'},
+  {key:'52',name:'52-Wochen-Challenge',target:1378,steps:52,mode:'incremental',kicker:'Klassiker',detail:'Jede Woche steigt der Betrag: 1 €, 2 €, 3 € … bis 52 €.',accent:'1 € → 52 €'},
+  {key:'600',name:'600-€-Challenge',target:600,steps:12,stepValue:50,kicker:'Urlaub & Wünsche',detail:'12 übersichtliche Schritte mit jeweils 50 € bis 600 €.',accent:'50 € / Schritt'},
+  {key:'1000',name:'1.000-€-Challenge',target:1000,steps:20,stepValue:50,kicker:'Großes Ziel',detail:'20 übersichtliche Schritte mit jeweils 50 € bis 1.000 €.',accent:'50 € / Schritt'},
+  {key:'2000',name:'2.000-€-Challenge',target:2000,steps:40,stepValue:50,kicker:'Ambitioniert',detail:'40 Schritte mit jeweils 50 € für ein größeres Sparziel.',accent:'50 € / Schritt'}
 ]
 var OLD_DEFAULT_IDS={builtin_52:'52',builtin_30x5:'30x5',builtin_1000:'1000'}
 var scheduled=false
 function n(v,d){var x=Number(v);return Number.isFinite(x)?x:(d||0)}
-function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;')}
+function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&#039;')}
 function euro(v){try{return new Intl.NumberFormat('de-AT',{style:'currency',currency:'EUR'}).format(n(v,0))}catch(e){return n(v,0).toFixed(2)+' €'}}
 function findTemplate(key){for(var i=0;i<TEMPLATES.length;i++)if(TEMPLATES[i].key===key)return TEMPLATES[i];return null}
 function exactTemplateMatch(c,t){return !!(c&&t&&String(c.name||'')===t.name&&n(c.target,0)===t.target&&n(c.steps,0)===t.steps)}
@@ -31,10 +40,16 @@ function templateForChallenge(c){
 }
 function progressFor(c){
   var steps=Math.max(1,n(c&&c.steps,1)),completed=Math.max(0,Math.min(steps,n(c&&c.completed,0))),target=Math.max(0,n(c&&c.target,0)),t=templateForChallenge(c),saved,next
-  if(t&&t.key==='52'){saved=completed*(completed+1)/2;next=completed<52?completed+1:0}
-  else if(t&&t.key==='30x5'){saved=completed*5;next=completed<30?5:0}
-  else if(t&&t.key==='1000'){saved=completed*50;next=completed<20?50:0}
-  else{saved=steps?target*(completed/steps):0;next=completed<steps?(steps?target/steps:0):0}
+  if(t&&t.mode==='incremental'){
+    saved=completed*(completed+1)/2
+    next=completed<t.steps?completed+1:0
+  }else if(t&&n(t.stepValue,0)>0){
+    saved=completed*t.stepValue
+    next=completed<t.steps?t.stepValue:0
+  }else{
+    saved=steps?target*(completed/steps):0
+    next=completed<steps?(steps?target/steps:0):0
+  }
   saved=Math.min(target,saved)
   return{completed:completed,steps:steps,target:target,saved:saved,remaining:Math.max(0,target-saved),percent:Math.round((completed/steps)*100),next:next,template:t}
 }
@@ -74,7 +89,7 @@ function templateDialogMarkup(){
     var t=TEMPLATES[i],on=!!active[t.key]
     cards+='<article class="c203-template-card"><div class="c203-template-top"><span>'+esc(t.kicker)+'</span><em>'+esc(t.accent)+'</em></div><h3>'+esc(t.name)+'</h3><p>'+esc(t.detail)+'</p><div class="c203-template-facts"><span><b>'+t.steps+'</b> Schritte</span><span><b>'+esc(euro(t.target))+'</b> Ziel</span></div><button type="button" data-c203-action="add-template" data-template="'+esc(t.key)+'" '+(on?'disabled':'')+'>'+(on?'Bereits aktiv':'Vorlage hinzufügen')+'</button></article>'
   }
-  return '<section class="c203-dialog-shell"><header><div><span>NEST VORLAGEN</span><h2>Challenge auswählen</h2><p>Vorlagen werden erst hinzugefügt, wenn du sie bewusst auswählst.</p></div><button type="button" data-c203-action="close-templates" aria-label="Schließen">×</button></header><div class="c203-template-list">'+cards+'</div><footer><button type="button" data-c203-action="close-templates">Fertig</button></footer></section>'
+  return '<section class="c203-dialog-shell"><header><div><span>NEST VORLAGEN</span><h2>Challenge auswählen</h2><p>Von kleinen Einstiegs-Challenges bis zu großen Sparzielen. Vorlagen werden nur auf Wunsch aktiviert.</p></div><button type="button" data-c203-action="close-templates" aria-label="Schließen">×</button></header><div class="c203-template-list">'+cards+'</div><footer><button type="button" data-c203-action="close-templates">Fertig</button></footer></section>'
 }
 function openTemplates(){var d=ensureTemplateDialog();d.innerHTML=templateDialogMarkup();if(!d.open)d.showModal()}
 function addTemplate(key){
@@ -106,7 +121,7 @@ function pageMarkup(){
   for(var i=0;i<list.length;i++){var p=progressFor(list[i]);totalSaved+=p.saved;totalTarget+=p.target;cards+=challengeCard(list[i])}
   var summary='<section class="c203-summary"><div><span>AKTIVE CHALLENGES</span><strong>'+list.length+'</strong></div><div><span>GESPART</span><strong>'+esc(euro(totalSaved))+'</strong></div><div><span>ZIELSUMME</span><strong>'+esc(euro(totalTarget))+'</strong></div></section>'
   var toolbar='<section class="c203-toolbar"><div><span>SPAR-CHALLENGES</span><h2>Deine Challenges</h2><p>Starte nur die Challenges, die du wirklich machen möchtest.</p></div><div class="c203-toolbar-actions"><button type="button" class="primary" data-c203-action="open-templates">Vorlage hinzufügen</button><button type="button" data-action="add-challenge">Eigene Challenge</button></div></section>'
-  var content=list.length?'<section class="c203-grid">'+cards+'</section>':'<section class="c203-empty"><div class="c203-empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v4a5 5 0 0 1-10 0V4z"/><path d="M7 6H4a3 3 0 0 0 3 3"/><path d="M17 6h3a3 3 0 0 1-3 3"/></svg></div><h3>Noch keine Challenge aktiv</h3><p>Wähle eine NEST-Vorlage oder erstelle deine eigene Challenge. Es wird nichts mehr automatisch hinzugefügt.</p><div><button type="button" class="primary" data-c203-action="open-templates">Vorlage auswählen</button><button type="button" data-action="add-challenge">Eigene erstellen</button></div></section>'
+  var content=list.length?'<section class="c203-grid">'+cards+'</section>':'<section class="c203-empty"><div class="c203-empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v4a5 5 0 0 1-10 0V4z"/><path d="M7 6H4a3 3 0 0 0 3 3"/><path d="M17 6h3a3 3 0 0 1-3 3"/></svg></div><h3>Noch keine Challenge aktiv</h3><p>Wähle eine NEST-Vorlage oder erstelle deine eigene Challenge. Es wird nichts automatisch hinzugefügt.</p><div><button type="button" class="primary" data-c203-action="open-templates">Vorlage auswählen</button><button type="button" data-action="add-challenge">Eigene erstellen</button></div></section>'
   return '<div class="c203-page">'+toolbar+summary+content+'</div>'
 }
 function enhanceChallengePage(){
