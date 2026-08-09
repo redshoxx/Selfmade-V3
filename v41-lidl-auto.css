@@ -1,6 +1,0 @@
-/* NEST V4.1 – automatic Lidl offer sync */
-.v41-auto-status{display:inline-flex!important;align-items:center;width:max-content;max-width:100%;height:18px;margin-top:5px;padding:0 7px;border-radius:999px;background:rgba(0,80,170,.08);color:#0050aa!important;font-size:7px!important;font-weight:850;line-height:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.v41-sync-btn{white-space:nowrap}
-.v41-hub-status{margin-top:4px!important;color:#0050aa!important;font-weight:750!important}
-html[data-theme=dark] .v41-auto-status{background:rgba(255,255,255,.08);color:#d7e6ff!important}
-@media(max-width:430px){.v41-auto-status{height:17px;line-height:17px;font-size:6.8px}.v41-sync-btn{grid-column:1/-1}}
