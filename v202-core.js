@@ -31,7 +31,7 @@ function normalizeTransaction(x={}){const created=num(x.createdAt,Date.now());re
   createdAt:created,updatedAt:num(x.updatedAt,created),source:['wallet','manual','legacy','system'].includes(x.source)?x.source:undefined
 }}
 function normalizeGoal(x={}){return{id:text(x.id||uid('goal'),80),name:text(x.name||'Sparziel',60),target:Math.max(0,num(x.target??x.targetAmount)),saved:Math.max(0,num(x.saved??x.currentAmount)),deadline:x.deadline?String(x.deadline).slice(0,10):'',createdAt:num(x.createdAt,Date.now())}}
-function normalizeChallenge(x={}){const steps=Math.max(1,Math.round(num(x.steps??x.totalSteps,20)));return{id:text(x.id||uid('challenge'),80),name:text(x.name||x.title||'Challenge',70),target:Math.max(0,num(x.target??x.targetAmount??x.total)),steps,completed:Math.max(0,Math.min(steps,Math.round(num(x.completed??x.completedSteps,0)))),deadline:x.deadline?String(x.deadline).slice(0,10):'',custom:Boolean(x.custom),createdAt:num(x.createdAt,Date.now())}}
+function normalizeChallenge(x={}){const steps=Math.max(1,Math.round(num(x.steps??x.totalSteps,20))),legacyCompleted=Array.isArray(x.doneSteps)?x.doneSteps.length:0;return{id:text(x.id||uid('challenge'),80),name:text(x.name||x.title||'Challenge',70),target:Math.max(0,num(x.target??x.targetAmount??x.total)),steps,completed:Math.max(0,Math.min(steps,Math.round(num(x.completed??x.completedSteps,legacyCompleted)))),deadline:x.deadline?String(x.deadline).slice(0,10):'',custom:Boolean(x.custom),createdAt:num(x.createdAt,Date.now())}}
 function normalizeState(raw){const s=raw&&typeof raw==='object'?raw:{};return{
   version:RELEASE,openingBalance:num(s.openingBalance),transactions:Array.isArray(s.transactions)?s.transactions.map(normalizeTransaction):[],
   goals:Array.isArray(s.goals)?s.goals.map(normalizeGoal):[],challenges:Array.isArray(s.challenges)?s.challenges.map(normalizeChallenge):defaultChallenges(),
@@ -43,6 +43,7 @@ function normalizePrefs(raw={}){return{
   textSize:['normal','large'].includes(raw.textSize)?raw.textSize:DEFAULT_PREFS.textSize,
   privacy:Boolean(raw.privacy),reduceMotion:Boolean(raw.reduceMotion),startRoute:ROUTES.has(raw.startRoute)?raw.startRoute:DEFAULT_PREFS.startRoute
 }}
+function isCoreStateCandidate(value){return Boolean(value&&typeof value==='object'&&!Array.isArray(value)&&Array.isArray(value.transactions)&&Array.isArray(value.goals)&&Array.isArray(value.challenges))}
 function snapshot(tx={}){const t=normalizeTransaction(tx);return{id:t.id,type:t.type,amount:t.amount,title:t.title,category:t.category,date:t.date,note:t.note,createdAt:t.createdAt,updatedAt:t.updatedAt,source:t.source}}
 function signature(tx={}){const t=snapshot(tx);return[t.type,t.title.toLocaleLowerCase('de-AT'),t.amount.toFixed(2),t.category.toLocaleLowerCase('de-AT')].join('|')}
 function inferMethod(tx={},isNew=false){if(tx.source==='wallet')return'wallet';if(tx.source==='manual')return'manual';const id=String(tx.id||''),note=String(tx.note||'');if(id.startsWith('imp_')||/apple\s*wallet|wallet\s*import|kurzbefehl/i.test(note))return'wallet';return isNew?'manual':'legacy'}
@@ -68,10 +69,10 @@ function createRepository(storage){
   function remove(key){try{storage.removeItem(key);return storage.getItem(key)===null}catch(error){lastError=String(error?.message||error);return false}}
   function probe(){try{setVerified(PROBE_KEY,'ok');remove(PROBE_KEY);return true}catch{return false}}
   function backupEnvelope(state){const clean=normalizeState(state),payload=JSON.stringify(clean);return JSON.stringify({schema:1,release:RELEASE,savedAt:iso(),checksum:hashString(payload),state:clean})}
-  function readBackup(){const envelope=safeParse(get(BACKUP_KEY),null);if(!envelope||envelope.schema!==1||!envelope.state)return null;const clean=normalizeState(envelope.state),payload=JSON.stringify(clean);return hashString(payload)===envelope.checksum?clean:null}
+  function readBackup(){const envelope=safeParse(get(BACKUP_KEY),null);if(!envelope||envelope.schema!==1||!isCoreStateCandidate(envelope.state))return null;const clean=normalizeState(envelope.state),payload=JSON.stringify(clean);return hashString(payload)===envelope.checksum?clean:null}
   function writeBackup(state){try{setVerified(BACKUP_KEY,backupEnvelope(state));return true}catch{return false}}
-  function rawState(){const parsed=safeParse(get(CORE_KEY),null);return parsed&&typeof parsed==='object'&&!Array.isArray(parsed)?normalizeState(parsed):null}
-  function loadState(){let state=rawState();if(!state){const backup=readBackup();state=backup||initialState();try{setVerified(CORE_KEY,JSON.stringify(state))}catch{}if(backup)lastError='Hauptspeicher wurde aus lokaler Sicherung wiederhergestellt'}else if(state.version!==RELEASE){state.version=RELEASE;try{setVerified(CORE_KEY,JSON.stringify(state))}catch{}}writeBackup(state);return clone(state)}
+  function rawState(){const parsed=safeParse(get(CORE_KEY),null);return isCoreStateCandidate(parsed)?normalizeState(parsed):null}
+  function loadState(){let state=rawState();if(!state){const backup=readBackup();state=backup||initialState();try{setVerified(CORE_KEY,JSON.stringify(state))}catch{}if(backup)lastError='Hauptspeicher wurde aus lokaler Sicherung wiederhergestellt'}else{try{setVerified(CORE_KEY,JSON.stringify(state))}catch{}}writeBackup(state);return clone(state)}
   function readAudit(){return readAuditRaw(get(AUDIT_KEY))}
   function writeAudit(audit){try{setVerified(AUDIT_KEY,JSON.stringify(audit));return true}catch{return false}}
   function saveState(next,{method='manual'}={}){
@@ -83,16 +84,16 @@ function createRepository(storage){
   }
   function loadPrefs(){return normalizePrefs(safeParse(get(PREF_KEY),{}))}
   function savePrefs(prefs){const clean=normalizePrefs(prefs);setVerified(PREF_KEY,JSON.stringify(clean));return clone(clean)}
-  function replaceAll(payload={}){const state=normalizeState(payload.core||payload.state||payload);setVerified(CORE_KEY,JSON.stringify(state));if(payload.audit)writeAudit(readAuditRaw(JSON.stringify(payload.audit)));if(payload.preferences)savePrefs(payload.preferences);writeBackup(state);return clone(state)}
-  function resetAll(){remove(CORE_KEY);remove(BACKUP_KEY);remove(AUDIT_KEY);remove(PREF_KEY)}
+  function replaceAll(payload={}){const input=payload.core||payload.state||payload;if(!isCoreStateCandidate(input))throw new Error('Ungültiger NEST Datenstand');const state=normalizeState(input);setVerified(CORE_KEY,JSON.stringify(state));if(payload.audit)writeAudit(readAuditRaw(JSON.stringify(payload.audit)));if(payload.preferences)savePrefs(payload.preferences);writeBackup(state);return clone(state)}
+  function resetAll(){const results=[remove(CORE_KEY),remove(BACKUP_KEY),remove(AUDIT_KEY),remove(PREF_KEY)];if(results.some(v=>!v))throw new Error('Lokale Daten konnten nicht vollständig gelöscht werden')}
   function importTransaction(transaction){const tx=normalizeTransaction({...transaction,source:'wallet'});if(!tx.id||tx.amount<=0)throw new Error('Ungültige Wallet-Transaktion');const state=loadState();if(state.transactions.some(item=>String(item.id)===String(tx.id)))return{status:'duplicate',transaction:tx,state};state.transactions.push(tx);const saved=saveState(state,{method:'wallet'});return{status:'imported',transaction:tx,state:saved}}
   function status(){return{available:probe(),lastError,coreKey:CORE_KEY,backupKey:BACKUP_KEY,release:RELEASE}}
   probe()
   const current=loadState(),audit=ensureExistingAudit(current,readAudit());writeAudit(audit)
-  return{RELEASE,CORE_KEY,BACKUP_KEY,AUDIT_KEY,PREF_KEY,initialState,normalizeState,normalizeTransaction,normalizeGoal,normalizeChallenge,normalizePrefs,loadState,saveState,loadPrefs,savePrefs,readAudit,replaceAll,resetAll,importTransaction,status,transactionSignature:signature,transactionSnapshot:snapshot,eventsFor,latestMethod,methodLabel,changedFields}
+  return{RELEASE,CORE_KEY,BACKUP_KEY,AUDIT_KEY,PREF_KEY,initialState,normalizeState,normalizeTransaction,normalizeGoal,normalizeChallenge,normalizePrefs,isCoreStateCandidate,loadState,saveState,loadPrefs,savePrefs,readAudit,replaceAll,resetAll,importTransaction,status,transactionSignature:signature,transactionSnapshot:snapshot,eventsFor,latestMethod,methodLabel,changedFields}
 }
 
-const pure={RELEASE,CORE_KEY,BACKUP_KEY,AUDIT_KEY,PREF_KEY,initialState,normalizeState,normalizeTransaction,normalizeGoal,normalizeChallenge,normalizePrefs,transactionSignature:signature,transactionSnapshot:snapshot,changedFields,readAuditRaw,ensureExistingAudit,applyTransition,eventsFor,latestMethod,methodLabel,hashString,createRepository}
+const pure={RELEASE,CORE_KEY,BACKUP_KEY,AUDIT_KEY,PREF_KEY,initialState,normalizeState,normalizeTransaction,normalizeGoal,normalizeChallenge,normalizePrefs,isCoreStateCandidate,transactionSignature:signature,transactionSnapshot:snapshot,changedFields,readAuditRaw,ensureExistingAudit,applyTransition,eventsFor,latestMethod,methodLabel,hashString,createRepository}
 if(typeof module!=='undefined'&&module.exports)module.exports=pure
 if(typeof localStorage!=='undefined'){root.NestV202=createRepository(localStorage);root.NestV2Core=root.NestV202}
 })(typeof globalThis!=='undefined'?globalThis:this)
