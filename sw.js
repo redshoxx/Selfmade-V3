@@ -1,5 +1,5 @@
-const CACHE='nest-v3.0.1-shopping-swipe-1'
-const SHELL=['/index.html','/v3.css?v=3.0.1','/v3-shopping.css?v=3.0.1','/v301-shopping.css?v=3.0.1','/v3-dialogs.css?v=3.0.1','/boot-v2.0.2.js?v=3.0.1','/v202-core-safe.js?v=3.0.1','/shopping-core-v3.js?v=3.0.1','/v202-wallet-guard.js?v=3.0.1','/import-v2.0.2.js?v=3.0.1','/app-v3.js?v=3.0.1','/settings-v3.js?v=3.0.1','/v301-shopping.js?v=3.0.1','/manifest.webmanifest','/icon.svg']
+const CACHE='nest-v3.1.0-tasks-1'
+const SHELL=['/index.html','/v3.css?v=3.1.0','/v3-shopping.css?v=3.1.0','/v301-shopping.css?v=3.1.0','/tasks-v3.1.css?v=3.1.0','/v3-dialogs.css?v=3.1.0','/boot-v2.0.2.js?v=3.1.0','/v202-core-safe.js?v=3.1.0','/shopping-core-v3.js?v=3.1.0','/tasks-core-v3.1.js?v=3.1.0','/tasks-v3.1.js?v=3.1.0','/v202-wallet-guard.js?v=3.1.0','/import-v2.0.2.js?v=3.1.0','/app-v3.js?v=3.1.0','/settings-v3.js?v=3.1.0','/v301-shopping.js?v=3.1.0','/manifest.webmanifest','/icon.svg']
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting())))
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE&&(k.startsWith('nest-')||k.startsWith('selfmade-'))).map(k=>caches.delete(k)))).then(()=>self.clients.claim())))
 self.addEventListener('fetch',event=>{
@@ -12,3 +12,4 @@ self.addEventListener('fetch',event=>{
   }
   event.respondWith(fetch(event.request).then(r=>{if(r&&r.ok)caches.open(CACHE).then(c=>c.put(event.request,r.clone()));return r}).catch(()=>caches.match(event.request)))
 })
+self.addEventListener('notificationclick',event=>{event.notification.close();event.waitUntil(clients.matchAll({type:'window',includeUncontrolled:true}).then(list=>{for(const client of list){if('focus' in client)return client.focus()}return clients.openWindow?clients.openWindow('/'):null}))})
