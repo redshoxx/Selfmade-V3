@@ -1,118 +1,116 @@
-# NEST V2.0.0
+# NEST V2.0.2
 
 NEST ist ein Finanzplaner für **Mobile und Desktop/Web** mit manuellen Buchungen, Sparzielen, Challenges und optionalem Apple-Wallet-/Kurzbefehle-Import ohne direkte Bankanbindung.
 
-## V2.0.0 – großes Update
+## V2.0.2 – Stabilität & Datenintegrität
 
-### Mobile + Desktop Web App
+V2.0.2 ersetzt den gemischten Laufzeit-Stack aus älteren V1-/V2-Skripten durch einen gemeinsamen V2.0.2-Datenkern.
 
-- bestehende mobile PWA bleibt erhalten
-- responsive Desktop-Web-App für PC und große Displays
-- Desktop-Navigation als feste Seitenleiste statt mobiler Bottom-Bar
-- größere Arbeitsfläche und bessere Informationsdichte auf PC
-- installierbar als Web-App/PWA auch auf Desktop-Browsern
-- Querformat und große Displays werden unterstützt
+### Verifizierte Datenspeicherung
 
-### Neue Buchungslogik
+- Hauptspeicher bleibt kompatibel unter `selfmade-save-v1`
+- jeder relevante Schreibvorgang wird direkt wieder aus dem Browser-Speicher gelesen und verifiziert
+- erst nach erfolgreicher Verifikation übernimmt die UI den neuen Zustand
+- schlägt das Speichern fehl, bleibt der vorherige Zustand erhalten und NEST zeigt einen Fehler
+- zusätzliche lokale Sicherung unter `selfmade-save-v1-backup-v202`
+- beschädigte oder nicht lesbare Hauptdaten können aus der lokalen Sicherung wiederhergestellt werden
+- Einstellungen enthalten eine Schreib-/Leseprüfung des lokalen Speichers
+- Änderungen aus einem zweiten Browser-Tab werden über das `storage`-Event übernommen
+- Rückkehr aus dem Browser-/PWA-Back-Forward-Cache lädt den Zustand erneut
 
-NEST führt ab V2 zusätzlich ein separates Buchungsprotokoll unter `nest-audit-v2`.
+### Bereinigte Runtime
 
-Für neue Buchungen wird nachvollziehbar gespeichert:
+Die produktive App lädt nicht mehr gleichzeitig `app.js`, `settings-v1.3.js`, `v2-ui.js` und den alten Storage-Hook. Aktiv sind nur noch:
 
-- wann die Buchung erfasst wurde
-- Buchungsdatum
-- wie sie verbucht wurde
-- manuell in NEST oder über Apple Wallet/Kurzbefehle
-- welche Felder später geändert wurden
-- wann eine Buchung gelöscht wurde
+- `v202-core.js`
+- `v202-wallet-guard.js`
+- `import-v2.0.2.js`
+- `app-v2.0.2.js`
+- `settings-v2.0.2.js`
 
-Bestehende Buchungen aus V1.x werden automatisch übernommen. Wo die ursprüngliche Quelle nicht sicher bekannt ist, wird sie ausdrücklich als **„Aus älterer NEST-Version“** gekennzeichnet statt eine Quelle zu erfinden.
+`Storage.prototype.setItem` wird nicht mehr überschrieben.
 
-### Bereits verbuchte / wiederkehrende Buchungen
+### Buchungen & Formulare
 
-- gleiche Buchungen werden über Art, Bezeichnung, Betrag und Kategorie erkannt
-- die Detailansicht zeigt, wie oft eine gleiche Buchung bereits vorhanden ist
-- vergangene Buchungsdaten werden zusammen angezeigt
-- dadurch bleiben regelmäßige Zahlungen wie Miete, Streaming, Einkäufe oder andere wiederkehrende Ausgaben nachvollziehbar
+- manuelle Buchungen werden über den zentralen V2.0.2-Speicher geschrieben
+- Erstellen, Bearbeiten und Löschen wird weiterhin im Buchungsprotokoll erfasst
+- Formularwerte werden validiert, bevor gespeichert wird
+- Kategorien wechseln passend zwischen Einzahlung und Auszahlung
+- Datums-Vorgabe verwendet das lokale Kalenderdatum statt UTC
+- zentrale Plus-Aktion in der Navigation bleibt erhalten
+- neue einheitliche SVG-Icons bleiben aktiv
 
-### Buchungsdetails und Protokoll
+### Wallet-Import
 
-Beim Öffnen einer Buchung zeigt NEST V2 zusätzlich:
+- Wallet-Import verwendet denselben verifizierten Speicher wie manuelle Buchungen
+- exakte Import-ID wird weiterhin gegen Duplikate geprüft
+- zusätzlich werden nahezu identische Wallet-Imports innerhalb von zwei Minuten abgefangen
+- ISO-Zeitpunkte mit Zeitzonen-Offset behalten ihr lokales Kalenderdatum; z. B. `2026-08-09T00:15:00+02:00` bleibt der **09.08.2026** und wird nicht durch UTC zum Vortag
+- Wallet-Buchungen erhalten explizit die Quelle `wallet`
 
-- Status `Verbucht`
-- Buchungsdatum
-- Erfassungszeitpunkt
-- Buchungsmethode
-- Notiz
-- ähnliche/bereits verbuchte Buchungen
-- vollständigen Verlauf der Buchung
+### PWA / Cache
 
-Auf der Buchungsseite gibt es außerdem eine **Buchungszentrale** mit Gesamtzahl, Wallet-Buchungen, manuellen Buchungen und wiederkehrenden Gruppen sowie Zugriff auf das globale Buchungsprotokoll.
+- neuer Service-Worker-Cache `nest-v2.0.2-stability`
+- alte NEST-/Selfmade-Caches werden beim Aktivieren entfernt
+- API-Routen werden nicht durch den Service Worker gecacht
+- `/` und `/index.html` werden mit `no-cache` ausgeliefert, damit keine gemischten App-Versionen entstehen
 
-### Formulare V2
+## V2-Funktionen
 
-- neu gestaltete Formulare auf Mobile und Desktop
-- klarere Feldgruppen
-- bessere Abstände und Typografie
-- größere und konsistentere Eingabefelder
-- Desktop-Formulare nutzen bei geeigneten Feldern zwei Spalten
-- wichtige Felder und längere Texte bleiben über die gesamte Formularbreite
-- vorhandene Funktionen zum Bearbeiten und Löschen bleiben erhalten
-
-### Einstellungen und Backups
-
-Die Einstellungen aus V1.3 bleiben erhalten:
-
-- System / Hell / Dunkel
-- komfortable oder kompakte Darstellung
-- Standard- oder große Schrift
-- Datenschutzmodus für sichtbare Beträge
-- reduzierte Animationen
-- Startseite festlegen
-- Startbetrag bearbeiten
-
-V2-Backups enthalten zusätzlich das Buchungsprotokoll. Beim Zurücksetzen werden auch die V2-Protokolldaten entfernt.
-
-## Bestehende Funktionen bleiben erhalten
-
+- Mobile PWA und responsive Desktop-Web-App
+- Desktop-Seitenleiste und mobile Bottom-Navigation
 - manuelle Ein- und Auszahlungen
-- Kategorien, Datum und Notizen
+- Apple-Wallet-/Kurzbefehle-Import
+- Buchungsdetails mit Status, Datum, Quelle und Erfassungszeitpunkt
+- Buchungsprotokoll unter `nest-audit-v2`
+- Erkennung wiederkehrender/gleichartiger Buchungen
 - Sparziele
 - eigene Spar-Challenges und Vorlagen
-- Wallet-/Kurzbefehle-Import
-- stabile Import-IDs gegen versehentliche Doppelimporte
-- automatische Händler-Kategorisierung
-- lokale Speicherung unter `selfmade-save-v1`
-- keine direkte Bankanbindung und keine Onlinebanking-Zugangsdaten
+- System / Hell / Dunkel
+- kompakte oder komfortable Ansicht
+- größere Schrift
+- Datenschutzmodus
+- Startseite festlegen
+- vollständige JSON-Backups inklusive Audit-Protokoll
 
-## Wallet-Import
-
-Der Vercel-Endpunkt bleibt:
+## Wallet-Endpunkt
 
 `POST /api/import-transaction`
 
-Er benötigt die Vercel Environment Variable:
+Benötigte Vercel Environment Variable:
 
 `SELFMADE_IMPORT_TOKEN=<langes-zufälliges-geheimes-token>`
 
-Der iPhone-Kurzbefehl sendet beispielsweise:
+Beispiel:
 
 ```json
 {
   "type": "expense",
   "amount": 24.90,
   "merchant": "BILLA",
-  "occurredAt": "2026-08-08T19:30:00+02:00",
+  "occurredAt": "2026-08-09T00:15:00+02:00",
   "source": "Apple Wallet"
 }
 ```
 
-NEST erkennt diese Buchungen in V2 als **Apple Wallet / Kurzbefehle** und protokolliert den Import entsprechend.
+## QA
+
+Der Build prüft Syntax und Regressionen für:
+
+- Kernlogik
+- Wallet-Endpunkt
+- Zeitzonen-/Datumsverarbeitung
+- verifizierte Speicherung
+- Wiederherstellung aus lokaler Sicherung
+- Schreibfehler ohne Zustandsverlust
+- Audit-Log bei Erstellen, Ändern und Löschen
+- Wallet-Duplikate
+- aktive V2.0.2-Runtime ohne alten Storage-Prototyp-Hook
 
 ## Sicherheit
 
 - keine IBAN oder Onlinebanking-Zugangsdaten erforderlich
 - POST-Imports sind durch `SELFMADE_IMPORT_TOKEN` geschützt
-- der API-Endpoint verwendet `Cache-Control: no-store`
-- der geheime Token wird nicht in den Import-Link geschrieben
-- Finanzdaten und das Buchungsprotokoll bleiben lokal im NEST-App-Speicher
+- API-Antworten verwenden `Cache-Control: no-store`
+- das geheime Token wird nicht in Import-Links geschrieben
+- Finanzdaten bleiben lokal im jeweiligen NEST-App-/Browser-Speicher
