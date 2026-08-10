@@ -1,0 +1,14 @@
+/* NEST V4.4 – performance and rendering layer */
+.v3-row,.v3-saving-row,.v3-shop-row,.v31-task-row{content-visibility:auto;contain-intrinsic-size:68px}
+.v3-shop-group,.v31-task-section,.v31-completed{content-visibility:auto;contain-intrinsic-size:320px}
+.v3-list{contain:layout style}
+.v3-shop-row,.v31-task-row{touch-action:pan-y}
+.v44-load-more{width:100%;min-height:42px;margin-top:10px;border:1px solid var(--line);border-radius:13px;background:var(--surface);color:var(--text);font-size:8.5px;font-weight:850}
+.v44-load-more span{margin-left:4px;color:var(--muted);font-size:7.5px}
+.v44-load-more:active{transform:scale(.992)}
+.v3-nav.v31-nav .v3-plus{will-change:auto!important}
+@media(max-width:600px){
+  .v3-nav,.v3-nav.v31-nav{-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background:var(--surface)!important;box-shadow:0 -5px 20px rgba(20,18,15,.08)!important}
+  .v3-row,.v3-saving-row,.v3-shop-row,.v31-task-row{contain-intrinsic-size:66px}
+}
+@media(prefers-reduced-motion:reduce){.v44-load-more{transition:none!important}}
