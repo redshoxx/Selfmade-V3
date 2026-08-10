@@ -1,9 +1,9 @@
 (function(root){
 'use strict'
-const RELEASE='4.3.1'
+const RELEASE='4.4.0'
 const HOME='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 10.5 12 3.5l8.5 7v9a1 1 0 0 1-1 1h-5v-6h-5v6h-5a1 1 0 0 1-1-1z"/></svg>'
 let queued=false
-function release(){document.title='NEST 4.3.1';document.documentElement.dataset.nestRelease=RELEASE;const meta=document.querySelector('meta[name="nest-version"]');if(meta)meta.content=RELEASE;const top=document.querySelector('.v3-top>div>span');if(top&&top.textContent!=='NEST · V'+RELEASE)top.textContent='NEST · V'+RELEASE}
+function release(){document.title='NEST 4.4';document.documentElement.dataset.nestRelease=RELEASE;const meta=document.querySelector('meta[name="nest-version"]');if(meta)meta.content=RELEASE;const top=document.querySelector('.v3-top>div>span');if(top&&top.textContent!=='NEST · V'+RELEASE)top.textContent='NEST · V'+RELEASE}
 function injectStyle(){if(document.getElementById('v322NavStyle'))return;const style=document.createElement('style');style.id='v322NavStyle';style.textContent=`
 .v322-top-actions{display:flex;align-items:center;gap:7px;flex:0 0 auto}
 .v322-home-btn,.v322-top-actions .v3-icon-btn{width:40px!important;height:40px!important;border:1px solid var(--line)!important;border-radius:13px!important;background:var(--surface)!important;color:var(--text)!important;display:grid!important;place-items:center!important;box-shadow:0 5px 16px rgba(20,18,15,.05)!important}
@@ -23,5 +23,5 @@ function injectStyle(){if(document.getElementById('v322NavStyle'))return;const s
 `;document.head.appendChild(style)}
 function enhance(){queued=false;injectStyle();release();const nav=document.querySelector('.v3-nav');if(nav){nav.classList.add('v322-nav');const oldHome=nav.querySelector('[data-route="overview"]');if(oldHome)oldHome.remove()}const top=document.querySelector('.v3-top');if(!top)return;const settings=top.querySelector('[data-v3="settings"]');let actions=top.querySelector('.v322-top-actions');if(!actions){actions=document.createElement('div');actions.className='v322-top-actions';if(settings)top.insertBefore(actions,settings);else top.appendChild(actions)}let home=actions.querySelector('.v322-home-btn');if(!home){home=document.createElement('button');home.type='button';home.className='v322-home-btn';home.setAttribute('data-route','overview');home.setAttribute('aria-label','Übersicht');home.setAttribute('title','Übersicht');home.innerHTML=HOME;actions.appendChild(home)}if(settings&&settings.parentElement!==actions)actions.appendChild(settings);const page=document.querySelector('.v3-main')?.dataset.page;home.classList.toggle('active',page==='overview')}
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(enhance)}
-const app=document.getElementById('app');if(app)new MutationObserver(schedule).observe(app,{childList:true});if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule();root.addEventListener('pageshow',schedule);root.addEventListener('load',schedule,{once:true});setTimeout(schedule,100);setTimeout(schedule,500);root.NestNavV322={RELEASE,enhance,schedule}
+const app=document.getElementById('app');if(app)new MutationObserver(schedule).observe(app,{childList:true});if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule();root.addEventListener('pageshow',schedule);root.addEventListener('load',schedule,{once:true});setTimeout(schedule,100);root.NestNavV322={RELEASE,enhance,schedule}
 })(globalThis)
