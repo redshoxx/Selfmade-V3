@@ -52,9 +52,14 @@ assert.equal(Core.normalizePrefs({startRoute:'tasks'}).startRoute,'tasks','Aufga
 const coreBefore=coreStorage.setCount
 for(let i=0;i<200;i++)Core.loadState()
 assert.equal(coreStorage.setCount,coreBefore,'Finanzkern: reine Reads erzeugen Speicherwrites')
+let noTxState=Core.loadState(),auditBefore=Core.status().performance.auditWrites
+noTxState.openingBalance=25
+Core.saveState(noTxState,{method:'manual'})
+assert.equal(Core.status().performance.auditWrites,auditBefore,'Finanzkern: Spar-/Nicht-Buchungsänderung schreibt unnötig das Buchungs-Audit')
 let coreState=Core.loadState()
 coreState.transactions.push(Core.normalizeTransaction({id:'perf_tx',type:'expense',amount:9.99,title:'Performance',category:'Sonstiges',date:'2026-08-10',source:'manual'}))
 Core.saveState(coreState,{method:'manual'})
+assert.ok(Core.status().performance.auditWrites>auditBefore,'Finanzkern: echte Buchungsänderung fehlt im Audit')
 const coreAfterSave=coreStorage.setCount
 for(let i=0;i<200;i++)Core.loadState()
 assert.equal(coreStorage.setCount,coreAfterSave,'Finanzkern: Reads nach Save erzeugen weitere Writes')
@@ -76,9 +81,10 @@ assert.ok(app.includes('render(false,false)'),'Render ohne unnötiges Core-Reloa
 assert.ok(app.includes("data-v3=\"tx-more\"")&&app.includes('txLimit+=TX_BATCH'),'Gestaffelte Buchungsliste fehlt')
 assert.ok(app.includes('const currencyFormatter=new Intl.NumberFormat'),'Wiederverwendbarer Formatter fehlt')
 assert.ok(bookings.includes('if(created>0)root.NestAppV3?.render?.(false);else schedule()'),'Buchungsmodul erzwingt weiterhin doppelten Render')
+assert.ok(!bookings.includes('correctOverviewBalance'),'Buchungsmodul berechnet den Kontostand weiterhin doppelt')
 assert.ok(taskUi.includes("RELEASE='4.4.0'")&&taskUi.includes('lastTaskMarkup')&&taskUi.includes('linkStateCache'),'Aufgaben-Rendercache fehlt')
 assert.ok(taskUi.includes("if(base===target)queueMicrotask(()=>root.NestAppV3?.render?.(false,false))"),'Aufgaben können bei gleicher Basisroute hängen bleiben')
 assert.ok(!index.includes('var taskMode=false,saving=false')&&!index.includes('function saveTask(form)'),'Alter doppelter Aufgaben-Bridge ist noch aktiv')
 assert.ok(css.includes('content-visibility:auto')&&css.includes('.v44-load-more'),'V4.4 Browser-Rendering-Optimierung fehlt')
 assert.ok(css.includes('backdrop-filter:none!important'),'Mobile Blur-Optimierung fehlt')
-console.log('NEST V4.4.0 performance, storage-cache, recovery, task routing and render regression tests passed')
+console.log('NEST V4.4.0 performance, storage-cache, audit, recovery, task routing and render regression tests passed')
