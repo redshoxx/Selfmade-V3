@@ -48,6 +48,7 @@ context.globalThis=context
 vm.runInNewContext(fs.readFileSync('v202-core-safe.js','utf8'),context,{filename:'v202-core-safe.js',timeout:3000})
 const Core=context.NestV202
 assert.ok(Core&&typeof Core.loadState==='function','Finanzkern wurde nicht geladen')
+assert.equal(Core.normalizePrefs({startRoute:'tasks'}).startRoute,'tasks','Aufgaben kann nicht als Startseite gespeichert werden')
 const coreBefore=coreStorage.setCount
 for(let i=0;i<200;i++)Core.loadState()
 assert.equal(coreStorage.setCount,coreBefore,'Finanzkern: reine Reads erzeugen Speicherwrites')
@@ -77,4 +78,4 @@ assert.ok(bookings.includes('if(created>0)root.NestAppV3?.render?.(false);else s
 assert.ok(taskUi.includes("RELEASE='4.4.0'")&&taskUi.includes('lastTaskMarkup')&&taskUi.includes('linkStateCache'),'Aufgaben-Rendercache fehlt')
 assert.ok(css.includes('content-visibility:auto')&&css.includes('.v44-load-more'),'V4.4 Browser-Rendering-Optimierung fehlt')
 assert.ok(css.includes('backdrop-filter:none!important'),'Mobile Blur-Optimierung fehlt')
-console.log('NEST V4.4.0 performance, storage-cache, recovery and render regression tests passed')
+console.log('NEST V4.4.0 performance, storage-cache, recovery, task-start-page and render regression tests passed')
