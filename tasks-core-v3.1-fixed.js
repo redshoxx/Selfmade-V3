@@ -14,7 +14,7 @@ var PRIORITIES=['low','normal','high']
 var REPEATS=['none','daily','weekly','monthly']
 var LINK_TYPES=['none','shopping','transaction','savings']
 function memoryStorage(){return{getItem:function(k){return Object.prototype.hasOwnProperty.call(memory,k)?memory[k]:null},setItem:function(k,v){memory[k]=String(v)},removeItem:function(k){delete memory[k]}}}
-function clone(v){return JSON.parse(JSON.stringify(v))}
+function clone(v){if(typeof structuredClone==='function')try{return structuredClone(v)}catch(e){}return JSON.parse(JSON.stringify(v))}
 function clean(v,max){return String(v==null?'':v).replace(/\s+/g,' ').trim().slice(0,max||180)}
 function num(v,d){var n=Number(v);return Number.isFinite(n)?n:(d==null?0:d)}
 function uid(prefix){return(prefix||'task')+'_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,9)}
@@ -36,14 +36,15 @@ function validState(s){return!!(s&&typeof s==='object'&&!Array.isArray(s)&&Array
 function normalizeState(s){s=s&&typeof s==='object'?s:{};var tasks=Array.isArray(s.tasks)?s.tasks.map(normalizeTask):[];return{version:RELEASE,tasks:tasks,updatedAt:num(s.updatedAt,Date.now())}}
 function defaultState(){return{version:RELEASE,tasks:[],updatedAt:Date.now()}}
 function resolveStorage(input){if(input)return{storage:input,persistent:true,error:''};try{var s=root&&root.localStorage;if(!s)throw new Error('Lokaler Speicher nicht verfügbar');s.setItem(PROBE_KEY,'1');if(s.getItem(PROBE_KEY)!=='1')throw new Error('Speicherprüfung fehlgeschlagen');s.removeItem(PROBE_KEY);return{storage:s,persistent:true,error:''}}catch(e){return{storage:memoryStorage(),persistent:false,error:String(e&&e.message||e)}}}
-function createStore(input){var resolved=resolveStorage(input),storage=resolved.storage,persistent=resolved.persistent,lastError=resolved.error
+function createStore(input){var resolved=resolveStorage(input),storage=resolved.storage,persistent=resolved.persistent,lastError=resolved.error,cacheRaw=null,cacheState=null,perf={parses:0,writes:0,backupWrites:0,recoveries:0}
 function parse(raw){try{return JSON.parse(raw)}catch(e){return null}}
 function writeVerified(key,value){var text=String(value);storage.setItem(key,text);if(storage.getItem(key)!==text)throw new Error('Aufgabendaten konnten nicht verifiziert werden')}
-function envelope(state){var cleanState=normalizeState(state),payload=JSON.stringify(cleanState);return JSON.stringify({schema:1,release:RELEASE,savedAt:new Date().toISOString(),checksum:hashString(payload),state:cleanState})}
+function envelope(state){var payload=JSON.stringify(state);return JSON.stringify({schema:1,release:RELEASE,savedAt:new Date().toISOString(),checksum:hashString(payload),state:state})}
 function readBackup(){var e=parse(storage.getItem(BACKUP_KEY));if(!e||!validState(e.state))return null;var normalized=normalizeState(e.state);if(e.checksum&&hashString(JSON.stringify(normalized))!==e.checksum)return null;return normalized}
-function writeBackup(state){try{writeVerified(BACKUP_KEY,envelope(state));return true}catch(e){lastError=String(e&&e.message||e);return false}}
-function load(){var raw=parse(storage.getItem(STORE_KEY)),state=validState(raw)?normalizeState(raw):null;if(!state)state=readBackup()||defaultState();try{writeVerified(STORE_KEY,JSON.stringify(state))}catch(e){lastError=String(e&&e.message||e)}writeBackup(state);return clone(state)}
-function save(next){var cleanState=normalizeState(next);cleanState.updatedAt=Date.now();writeVerified(STORE_KEY,JSON.stringify(cleanState));writeBackup(cleanState);return clone(cleanState)}
+function writeBackup(state){try{writeVerified(BACKUP_KEY,envelope(state));perf.backupWrites++;return true}catch(e){lastError=String(e&&e.message||e);return false}}
+function remember(raw,state){cacheRaw=raw;cacheState=state;return clone(state)}
+function load(){var rawText=storage.getItem(STORE_KEY);if(rawText===cacheRaw&&cacheState)return clone(cacheState);var raw=parse(rawText),state=validState(raw)?normalizeState(raw):null;if(state){perf.parses++;return remember(rawText,state)}state=readBackup()||defaultState();perf.recoveries++;try{var repaired=JSON.stringify(state);writeVerified(STORE_KEY,repaired);perf.writes++;remember(repaired,state)}catch(e){lastError=String(e&&e.message||e);cacheRaw=null;cacheState=null}writeBackup(state);return clone(state)}
+function save(next){var cleanState=normalizeState(next);cleanState.updatedAt=Date.now();var raw=JSON.stringify(cleanState);writeVerified(STORE_KEY,raw);perf.writes++;cacheRaw=raw;cacheState=cleanState;writeBackup(cleanState);return clone(cleanState)}
 function add(data){data=data||{};var state=load(),task=normalizeTask(Object.assign({},data,{id:data.id||uid('task'),createdAt:Date.now(),updatedAt:Date.now(),order:state.tasks.length?Math.max.apply(null,state.tasks.map(function(x){return num(x.order,0)}))+1:0}));if(!clean(data.title,140))throw new Error('Aufgabe fehlt');task.seriesId=task.seriesId||task.id;state.tasks.push(task);return{task:task,state:save(state)}}
 function update(id,patch){var state=load(),found=false;state.tasks=state.tasks.map(function(t,i){if(t.id!==id)return t;found=true;return normalizeTask(Object.assign({},t,patch||{},{id:t.id,createdAt:t.createdAt,updatedAt:Date.now(),order:t.order}),i)});if(!found)throw new Error('Aufgabe nicht gefunden');return save(state)}
 function createNextOccurrence(state,task){if(!task||task.repeat==='none'||!task.date)return null;var date=nextDate(task.date,task.repeat),series=task.seriesId||task.id,exists=state.tasks.some(function(x){return x.seriesId===series&&x.date===date&&!x.completed});if(exists)return null;var next=normalizeTask(Object.assign({},task,{id:uid('task'),date:date,completed:false,completedAt:0,createdAt:Date.now(),updatedAt:Date.now(),order:task.order+.01,seriesId:series,occurrenceOf:task.id,remindedAt:0}));state.tasks.push(next);return next}
@@ -57,8 +58,8 @@ function markReminded(id,stamp){return update(id,{remindedAt:num(stamp,Date.now(
 function replace(data){if(!validState(data))throw new Error('Ungültige Aufgabendaten');return save(data)}
 function exportData(){return{version:RELEASE,state:load()}}
 function importData(payload){var state=payload&&payload.state?payload.state:payload;return replace(state)}
-function reset(){storage.removeItem(STORE_KEY);storage.removeItem(BACKUP_KEY);if(storage.getItem(STORE_KEY)!==null||storage.getItem(BACKUP_KEY)!==null)throw new Error('Aufgabendaten konnten nicht vollständig gelöscht werden');return true}
-function status(){return{persistent:persistent,available:persistent,lastError:lastError,storeKey:STORE_KEY,backupKey:BACKUP_KEY,release:RELEASE}}
+function reset(){storage.removeItem(STORE_KEY);storage.removeItem(BACKUP_KEY);cacheRaw=null;cacheState=null;if(storage.getItem(STORE_KEY)!==null||storage.getItem(BACKUP_KEY)!==null)throw new Error('Aufgabendaten konnten nicht vollständig gelöscht werden');return true}
+function status(){return{persistent:persistent,available:persistent,lastError:lastError,storeKey:STORE_KEY,backupKey:BACKUP_KEY,release:RELEASE,performance:clone(perf)}}
 return{RELEASE:RELEASE,STORE_KEY:STORE_KEY,BACKUP_KEY:BACKUP_KEY,load:load,save:save,add:add,update:update,toggle:toggle,remove:remove,moveTomorrow:moveTomorrow,reorder:reorder,reminderAt:reminderAt,dueReminders:dueReminders,markReminded:markReminded,replace:replace,exportData:exportData,importData:importData,reset:reset,status:status}}
 var store=createStore()
 return{RELEASE:RELEASE,STORE_KEY:STORE_KEY,BACKUP_KEY:BACKUP_KEY,PRIORITIES:PRIORITIES,REPEATS:REPEATS,LINK_TYPES:LINK_TYPES,normalizeTask:normalizeTask,normalizeState:normalizeState,validState:validState,localDate:localDate,addDays:addDays,nextDate:nextDate,reminderAt:function(task){return store.reminderAt(task)},bucket:bucket,createStore:createStore,store:store}
