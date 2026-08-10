@@ -72,60 +72,6 @@
   <script src="/v202-core-safe.js?v=4.4.0-r19"></script>
   <script src="/shopping-core-v3.js?v=4.4.0-r19"></script>
   <script src="/tasks-core-v3.1-fixed.js?v=4.4.0-r19"></script>
-  <script>
-  (function(root){
-    'use strict'
-    var taskMode=false,saving=false
-    function tasksActive(){return taskMode||document.documentElement.dataset.v31Tasks==='on'||document.querySelector('.v3-main')?.dataset.page==='tasks'}
-    function toast(message,bad){var t=document.getElementById('toast');if(!t)return;t.textContent=message;t.classList.toggle('bad',!!bad);t.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(function(){t.classList.remove('show','bad')},2200)}
-    function openTasks(){taskMode=true;var UI=root.NestTasksV31;if(UI&&UI.open)UI.open()}
-    function saveTask(form){
-      if(saving)return
-      saving=true
-      try{
-        var Tasks=root.NestTasksCoreV31,UI=root.NestTasksV31
-        if(!Tasks||!UI)throw new Error('Aufgabenmodul ist nicht bereit')
-        var d=new FormData(form),id=String(d.get('id')||''),title=String(d.get('title')||'').trim(),date=String(d.get('date')||''),time=String(d.get('time')||''),priority=String(d.get('priority')||'normal'),repeat=String(d.get('repeat')||'none'),linkType=String(d.get('linkType')||'none'),linkId=linkType==='savings'?String(d.get('linkId')||''):'',rawReminder=String(d.get('reminderMinutes')||''),reminderMinutes=rawReminder===''?null:Number(rawReminder)
-        if(!title||!date)throw new Error('Bitte Aufgabe und Datum eingeben')
-        var patch={title:title,date:date,time:time,priority:priority,repeat:repeat,linkType:linkType,linkId:linkId,reminderMinutes:reminderMinutes}
-        if(id)Tasks.store.update(id,patch);else Tasks.store.add(patch)
-        var dialog=document.getElementById('v31TaskDialog');if(dialog&&dialog.open)dialog.close()
-        taskMode=true
-        requestAnimationFrame(function(){if(taskMode)UI.open()})
-        toast(id?'Aufgabe gespeichert':'Aufgabe erstellt')
-      }catch(err){console.error(err);toast(err&&err.message||'Aufgabe konnte nicht gespeichert werden',true)}finally{setTimeout(function(){saving=false},80)}
-    }
-    root.addEventListener('pointerdown',function(e){
-      var taskRoute=e.target.closest&&e.target.closest('[data-v31-route="tasks"]')
-      if(taskRoute){taskMode=true;return}
-      var regular=e.target.closest&&e.target.closest('[data-route]')
-      if(regular)taskMode=false
-    },true)
-    root.addEventListener('click',function(e){
-      var submit=e.target.closest&&e.target.closest('#v31TaskForm button[type="submit"]')
-      if(submit){e.preventDefault();e.stopImmediatePropagation();var form=submit.closest('form');if(form&&(!form.reportValidity||form.reportValidity()))saveTask(form);return}
-      var taskRoute=e.target.closest&&e.target.closest('[data-v31-route="tasks"]')
-      if(taskRoute){e.preventDefault();e.stopImmediatePropagation();openTasks();return}
-      var plus=e.target.closest&&e.target.closest('.v3-plus')
-      if(plus&&tasksActive()){e.preventDefault();e.stopImmediatePropagation();taskMode=true;var UI=root.NestTasksV31;if(UI&&UI.openForm)UI.openForm();return}
-      var regular=e.target.closest&&e.target.closest('[data-route]')
-      if(regular&&tasksActive()){taskMode=false;var UI2=root.NestTasksV31;if(UI2&&UI2.close)UI2.close()}
-    },true)
-    root.addEventListener('submit',function(e){
-      var form=e.target
-      if(!form||form.id!=='v31TaskForm')return
-      e.preventDefault();e.stopImmediatePropagation()
-      if(!form.reportValidity||form.reportValidity())saveTask(form)
-    },true)
-    root.addEventListener('load',function(){
-      var App=root.NestAppV3,UI=root.NestTasksV31
-      if(!App||!UI||typeof App.render!=='function'||App.__tasksRenderGuard)return
-      var original=App.render.bind(App)
-      App.render=function(){var result=original.apply(null,arguments);if(taskMode)queueMicrotask(function(){if(taskMode)UI.open()});return result}
-      App.__tasksRenderGuard=true
-    },{once:true})
-  })(globalThis)
-  </script>
   <script src="/tasks-v3.1.js?v=4.4.0-r19"></script>
   <script src="/v202-wallet-guard.js?v=4.4.0-r19"></script>
   <script src="/import-v2.0.2.js?v=4.4.0-r19"></script>
