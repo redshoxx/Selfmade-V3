@@ -10,7 +10,7 @@ const moreIcon='<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1" class="fil
 const checkIcon='<svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></svg>'
 const trashIcon='<svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/></svg>'
 const tomorrowIcon='<svg viewBox="0 0 24 24"><path d="M4 6h16v14H4zM8 3v6M16 3v6M4 10h16"/><path d="m10 15 2 2 3-4"/></svg>'
-function esc(v=''){return String(v==null?'':v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#039;'}[m]))}
+function esc(v=''){return String(v==null?'':v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 function localDate(){return Tasks.localDate(new Date())}
 function tomorrow(){return Tasks.addDays(localDate(),1)}
 function dateLabel(v){if(!v)return'';const d=new Date(String(v).slice(0,10)+'T12:00:00');if(!Number.isFinite(d.getTime()))return String(v);return taskDateFormatter.format(d)}
