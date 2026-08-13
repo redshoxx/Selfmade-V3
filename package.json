@@ -3,9 +3,18 @@
   "private": true,
   "version": "4.4.0",
   "scripts": {
-    "test": "node tests.mjs && node import-tests.cjs && node v2-tests.cjs && node v202-tests.cjs && node v3-tests.cjs && node v301-v31-tests.cjs && node tasks-v3.1-fixed-tests.cjs && node v32-tests.cjs && node v321-recurring-tests.cjs && node v322-nav-tests.cjs && node v44-performance-tests.cjs",
+    "test": "node tests.mjs && node import-tests.cjs && node v2-tests.cjs && node v202-tests.cjs && node v3-tests.cjs && node v301-v31-tests.cjs && node tasks-v3.1-fixed-tests.cjs && node v32-tests.cjs && node v321-recurring-tests.cjs && node v322-nav-tests.cjs && node v44-performance-tests.cjs && node ios-sideload-tests.cjs",
     "build": "node build.mjs",
-    "start": "node local-server.mjs"
+    "start": "node local-server.mjs",
+    "ios:sync": "npm run build && npx cap sync ios"
+  },
+  "dependencies": {
+    "@capacitor/core": "8.4.2",
+    "@capacitor/ios": "8.4.2"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "3.0.5",
+    "@capacitor/cli": "8.4.2"
   },
   "engines": {"node": ">=20"}
 }
