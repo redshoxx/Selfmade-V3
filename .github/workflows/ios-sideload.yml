@@ -1,0 +1,99 @@
+name: NEST iOS IPA - Sideloadly
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/ios-sideload.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build-ios-ipa:
+    name: Build unsigned NEST IPA
+    runs-on: macos-15
+    timeout-minutes: 35
+
+    steps:
+      - name: Repository laden
+        uses: actions/checkout@v6
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      - name: Abhängigkeiten installieren
+        run: npm install --no-audit --no-fund
+
+      - name: NEST Web-App bauen und testen
+        run: npm run build
+
+      - name: iOS-Projekt mit Capacitor erzeugen
+        run: |
+          rm -rf ios
+          npx cap add ios --packagemanager SPM
+          npx cap sync ios
+
+      - name: NEST Icon und Splash erzeugen
+        run: |
+          mkdir -p assets
+          cp icon.svg assets/logo.svg
+          npx @capacitor/assets generate --ios \
+            --iconBackgroundColor '#171715' \
+            --iconBackgroundColorDark '#171715' \
+            --splashBackgroundColor '#f6f5f2' \
+            --splashBackgroundColorDark '#111210'
+
+      - name: iPhone Berechtigungen setzen
+        run: |
+          PLIST='ios/App/App/Info.plist'
+          /usr/libexec/PlistBuddy -c "Delete :NSCameraUsageDescription" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string NEST benötigt die Kamera zum Scannen von Produkt-Barcodes." "$PLIST"
+          /usr/libexec/PlistBuddy -c "Delete :ITSAppUsesNonExemptEncryption" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST"
+
+      - name: Unsigned iPhone App kompilieren
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath ios/DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY='' \
+            PRODUCT_BUNDLE_IDENTIFIER='at.nest.selfmade' \
+            MARKETING_VERSION='4.4.0' \
+            CURRENT_PROJECT_VERSION="${GITHUB_RUN_NUMBER}" \
+            build | tee ios-xcodebuild.log
+
+      - name: Sideloadly IPA erstellen
+        run: |
+          set -e
+          APP_PATH="$(find ios/DerivedData/Build/Products/Release-iphoneos -maxdepth 1 -type d -name '*.app' | head -n 1)"
+          if [ -z "$APP_PATH" ] || [ ! -d "$APP_PATH" ]; then
+            echo 'Keine kompilierte .app gefunden.'
+            exit 1
+          fi
+          rm -rf Payload NEST-v4.4.0-Sideloadly.ipa
+          mkdir -p Payload
+          cp -R "$APP_PATH" Payload/NEST.app
+          /usr/bin/zip -qry NEST-v4.4.0-Sideloadly.ipa Payload
+          /usr/bin/unzip -t NEST-v4.4.0-Sideloadly.ipa
+          test -f Payload/NEST.app/Info.plist
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' Payload/NEST.app/Info.plist
+          file Payload/NEST.app/NEST
+
+      - name: IPA als Download bereitstellen
+        uses: actions/upload-artifact@v4
+        with:
+          name: NEST-v4.4.0-Sideloadly
+          path: NEST-v4.4.0-Sideloadly.ipa
+          if-no-files-found: error
+          retention-days: 30
