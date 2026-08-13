@@ -7,10 +7,16 @@ on:
     paths:
       - '.github/workflows/ios-sideload.yml'
       - 'ios-sideload-tests.cjs'
+      - 'manual-sync-tests.cjs'
       - 'capacitor.config.json'
       - 'package.json'
+      - 'index.html'
+      - 'settings-v3.js'
+      - 'v3-dialogs.css'
+      - 'sw.js'
       - 'native-v44.js'
       - 'api/product-lookup.js'
+      - 'api/manual-sync.js'
 
 permissions:
   contents: read
