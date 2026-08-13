@@ -2,7 +2,8 @@
 const API_VERSION='v3.6'
 const API_PATH_VERSION='v3'
 const FIELDS=['code','product_name','brands','quantity','product_quantity','product_quantity_unit','serving_size','serving_quantity','serving_quantity_unit','image_front_small_url','image_front_url','image_url','nutriments','nutrition_data_per','nutriscore_grade','nutrition_grades','ingredients_text','allergens_tags','categories','categories_tags']
-function json(res,status,body,cache){res.status(status);res.setHeader('Content-Type','application/json; charset=utf-8');res.setHeader('Cache-Control',cache||'no-store');return res.json(body)}
+function cors(res){res.setHeader('Access-Control-Allow-Origin','*');res.setHeader('Access-Control-Allow-Methods','GET, OPTIONS');res.setHeader('Access-Control-Allow-Headers','Accept, Content-Type')}
+function json(res,status,body,cache){cors(res);res.status(status);res.setHeader('Content-Type','application/json; charset=utf-8');res.setHeader('Cache-Control',cache||'no-store');return res.json(body)}
 function cleanText(v,max=500){return String(v==null?'':v).replace(/\s+/g,' ').trim().slice(0,max)}
 function normalizeBarcode(v){const code=String(v==null?'':v).replace(/\D/g,'');return /^\d{7,14}$/.test(code)?code:''}
 function finite(v){if(v==null||v==='')return null;const n=Number(v);return Number.isFinite(n)?n:null}
@@ -16,12 +17,14 @@ function quantityInfo(p={}){const q=finite(p.product_quantity),u=cleanText(p.pro
 function mapProduct(p={},barcode=''){const grade=cleanText(p.nutriscore_grade||p.nutrition_grades,4).toLowerCase(),q=quantityInfo(p),nutri=nutrition(p.nutriments);return{code:normalizeBarcode(p.code)||barcode,name:cleanText(p.product_name||'Unbekanntes Produkt',120),brand:cleanText(p.brands,100),quantity:q.display,productQuantity:q.value,productQuantityUnit:q.unit,servingSize:cleanText(p.serving_size,80),image:cleanText(p.image_front_small_url||p.image_front_url||p.image_url,500),nutriscoreGrade:/^[a-e]$/.test(grade)?grade:'',ingredients:cleanText(p.ingredients_text,1600),allergens:Array.isArray(p.allergens_tags)?p.allergens_tags.map(normalizeAllergen).filter(Boolean).slice(0,30):[],categories:cleanText(p.categories,500),category:categoryFromProduct(p),nutrition:nutri,nutritionAvailable:Object.values(nutri).some(v=>v!=null),nutritionBasis:'100g',source:'Open Food Facts',fetchedAt:Date.now()}}
 async function fetchWithTimeout(url,options={},ms=9000){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),ms);try{return await fetch(url,{...options,signal:controller.signal})}finally{clearTimeout(timer)}}
 async function handler(req,res){
-  if(req.method!=='GET'){res.setHeader('Allow','GET');return json(res,405,{ok:false,error:'method_not_allowed'})}
+  cors(res)
+  if(req.method==='OPTIONS'){res.status(204);return res.end?res.end():res.json({})}
+  if(req.method!=='GET'){res.setHeader('Allow','GET, OPTIONS');return json(res,405,{ok:false,error:'method_not_allowed'})}
   const barcode=normalizeBarcode(req.query&&req.query.barcode)
   if(!barcode)return json(res,400,{ok:false,error:'invalid_barcode'})
   const endpoint=`https://world.openfoodfacts.org/api/${API_PATH_VERSION}/product/${encodeURIComponent(barcode)}?product_type=food&lc=de&cc=at&fields=${encodeURIComponent(FIELDS.join(','))}`
   try{
-    const response=await fetchWithTimeout(endpoint,{headers:{Accept:'application/json','User-Agent':'NEST/3.0.0 (https://selfmade-v3.vercel.app)'}},9000)
+    const response=await fetchWithTimeout(endpoint,{headers:{Accept:'application/json','User-Agent':'NEST/4.4.0 (https://selfmade-v3.vercel.app)'}},9000)
     if(response.status===404)return json(res,200,{ok:true,found:false,barcode},'public, s-maxage=3600, stale-while-revalidate=86400')
     if(response.status===429)return json(res,429,{ok:false,error:'product_service_rate_limited'})
     if(!response.ok)return json(res,502,{ok:false,error:'product_service_error',status:response.status})
