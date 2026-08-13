@@ -25,7 +25,9 @@ assert.ok(sw.includes("nest-v4.4.0-r20")&&sw.includes('/native-v44.js?v=4.4.0-r2
 assert.ok(api.includes("Access-Control-Allow-Origin','*'"),'Produkt-API erlaubt native iOS-Origin nicht')
 assert.ok(workflow.includes('runs-on: macos-15'),'iOS Build benötigt macOS')
 assert.ok(workflow.includes('pod --version'),'CocoaPods-Prüfung fehlt')
-assert.ok(workflow.includes('npx cap add ios'),'Capacitor iOS-Erzeugung fehlt')
+assert.ok(workflow.includes('npx cap add ios --packagemanager Cocoapods'),'Capacitor 8 muss explizit CocoaPods verwenden')
+assert.ok(workflow.includes('test -f ios/App/Podfile'),'Podfile-Prüfung fehlt')
+assert.ok(workflow.includes('test -d ios/App/App.xcworkspace'),'Workspace-Prüfung fehlt')
 assert.ok(workflow.includes('-workspace ios/App/App.xcworkspace'),'CocoaPods Xcode-Workspace fehlt')
 assert.ok(!workflow.includes('--packagemanager SPM'),'SPM darf im stabilen Sideloadly-Build nicht aktiv sein')
 assert.ok(workflow.includes('CODE_SIGNING_ALLOWED=NO'),'Unsigned iOS Build fehlt')
@@ -33,6 +35,8 @@ assert.ok(workflow.includes("PRODUCT_BUNDLE_IDENTIFIER='at.nest.selfmade'"),'Sta
 assert.ok(workflow.includes('NSCameraUsageDescription'),'Kamera-Berechtigung fehlt')
 assert.ok(workflow.includes('NEST-v4.4.0-Sideloadly.ipa'),'Sideloadly IPA-Datei fehlt')
 assert.ok(workflow.includes('/usr/bin/unzip -t NEST-v4.4.0-Sideloadly.ipa'),'IPA-Integritätsprüfung fehlt')
+assert.ok(workflow.includes("Print :CFBundleExecutable"),'Executable-Prüfung muss dynamisch aus Info.plist kommen')
+assert.ok(workflow.includes('NEST-iOS-build-diagnostics'),'Fehlerdiagnose-Artefakt fehlt')
 assert.ok(workflow.includes('actions/upload-artifact@v4'),'IPA-Artefakt wird nicht bereitgestellt')
 
 const context={
