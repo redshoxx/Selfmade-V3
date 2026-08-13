@@ -38,7 +38,8 @@ jobs:
       - name: iOS-Projekt mit Capacitor erzeugen
         run: |
           rm -rf ios
-          npx cap add ios --packagemanager SPM
+          pod --version
+          npx cap add ios
           npx cap sync ios
 
       - name: NEST Icon und Splash erzeugen
@@ -63,7 +64,7 @@ jobs:
         run: |
           set -o pipefail
           xcodebuild \
-            -project ios/App/App.xcodeproj \
+            -workspace ios/App/App.xcworkspace \
             -scheme App \
             -configuration Release \
             -sdk iphoneos \
