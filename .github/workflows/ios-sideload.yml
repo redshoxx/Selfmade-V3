@@ -80,12 +80,9 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY='' \
-            PRODUCT_BUNDLE_IDENTIFIER='at.nest.selfmade' \
-            MARKETING_VERSION='4.4.0' \
-            CURRENT_PROJECT_VERSION="${GITHUB_RUN_NUMBER}" \
             build | tee ios-xcodebuild.log
 
-      - name: Sideloadly IPA erstellen
+      - name: Sideloadly IPA erstellen und Bundle-IDs prüfen
         run: |
           set -euxo pipefail
           APP_PATH="$(find ios/DerivedData/Build/Products/Release-iphoneos -maxdepth 1 -type d -name '*.app' | head -n 1)"
@@ -93,18 +90,51 @@ jobs:
             echo 'Keine kompilierte .app gefunden.'
             exit 1
           fi
+
           rm -rf Payload NEST-v4.4.0-Sideloadly.ipa
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/NEST.app
-          /usr/bin/zip -qry NEST-v4.4.0-Sideloadly.ipa Payload
-          /usr/bin/unzip -t NEST-v4.4.0-Sideloadly.ipa
-          test -f Payload/NEST.app/Info.plist
-          BUNDLE_ID="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' Payload/NEST.app/Info.plist)"
-          EXECUTABLE="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' Payload/NEST.app/Info.plist)"
-          test "$BUNDLE_ID" = 'at.nest.selfmade'
+
+          APP_PLIST='Payload/NEST.app/Info.plist'
+          test -f "$APP_PLIST"
+          APP_ID="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP_PLIST")"
+          EXECUTABLE="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$APP_PLIST")"
+          test "$APP_ID" = 'at.nest.selfmade'
           test -n "$EXECUTABLE"
           test -f "Payload/NEST.app/$EXECUTABLE"
+
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 4.4.0" "$APP_PLIST" 2>/dev/null || /usr/libexec/PlistBuddy -c "Add :CFBundleShortVersionString string 4.4.0" "$APP_PLIST"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${GITHUB_RUN_NUMBER}" "$APP_PLIST" 2>/dev/null || /usr/libexec/PlistBuddy -c "Add :CFBundleVersion string ${GITHUB_RUN_NUMBER}" "$APP_PLIST"
+
+          BAD=0
+          IDS_FILE="$(mktemp)"
+          if [ -d Payload/NEST.app/Frameworks ]; then
+            while IFS= read -r -d '' PLIST; do
+              BUNDLE_ID="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$PLIST" 2>/dev/null || true)"
+              RELATIVE="${PLIST#Payload/NEST.app/}"
+              echo "$RELATIVE -> ${BUNDLE_ID:-<keine Bundle-ID>}"
+              if [ -n "$BUNDLE_ID" ]; then
+                echo "$BUNDLE_ID" >> "$IDS_FILE"
+              fi
+              if [ "$BUNDLE_ID" = "$APP_ID" ]; then
+                echo "::error::Embedded bundle $RELATIVE verwendet fälschlich die App-ID $APP_ID"
+                BAD=1
+              fi
+            done < <(find Payload/NEST.app/Frameworks -type f -name Info.plist -print0)
+          fi
+
+          DUPLICATES="$(sort "$IDS_FILE" | uniq -d || true)"
+          if [ -n "$DUPLICATES" ]; then
+            echo "::error::Doppelte Bundle-Identifier in eingebetteten Frameworks gefunden:"
+            echo "$DUPLICATES"
+            BAD=1
+          fi
+          rm -f "$IDS_FILE"
+          test "$BAD" -eq 0
+
           file "Payload/NEST.app/$EXECUTABLE"
+          /usr/bin/zip -qry NEST-v4.4.0-Sideloadly.ipa Payload
+          /usr/bin/unzip -t NEST-v4.4.0-Sideloadly.ipa
           ls -lh NEST-v4.4.0-Sideloadly.ipa
 
       - name: Diagnose bei Fehler hochladen
