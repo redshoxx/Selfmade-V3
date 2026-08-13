@@ -24,9 +24,15 @@ assert.ok(index.indexOf('/native-v44.js')<index.indexOf('/app-v3.js'),'Native Br
 assert.ok(sw.includes("nest-v4.4.0-r20")&&sw.includes('/native-v44.js?v=4.4.0-r20'),'Native Bridge fehlt im PWA-Cache')
 assert.ok(api.includes("Access-Control-Allow-Origin','*'"),'Produkt-API erlaubt native iOS-Origin nicht')
 assert.ok(workflow.includes('runs-on: macos-15'),'iOS Build benötigt macOS')
+assert.ok(workflow.includes('pod --version'),'CocoaPods-Prüfung fehlt')
+assert.ok(workflow.includes('npx cap add ios'),'Capacitor iOS-Erzeugung fehlt')
+assert.ok(workflow.includes('-workspace ios/App/App.xcworkspace'),'CocoaPods Xcode-Workspace fehlt')
+assert.ok(!workflow.includes('--packagemanager SPM'),'SPM darf im stabilen Sideloadly-Build nicht aktiv sein')
 assert.ok(workflow.includes('CODE_SIGNING_ALLOWED=NO'),'Unsigned iOS Build fehlt')
+assert.ok(workflow.includes("PRODUCT_BUNDLE_IDENTIFIER='at.nest.selfmade'"),'Stabile Bundle-ID fehlt')
 assert.ok(workflow.includes('NSCameraUsageDescription'),'Kamera-Berechtigung fehlt')
 assert.ok(workflow.includes('NEST-v4.4.0-Sideloadly.ipa'),'Sideloadly IPA-Datei fehlt')
+assert.ok(workflow.includes('/usr/bin/unzip -t NEST-v4.4.0-Sideloadly.ipa'),'IPA-Integritätsprüfung fehlt')
 assert.ok(workflow.includes('actions/upload-artifact@v4'),'IPA-Artefakt wird nicht bereitgestellt')
 
 const context={
