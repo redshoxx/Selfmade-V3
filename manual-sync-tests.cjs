@@ -1,0 +1,38 @@
+'use strict'
+const fs=require('node:fs')
+const assert=require('node:assert/strict')
+
+const settings=fs.readFileSync('settings-v3.js','utf8')
+const api=fs.readFileSync('api/manual-sync.js','utf8')
+const sql=fs.readFileSync('supabase/nest-manual-sync.sql','utf8')
+const css=fs.readFileSync('v3-dialogs.css','utf8')
+
+assert.ok(settings.includes("SYNC_META_KEY='nest-manual-sync-meta-v1'"),'Lokaler Sync-Status fehlt')
+assert.ok(settings.includes("SYNC_DEVICE_KEY='nest-manual-sync-device-v1'"),'Lokale Geräte-ID fehlt')
+assert.ok(settings.includes('data-settings="sync"'),'Synchronisieren-Button fehlt')
+assert.ok(settings.includes('<b>Manuelle Synchronisierung</b>'),'Sync ist in Einstellungen nicht sichtbar')
+assert.ok(settings.includes('Nur lokal ·'),'Local-First-Hinweis fehlt')
+assert.ok(settings.includes('async function manualSync'),'Manueller Sync-Handler fehlt')
+assert.ok(settings.includes('buildSyncPayload()'),'Vollständiger lokaler Snapshot wird nicht erzeugt')
+assert.ok(settings.includes('core:Core.loadState()'),'Finanzdaten fehlen im Sync')
+assert.ok(settings.includes('shopping:Shopping?.store?.exportData?.()'),'Einkaufsdaten fehlen im Sync')
+assert.ok(settings.includes('tasks:Tasks?.store?.exportData?.()'),'Aufgabendaten fehlen im Sync')
+assert.ok(settings.includes('recurring:recurring()?.exportData?.()'),'Wiederkehrende Buchungen fehlen im Sync')
+assert.ok(settings.includes("root.NestNativeV44?.apiUrl?.('/api/manual-sync')"),'Native iOS Sync-Endpoint fehlt')
+assert.ok(!settings.includes("setInterval(manualSync")&&!settings.includes("addEventListener('load',manualSync")&&!settings.includes("addEventListener('pageshow',manualSync"),'Sync darf nicht automatisch laufen')
+assert.ok(css.includes('.v3-sync-btn'),'Sync-Button hat kein Styling')
+
+assert.ok(api.includes('NEST_SUPABASE_URL'),'Dedizierte Supabase URL fehlt')
+assert.ok(api.includes('NEST_SUPABASE_SERVICE_ROLE_KEY'),'Serverseitiger Service-Role-Key fehlt')
+assert.ok(api.includes("'nest_manual_sync'"),'Sync-Tabelle fehlt')
+assert.ok(api.includes("req.method!=='POST'"),'Sync-API akzeptiert unerwünschte Methoden')
+assert.ok(api.includes('device_token_hash'),'Geräte-Token wird nicht geschützt gespeichert')
+assert.ok(api.includes("crypto.createHash('sha256')"),'Geräte-Token wird nicht gehasht')
+assert.ok(api.includes("Access-Control-Allow-Origin','*'"),'Native iOS CORS fehlt')
+
+assert.ok(sql.includes('create table if not exists public.nest_manual_sync'),'Datenbanktabelle fehlt')
+assert.ok(sql.includes('payload jsonb not null'),'Vollständiger Datenstand wird nicht als JSON gespeichert')
+assert.ok(sql.includes('enable row level security'),'RLS fehlt')
+assert.ok(!/create\s+policy/i.test(sql),'Die Sync-Tabelle darf keine öffentliche Client-Policy haben')
+
+console.log('NEST V4.4.0 local-first manual sync regression tests passed')
