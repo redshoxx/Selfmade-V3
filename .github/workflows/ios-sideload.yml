@@ -87,7 +87,7 @@ jobs:
             CODE_SIGN_IDENTITY='' \
             build | tee ios-xcodebuild.log
 
-      - name: Sideloadly IPA erstellen und Bundle-IDs prüfen
+      - name: Sideloadly IPA erstellen und Bundle-IDs reparieren
         run: |
           set -euxo pipefail
           APP_PATH="$(find ios/DerivedData/Build/Products/Release-iphoneos -maxdepth 1 -type d -name '*.app' | head -n 1)"
@@ -111,13 +111,32 @@ jobs:
           /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 4.4.0" "$APP_PLIST" 2>/dev/null || /usr/libexec/PlistBuddy -c "Add :CFBundleShortVersionString string 4.4.0" "$APP_PLIST"
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${GITHUB_RUN_NUMBER}" "$APP_PLIST" 2>/dev/null || /usr/libexec/PlistBuddy -c "Add :CFBundleVersion string ${GITHUB_RUN_NUMBER}" "$APP_PLIST"
 
+          # Die IPA ist an dieser Stelle absichtlich unsigniert. Manche CocoaPods-
+          # Frameworks übernehmen beim unsigned Build dieselbe CFBundleIdentifier.
+          # Sideloadly/iOS lehnt das als DuplicateIdentifier ab. Deshalb bekommt
+          # jedes eingebettete Framework vor dem späteren Sideloadly-Signing eine
+          # eigene, gültige und garantiert eindeutige Bundle-ID.
+          INDEX=0
+          if [ -d Payload/NEST.app/Frameworks ]; then
+            while IFS= read -r -d '' PLIST; do
+              INDEX=$((INDEX + 1))
+              RELATIVE="${PLIST#Payload/NEST.app/}"
+              OLD_ID="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$PLIST" 2>/dev/null || true)"
+              NEW_ID="at.nest.selfmade.embedded.f${INDEX}"
+              /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $NEW_ID" "$PLIST" 2>/dev/null || /usr/libexec/PlistBuddy -c "Add :CFBundleIdentifier string $NEW_ID" "$PLIST"
+              echo "Bundle-ID repariert: $RELATIVE : ${OLD_ID:-<leer>} -> $NEW_ID"
+            done < <(find Payload/NEST.app/Frameworks -type f -name Info.plist -print0 | sort -z)
+          fi
+
+          # Danach hart verifizieren: App-ID darf nirgendwo eingebettet vorkommen
+          # und keine zwei eingebetteten Bundles dürfen dieselbe ID besitzen.
           BAD=0
           IDS_FILE="$(mktemp)"
           if [ -d Payload/NEST.app/Frameworks ]; then
             while IFS= read -r -d '' PLIST; do
               BUNDLE_ID="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$PLIST" 2>/dev/null || true)"
               RELATIVE="${PLIST#Payload/NEST.app/}"
-              echo "$RELATIVE -> ${BUNDLE_ID:-<keine Bundle-ID>}"
+              echo "Prüfung: $RELATIVE -> ${BUNDLE_ID:-<keine Bundle-ID>}"
               if [ -n "$BUNDLE_ID" ]; then
                 echo "$BUNDLE_ID" >> "$IDS_FILE"
               fi
@@ -125,7 +144,7 @@ jobs:
                 echo "::error::Embedded bundle $RELATIVE verwendet fälschlich die App-ID $APP_ID"
                 BAD=1
               fi
-            done < <(find Payload/NEST.app/Frameworks -type f -name Info.plist -print0)
+            done < <(find Payload/NEST.app/Frameworks -type f -name Info.plist -print0 | sort -z)
           fi
 
           DUPLICATES="$(sort "$IDS_FILE" | uniq -d || true)"
