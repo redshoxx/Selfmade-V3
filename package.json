@@ -3,7 +3,7 @@
   "private": true,
   "version": "4.4.0",
   "scripts": {
-    "test": "node tests.mjs && node import-tests.cjs && node v2-tests.cjs && node v202-tests.cjs && node v3-tests.cjs && node v301-v31-tests.cjs && node tasks-v3.1-fixed-tests.cjs && node v32-tests.cjs && node v321-recurring-tests.cjs && node v322-nav-tests.cjs && node v44-performance-tests.cjs && node manual-sync-tests.cjs && node ios-sideload-tests.cjs",
+    "test": "node tests.mjs && node import-tests.cjs && node v2-tests.cjs && node v202-tests.cjs && node v3-tests.cjs && node v301-v31-tests.cjs && node tasks-v3.1-fixed-tests.cjs && node v32-tests.cjs && node v321-recurring-tests.cjs && node v322-nav-tests.cjs && node v44-performance-tests.cjs && node manual-sync-tests.cjs && node screenshot-import-tests.cjs && node ios-sideload-tests.cjs",
     "build": "node build.mjs",
     "start": "node local-server.mjs",
     "ios:sync": "npm run build && npx cap sync ios"
